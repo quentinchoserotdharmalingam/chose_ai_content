@@ -47,9 +47,12 @@ export async function generateFormatContent(
   const fn = promptFn[format];
   if (!fn) throw new Error(`Format "${format}" is dynamic and cannot be pre-generated`);
 
+  // Module needs more tokens due to complex nested structure (steps + quizzes + options)
+  const maxTokens = format === "module" ? 4000 : 2500;
+
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 2500,
+    max_tokens: maxTokens,
     messages: [
       {
         role: "user",
@@ -60,6 +63,10 @@ export async function generateFormatContent(
 
   const content = response.content[0];
   if (content.type !== "text") throw new Error("Unexpected response type");
+
+  if (response.stop_reason === "max_tokens") {
+    throw new Error(`Response truncated for format "${format}" — increase max_tokens`);
+  }
 
   const jsonMatch = content.text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("No JSON found in response");
