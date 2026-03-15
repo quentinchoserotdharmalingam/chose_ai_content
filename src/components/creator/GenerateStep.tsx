@@ -28,10 +28,13 @@ export function GenerateStep({ resourceId, formats, onGenerated }: GenerateStepP
     const results: Record<string, object> = {};
     let hasError = false;
 
-    // Generate each format one by one
-    for (const format of generatableFormats) {
-      setStatus((prev) => ({ ...prev, [format]: "generating" }));
+    // Mark all as generating
+    const generating: Record<string, "generating"> = {};
+    generatableFormats.forEach((f) => (generating[f] = "generating"));
+    setStatus(generating);
 
+    // Generate all formats in parallel
+    const promises = generatableFormats.map(async (format) => {
       try {
         const res = await fetch(`/api/resources/${resourceId}/generate`, {
           method: "POST",
@@ -49,7 +52,9 @@ export function GenerateStep({ resourceId, formats, onGenerated }: GenerateStepP
         setStatus((prev) => ({ ...prev, [format]: "error" }));
         hasError = true;
       }
-    }
+    });
+
+    await Promise.all(promises);
 
     // Finalize: update resource with enabled formats
     const enabledFormats = [
