@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Resource {
+  id             String   @id @default(cuid())
+  title          String?
+  description    String?
+  pdfUrl         String
+  extractedText  String?  @db.Text
+  analysis       String?  @db.Text
+  objective      String?  @db.Text
+  tone           String   @default("professional")
+  language       String   @default("fr")
+  enabledFormats String   @default("[]")
+  status         String   @default("draft")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  contents FormatContent[]
+  sessions ConsumptionSession[]
+}
+
+model FormatContent {
+  id         String   @id @default(cuid())
+  resourceId String
+  format     String
+  content    String   @db.Text
+  version    Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, format])
+}
+
+model ConsumptionSession {
+  id            String    @id @default(cuid())
+  resourceId    String
+  currentFormat String?
+  completed     Boolean   @default(false)
+  progress      String    @default("{}")
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+}
