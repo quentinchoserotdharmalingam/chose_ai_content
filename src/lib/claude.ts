@@ -48,8 +48,8 @@ export async function generateFormatContent(
   if (!fn) throw new Error(`Format "${format}" is dynamic and cannot be pre-generated`);
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4000,
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 2500,
     messages: [
       {
         role: "user",

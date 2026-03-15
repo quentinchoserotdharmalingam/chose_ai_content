@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { analyzeDocument } from "@/lib/claude";
 
+export const maxDuration = 60;
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ resourceId: string }> }
