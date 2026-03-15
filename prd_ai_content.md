@@ -115,8 +115,58 @@ Le tracking (formats ouverts, temps passé, scores) est envoyé en continu indé
 
 ---
 
+## Améliorations du flow créateur — Édition & Validation du contenu généré
+
+### Contexte
+
+Le flow créateur actuel est linéaire et sans retour : une fois le contenu généré (étape 4), le créateur peut uniquement le prévisualiser (étape 5) puis publier. Il ne peut ni modifier le contenu, ni regénérer un format spécifique, ni valider individuellement chaque format. Cette rigidité limite le contrôle qualité et l'appropriation du contenu par le RH.
+
+### Améliorations implémentées
+
+#### 1. Regénération par format avec instructions
+
+Le créateur peut regénérer un format individuel depuis le preview, avec un champ d'instructions optionnel pour guider l'IA (ex: "Plus de détails sur le chapitre 3", "Ton plus décontracté", "Simplifie les questions").
+
+- **API** : `POST /api/resources/[id]/regenerate` avec `{ format, instructions? }`
+- **UX** : Bouton "Regénérer" par onglet de format, modale avec champ instructions
+- **Versioning** : Le champ `version` de FormatContent est incrémenté à chaque regénération
+
+#### 2. Édition inline du contenu généré
+
+Le créateur peut éditer directement le contenu JSON structuré de chaque format : modifier une question de flashcard, reformuler une section de synthèse, corriger une option de quiz, ajuster un narratif de scénario.
+
+- **API** : `PATCH /api/resources/[id]/format-content` avec `{ format, content }`
+- **UX** : Mode édition/lecture toggle par format, éditeurs spécifiques par type de contenu
+- **Éditeurs par format** :
+  - **Synthèse** : Édition titre, sections (heading, content, keyPoints), takeaways
+  - **Flashcards** : Édition question, réponse, indice, difficulté par carte
+  - **Module** : Édition titre/contenu des lessons, question/options des quiz
+  - **Scénarios** : Édition narratif, choix, feedback, qualité par étape
+
+#### 3. Validation format par format
+
+Chaque format a un statut de validation individuel (brouillon / validé). Le créateur valide manuellement chaque format avant de pouvoir publier la ressource.
+
+- **UX** : Badge de statut + bouton "Valider ce format" par onglet
+- **Règle** : La publication n'est possible que lorsque tous les formats activés sont validés
+- **État** : Stocké côté client dans le flow créateur (pas de nouveau champ en base pour le POC)
+
+#### 4. Navigation retour dans le wizard
+
+Le créateur peut revenir aux étapes précédentes depuis n'importe quelle étape du wizard (modifier l'objectif, changer les formats activés), puis regénérer les formats impactés.
+
+- **UX** : Clic sur les étapes précédentes dans le stepper pour y revenir
+- **Logique** : Retour à l'étape objectif → possibilité de modifier puis regénérer
+
+#### 5. Historique des versions (prévu)
+
+Le champ `version` de FormatContent est déjà incrémenté à chaque regénération. Une future itération permettra au créateur de visualiser et restaurer des versions précédentes.
+
+---
+
 ## Changelog
 
 | Date | Entrée |
 | --- | --- |
 | 14/03/2026 | Création PRD V2 discovery complet (~2300 lignes). 5 formats, 6 extensions, flow créateur 8 étapes, expérience enrollee, contrat API 6 flux, architecture micro-app. |
+| 15/03/2026 | Ajout section "Améliorations du flow créateur" : édition inline, regénération avec instructions, validation par format, navigation retour wizard. |

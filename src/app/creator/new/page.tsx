@@ -34,27 +34,41 @@ export default function NewResourcePage() {
 
   const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
 
+  // Allow navigating back to completed steps
+  const handleStepClick = (stepIndex: number) => {
+    if (stepIndex < currentIndex) {
+      setCurrentStep(STEPS[stepIndex].key);
+    }
+  };
+
   return (
     <div>
-      {/* Step indicator */}
+      {/* Step indicator — clickable for completed steps */}
       <div className="mb-8 flex items-center gap-2">
         {STEPS.map((step, i) => (
           <div key={step.key} className="flex items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+            <button
+              onClick={() => handleStepClick(i)}
+              disabled={i >= currentIndex}
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
                 i < currentIndex
-                  ? "bg-blue-600 text-white"
+                  ? "cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
                   : i === currentIndex
                   ? "bg-blue-100 text-blue-600 ring-2 ring-blue-600"
                   : "bg-gray-100 text-gray-400"
               }`}
             >
               {i < currentIndex ? "✓" : i + 1}
-            </div>
+            </button>
             <span
               className={`hidden text-sm sm:inline ${
-                i === currentIndex ? "font-medium text-gray-900" : "text-gray-400"
+                i === currentIndex
+                  ? "font-medium text-gray-900"
+                  : i < currentIndex
+                  ? "cursor-pointer text-gray-600 hover:text-gray-900"
+                  : "text-gray-400"
               }`}
+              onClick={() => handleStepClick(i)}
             >
               {step.label}
             </span>
@@ -116,7 +130,13 @@ export default function NewResourcePage() {
       )}
 
       {currentStep === "preview" && resourceId && (
-        <PreviewStep resourceId={resourceId} content={generatedContent} formats={selectedFormats} />
+        <PreviewStep
+          resourceId={resourceId}
+          content={generatedContent}
+          formats={selectedFormats}
+          onContentChange={setGeneratedContent}
+          onBack={() => setCurrentStep("objective")}
+        />
       )}
     </div>
   );
