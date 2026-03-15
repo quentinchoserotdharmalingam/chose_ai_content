@@ -1,0 +1,115 @@
+"use client";
+
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FORMAT_META, type AnalysisResult, type FormatSlug } from "@/types";
+
+interface ObjectiveStepProps {
+  analysis: AnalysisResult;
+  objective: string;
+  onObjectiveChange: (value: string) => void;
+  selectedFormats: FormatSlug[];
+  onFormatsChange: (formats: FormatSlug[]) => void;
+  onNext: () => void;
+}
+
+const ALL_FORMATS: FormatSlug[] = ["synthese", "flashcards", "chat", "module", "scenarios"];
+
+export function ObjectiveStep({
+  analysis,
+  objective,
+  onObjectiveChange,
+  selectedFormats,
+  onFormatsChange,
+  onNext,
+}: ObjectiveStepProps) {
+  const toggleFormat = (format: FormatSlug) => {
+    if (selectedFormats.includes(format)) {
+      if (selectedFormats.length > 1) {
+        onFormatsChange(selectedFormats.filter((f) => f !== format));
+      }
+    } else {
+      onFormatsChange([...selectedFormats, format]);
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="mb-2 text-xl font-semibold">Objectif pédagogique</h2>
+      <p className="mb-6 text-sm text-gray-500">
+        Définissez ce que l&apos;apprenant doit retenir de cette ressource
+      </p>
+
+      {/* Suggested objectives */}
+      <div className="mb-4">
+        <p className="mb-2 text-sm font-medium text-gray-700">Suggestions IA :</p>
+        <div className="space-y-2">
+          {analysis.suggestedObjectives.map((suggestion) => (
+            <button
+              key={suggestion}
+              onClick={() => onObjectiveChange(suggestion)}
+              className={`block w-full rounded-lg border p-3 text-left text-sm transition-colors ${
+                objective === suggestion
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          Ou écrivez votre propre objectif :
+        </label>
+        <Textarea
+          value={objective}
+          onChange={(e) => onObjectiveChange(e.target.value)}
+          placeholder="À l'issue de cette ressource, l'apprenant sera capable de..."
+          rows={3}
+        />
+      </div>
+
+      {/* Format selection */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base">Formats de consommation</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {ALL_FORMATS.map((format) => {
+              const meta = FORMAT_META[format];
+              const selected = selectedFormats.includes(format);
+              return (
+                <button
+                  key={format}
+                  onClick={() => toggleFormat(format)}
+                  className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                    selected
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <span className="text-xl">{meta.icon}</span>
+                  <div>
+                    <p className="text-sm font-medium">{meta.label}</p>
+                    <p className="text-xs text-gray-500">{meta.duration}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={onNext} disabled={!objective.trim()}>
+          Générer le contenu
+        </Button>
+      </div>
+    </div>
+  );
+}
