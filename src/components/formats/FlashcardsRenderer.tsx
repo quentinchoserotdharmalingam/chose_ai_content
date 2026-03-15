@@ -77,7 +77,10 @@ export function FlashcardsRenderer({ content }: Props) {
 
           {/* Back */}
           {flipped && (
-            <div className="rounded-xl border-2 border-gray-200 bg-white p-8 text-center">
+            <div
+              className="rounded-xl border-2 border-gray-200 bg-white p-8 text-center"
+              style={{ transform: "rotateY(180deg)" }}
+            >
               <p className="text-base leading-relaxed text-gray-700">{card.answer}</p>
               <p className="mt-4 text-xs text-gray-400">Cliquez pour revoir la question</p>
             </div>
