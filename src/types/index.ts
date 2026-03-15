@@ -5,10 +5,13 @@ export type ResourceStatus = "draft" | "analyzed" | "generated" | "published";
 export interface SyntheseContent {
   title: string;
   duration: string;
+  introduction?: string;
   sections: Array<{
+    emoji?: string;
     heading: string;
     content: string;
     keyPoints?: string[];
+    highlight?: string;
   }>;
   takeaways: string[];
 }

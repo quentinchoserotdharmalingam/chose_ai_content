@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import type {
   FormatSlug,
   SyntheseContent,
@@ -44,6 +44,13 @@ function SyntheseEditor({
 }) {
   const update = (partial: Partial<SyntheseContent>) => onChange({ ...content, ...partial });
 
+  const moveSection = (from: number, to: number) => {
+    const sections = [...content.sections];
+    const [moved] = sections.splice(from, 1);
+    sections.splice(to, 0, moved);
+    update({ sections });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -51,46 +58,103 @@ function SyntheseEditor({
         <Input value={content.title} onChange={(e) => update({ title: e.target.value })} />
       </div>
 
+      <div>
+        <label className="mb-1 block text-xs font-medium text-gray-500">Introduction</label>
+        <Textarea
+          rows={2}
+          value={content.introduction || ""}
+          onChange={(e) => update({ introduction: e.target.value })}
+          placeholder="Phrase d'accroche contextualisant le sujet..."
+        />
+      </div>
+
       {content.sections?.map((section, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm text-gray-500">Section {i + 1}</CardTitle>
-              {content.sections.length > 1 && (
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    update({ sections: content.sections.filter((_, j) => j !== i) })
-                  }
+                  disabled={i === 0}
+                  onClick={() => moveSection(i, i - 1)}
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <ChevronUp className="h-3 w-3" />
                 </Button>
-              )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={i === content.sections.length - 1}
+                  onClick={() => moveSection(i, i + 1)}
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+                {content.sections.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      update({ sections: content.sections.filter((_, j) => j !== i) })
+                    }
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Titre de section</label>
-              <Input
-                value={section.heading}
-                onChange={(e) => {
-                  const sections = [...content.sections];
-                  sections[i] = { ...sections[i], heading: e.target.value };
-                  update({ sections });
-                }}
-              />
+            <div className="flex gap-3">
+              <div className="w-16">
+                <label className="mb-1 block text-xs font-medium text-gray-500">Emoji</label>
+                <Input
+                  value={section.emoji || ""}
+                  onChange={(e) => {
+                    const sections = [...content.sections];
+                    sections[i] = { ...sections[i], emoji: e.target.value };
+                    update({ sections });
+                  }}
+                  className="text-center text-lg"
+                  maxLength={2}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="mb-1 block text-xs font-medium text-gray-500">Titre de section</label>
+                <Input
+                  value={section.heading}
+                  onChange={(e) => {
+                    const sections = [...content.sections];
+                    sections[i] = { ...sections[i], heading: e.target.value };
+                    update({ sections });
+                  }}
+                />
+              </div>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Contenu</label>
               <Textarea
-                rows={3}
+                rows={4}
                 value={section.content}
                 onChange={(e) => {
                   const sections = [...content.sections];
                   sections[i] = { ...sections[i], content: e.target.value };
                   update({ sections });
                 }}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Citation / Highlight (optionnel)
+              </label>
+              <Input
+                value={section.highlight || ""}
+                onChange={(e) => {
+                  const sections = [...content.sections];
+                  sections[i] = { ...sections[i], highlight: e.target.value || undefined };
+                  update({ sections });
+                }}
+                placeholder="Phrase clé marquante..."
               />
             </div>
             <div>
@@ -121,7 +185,7 @@ function SyntheseEditor({
           update({
             sections: [
               ...content.sections,
-              { heading: "", content: "", keyPoints: [] },
+              { emoji: "", heading: "", content: "", keyPoints: [], highlight: undefined },
             ],
           })
         }
