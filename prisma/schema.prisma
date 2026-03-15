@@ -4,17 +4,17 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model Resource {
   id             String   @id @default(cuid())
   title          String?
   description    String?
-  pdfPath        String
-  extractedText  String?
-  analysis       String?
-  objective      String?
+  pdfUrl         String
+  extractedText  String?  @db.Text
+  analysis       String?  @db.Text
+  objective      String?  @db.Text
   tone           String   @default("professional")
   language       String   @default("fr")
   enabledFormats String   @default("[]")
@@ -30,7 +30,7 @@ model FormatContent {
   id         String   @id @default(cuid())
   resourceId String
   format     String
-  content    String
+  content    String   @db.Text
   version    Int      @default(1)
   createdAt  DateTime @default(now())
 

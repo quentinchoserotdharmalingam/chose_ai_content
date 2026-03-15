@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 
 export async function GET() {
   const resources = await prisma.resource.findMany({
@@ -19,17 +18,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Un fichier PDF est requis" }, { status: 400 });
   }
 
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadsDir, { recursive: true });
-
-  const filename = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-  const filePath = path.join(uploadsDir, filename);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(filePath, buffer);
+  const blob = await put(`pdfs/${Date.now()}-${file.name.replace(/\s+/g, "_")}`, file, {
+    access: "public",
+  });
 
   const resource = await prisma.resource.create({
     data: {
-      pdfPath: `/uploads/${filename}`,
+      pdfUrl: blob.url,
       title: file.name.replace(".pdf", ""),
     },
   });

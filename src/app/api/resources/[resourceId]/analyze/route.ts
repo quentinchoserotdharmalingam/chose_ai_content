@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { extractTextFromPdf } from "@/lib/pdf";
+import { extractTextFromPdfUrl } from "@/lib/pdf";
 import { analyzeDocument } from "@/lib/claude";
-import path from "path";
 
 export async function POST(
   _request: NextRequest,
@@ -16,8 +15,7 @@ export async function POST(
   }
 
   try {
-    const filePath = path.join(process.cwd(), "public", resource.pdfPath);
-    const extractedText = await extractTextFromPdf(filePath);
+    const extractedText = await extractTextFromPdfUrl(resource.pdfUrl);
 
     const analysis = await analyzeDocument(extractedText);
 
