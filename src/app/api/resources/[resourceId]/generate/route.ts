@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { generateFormatContent } from "@/lib/claude";
 import type { FormatSlug } from "@/types";
 
+export const maxDuration = 60;
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ resourceId: string }> }
@@ -22,13 +24,14 @@ export async function POST(
   }
 
   const body = await request.json();
-  const formats: FormatSlug[] = body.formats || ["synthese", "flashcards", "module", "scenarios"];
+  const format: FormatSlug | undefined = body.format;
+  const formats: FormatSlug[] | undefined = body.formats;
 
-  const results: Record<string, object> = {};
-  const errors: Record<string, string> = {};
-
-  for (const format of formats) {
-    if (format === "chat") continue;
+  // Single format mode: generate one format at a time (recommended)
+  if (format) {
+    if (format === "chat") {
+      return NextResponse.json({ format, content: null, dynamic: true });
+    }
 
     try {
       const content = await generateFormatContent(
@@ -44,14 +47,47 @@ export async function POST(
         update: { content: JSON.stringify(content), version: { increment: 1 } },
       });
 
-      results[format] = content;
+      return NextResponse.json({ format, content });
     } catch (error) {
       console.error(`Generation error for ${format}:`, error);
-      errors[format] = `Erreur lors de la génération du format ${format}`;
+      return NextResponse.json(
+        { error: `Erreur lors de la génération du format ${format}` },
+        { status: 500 }
+      );
     }
   }
 
-  const enabledFormats = formats.filter((f) => f === "chat" || results[f]);
+  // Batch mode (legacy): generate all formats at once
+  const allFormats: FormatSlug[] = formats || ["synthese", "flashcards", "module", "scenarios"];
+
+  const results: Record<string, object> = {};
+  const errors: Record<string, string> = {};
+
+  for (const f of allFormats) {
+    if (f === "chat") continue;
+
+    try {
+      const content = await generateFormatContent(
+        resource.extractedText,
+        resource.objective,
+        f,
+        resource.tone
+      );
+
+      await prisma.formatContent.upsert({
+        where: { resourceId_format: { resourceId, format: f } },
+        create: { resourceId, format: f, content: JSON.stringify(content) },
+        update: { content: JSON.stringify(content), version: { increment: 1 } },
+      });
+
+      results[f] = content;
+    } catch (error) {
+      console.error(`Generation error for ${f}:`, error);
+      errors[f] = `Erreur lors de la génération du format ${f}`;
+    }
+  }
+
+  const enabledFormats = allFormats.filter((f) => f === "chat" || results[f]);
 
   await prisma.resource.update({
     where: { id: resourceId },

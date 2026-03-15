@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { getChatStream } from "@/lib/claude";
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { resourceId, messages } = body;

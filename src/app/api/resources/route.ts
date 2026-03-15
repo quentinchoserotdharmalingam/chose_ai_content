@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { extractTextFromPdfBuffer } from "@/lib/pdf";
 
+export const maxDuration = 60;
+
 export async function GET() {
   const resources = await prisma.resource.findMany({
     orderBy: { createdAt: "desc" },

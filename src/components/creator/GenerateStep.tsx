@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Loader2, Check, AlertCircle } from "lucide-react";
 import { FORMAT_META, type FormatSlug } from "@/types";
 
@@ -13,46 +13,72 @@ interface GenerateStepProps {
 export function GenerateStep({ resourceId, formats, onGenerated }: GenerateStepProps) {
   const [status, setStatus] = useState<Record<string, "pending" | "generating" | "done" | "error">>({});
   const [error, setError] = useState<string | null>(null);
+  const hasStarted = useRef(false);
+  const onGeneratedRef = useRef(onGenerated);
+  onGeneratedRef.current = onGenerated;
 
-  useEffect(() => {
+  const generate = useCallback(async () => {
     const generatableFormats = formats.filter((f) => f !== "chat");
+
+    // Initialize all as pending
     const initial: Record<string, "pending"> = {};
     generatableFormats.forEach((f) => (initial[f] = "pending"));
     setStatus(initial);
 
-    async function generate() {
-      try {
-        // Mark all as generating
-        const generating: Record<string, "generating"> = {};
-        generatableFormats.forEach((f) => (generating[f] = "generating"));
-        setStatus(generating);
+    const results: Record<string, object> = {};
+    let hasError = false;
 
+    // Generate each format one by one
+    for (const format of generatableFormats) {
+      setStatus((prev) => ({ ...prev, [format]: "generating" }));
+
+      try {
         const res = await fetch(`/api/resources/${resourceId}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ formats }),
+          body: JSON.stringify({ format }),
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Erreur génération");
 
-        const final: Record<string, "done" | "error"> = {};
-        generatableFormats.forEach((f) => {
-          final[f] = data.results[f] ? "done" : "error";
-        });
-        setStatus(final);
-
-        onGenerated(data.results);
+        results[format] = data.content;
+        setStatus((prev) => ({ ...prev, [format]: "done" }));
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur");
-        const errStatus: Record<string, "error"> = {};
-        generatableFormats.forEach((f) => (errStatus[f] = "error"));
-        setStatus(errStatus);
+        console.error(`Error generating ${format}:`, err);
+        setStatus((prev) => ({ ...prev, [format]: "error" }));
+        hasError = true;
       }
     }
 
+    // Finalize: update resource with enabled formats
+    const enabledFormats = [
+      ...Object.keys(results),
+      ...(formats.includes("chat") ? ["chat"] : []),
+    ];
+
+    if (enabledFormats.length > 0) {
+      try {
+        await fetch(`/api/resources/${resourceId}/finalize`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabledFormats }),
+        });
+      } catch {
+        // Non-critical: status update failed
+      }
+
+      onGeneratedRef.current(results);
+    } else if (hasError) {
+      setError("Erreur lors de la génération des contenus");
+    }
+  }, [resourceId, formats]);
+
+  useEffect(() => {
+    if (hasStarted.current) return;
+    hasStarted.current = true;
     generate();
-  }, [resourceId, formats, onGenerated]);
+  }, [generate]);
 
   return (
     <div>
