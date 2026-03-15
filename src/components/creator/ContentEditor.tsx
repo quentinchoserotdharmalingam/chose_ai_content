@@ -672,6 +672,19 @@ function ScenariosEditor({
 }) {
   const update = (partial: Partial<ScenariosContent>) => onChange({ ...content, ...partial });
 
+  const moveStep = (from: number, to: number) => {
+    const steps = [...content.steps];
+    const [moved] = steps.splice(from, 1);
+    steps.splice(to, 0, moved);
+    update({ steps });
+  };
+
+  const qualityStats = {
+    optimal: content.steps.reduce((n, s) => n + s.choices.filter((c) => c.quality === "optimal").length, 0),
+    acceptable: content.steps.reduce((n, s) => n + s.choices.filter((c) => c.quality === "acceptable").length, 0),
+    poor: content.steps.reduce((n, s) => n + s.choices.filter((c) => c.quality === "poor").length, 0),
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -679,20 +692,64 @@ function ScenariosEditor({
         <Input value={content.title} onChange={(e) => update({ title: e.target.value })} />
       </div>
       <div>
+        <label className="mb-1 block text-xs font-medium text-gray-500">Description</label>
+        <Input
+          value={content.description || ""}
+          onChange={(e) => update({ description: e.target.value })}
+          placeholder="Résumé de la mise en situation..."
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-gray-500">Rôle incarné</label>
+        <Input
+          value={content.role || ""}
+          onChange={(e) => update({ role: e.target.value })}
+          placeholder="Ex: Manager d'équipe, Consultant RH..."
+        />
+      </div>
+      <div>
         <label className="mb-1 block text-xs font-medium text-gray-500">Contexte</label>
         <Textarea
-          rows={2}
+          rows={3}
           value={content.context}
           onChange={(e) => update({ context: e.target.value })}
         />
       </div>
 
+      {/* Stats bar */}
+      <div className="flex gap-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-500">
+        <span>{content.steps.length} étapes</span>
+        <span>|</span>
+        <span className="text-green-600">{qualityStats.optimal} optimaux</span>
+        <span className="text-amber-600">{qualityStats.acceptable} acceptables</span>
+        <span className="text-red-600">{qualityStats.poor} mauvais</span>
+      </div>
+
       {content.steps?.map((step, i) => (
         <Card key={step.id}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">
-              Étape : {step.id}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-gray-500">
+                Étape {i + 1} — {step.id}
+              </CardTitle>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" disabled={i === 0} onClick={() => moveStep(i, i - 1)}>
+                  <ChevronUp className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="sm" disabled={i === content.steps.length - 1} onClick={() => moveStep(i, i + 1)}>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+                {content.steps.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => update({ steps: content.steps.filter((_, j) => j !== i) })}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
@@ -707,56 +764,129 @@ function ScenariosEditor({
                 }}
               />
             </div>
-            {step.choices?.map((choice, j) => (
-              <div key={j} className="ml-4 space-y-2 rounded border p-3">
-                <div className="flex items-center gap-2">
-                  <select
-                    className="rounded border px-2 py-1 text-xs"
-                    value={choice.quality}
-                    onChange={(e) => {
-                      const steps = [...content.steps];
-                      const choices = [...steps[i].choices];
-                      choices[j] = {
-                        ...choices[j],
-                        quality: e.target.value as "optimal" | "acceptable" | "poor",
-                      };
-                      steps[i] = { ...steps[i], choices };
-                      update({ steps });
-                    }}
-                  >
-                    <option value="optimal">Optimal</option>
-                    <option value="acceptable">Acceptable</option>
-                    <option value="poor">Mauvais</option>
-                  </select>
+            {step.choices?.map((choice, j) => {
+              const qualityBorder = choice.quality === "optimal" ? "border-green-300 bg-green-50/50"
+                : choice.quality === "poor" ? "border-red-300 bg-red-50/50" : "";
+              return (
+                <div key={j} className={`ml-4 space-y-2 rounded border p-3 ${qualityBorder}`}>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="rounded border px-2 py-1 text-xs"
+                      value={choice.quality}
+                      onChange={(e) => {
+                        const steps = [...content.steps];
+                        const choices = [...steps[i].choices];
+                        choices[j] = {
+                          ...choices[j],
+                          quality: e.target.value as "optimal" | "acceptable" | "poor",
+                        };
+                        steps[i] = { ...steps[i], choices };
+                        update({ steps });
+                      }}
+                    >
+                      <option value="optimal">✓ Optimal</option>
+                      <option value="acceptable">~ Acceptable</option>
+                      <option value="poor">✗ Mauvais</option>
+                    </select>
+                    <Input
+                      className="flex-1"
+                      value={choice.label}
+                      placeholder="Choix"
+                      onChange={(e) => {
+                        const steps = [...content.steps];
+                        const choices = [...steps[i].choices];
+                        choices[j] = { ...choices[j], label: e.target.value };
+                        steps[i] = { ...steps[i], choices };
+                        update({ steps });
+                      }}
+                    />
+                    {(step.choices?.length || 0) > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const steps = [...content.steps];
+                          const choices = [...steps[i].choices];
+                          choices.splice(j, 1);
+                          steps[i] = { ...steps[i], choices };
+                          update({ steps });
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                   <Input
-                    className="flex-1"
-                    value={choice.label}
-                    placeholder="Choix"
+                    value={choice.feedback}
+                    placeholder="Feedback pédagogique"
                     onChange={(e) => {
                       const steps = [...content.steps];
                       const choices = [...steps[i].choices];
-                      choices[j] = { ...choices[j], label: e.target.value };
+                      choices[j] = { ...choices[j], feedback: e.target.value };
                       steps[i] = { ...steps[i], choices };
                       update({ steps });
                     }}
                   />
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-400">→ Étape suivante</label>
+                    <Input
+                      value={choice.nextStepId}
+                      placeholder="step-2 ou conclusion"
+                      onChange={(e) => {
+                        const steps = [...content.steps];
+                        const choices = [...steps[i].choices];
+                        choices[j] = { ...choices[j], nextStepId: e.target.value };
+                        steps[i] = { ...steps[i], choices };
+                        update({ steps });
+                      }}
+                      className="text-xs"
+                    />
+                  </div>
                 </div>
-                <Input
-                  value={choice.feedback}
-                  placeholder="Feedback"
-                  onChange={(e) => {
-                    const steps = [...content.steps];
-                    const choices = [...steps[i].choices];
-                    choices[j] = { ...choices[j], feedback: e.target.value };
-                    steps[i] = { ...steps[i], choices };
-                    update({ steps });
-                  }}
-                />
-              </div>
-            ))}
+              );
+            })}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const steps = [...content.steps];
+                const choices = [...steps[i].choices];
+                const nextId = i < content.steps.length - 1
+                  ? content.steps[i + 1].id
+                  : "conclusion";
+                choices.push({ label: "", nextStepId: nextId, feedback: "", quality: "acceptable" });
+                steps[i] = { ...steps[i], choices };
+                update({ steps });
+              }}
+            >
+              <Plus className="mr-1 h-3 w-3" /> Ajouter un choix
+            </Button>
           </CardContent>
         </Card>
       ))}
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          const newId = `step-${content.steps.length + 1}`;
+          update({
+            steps: [
+              ...content.steps,
+              {
+                id: newId,
+                narrative: "",
+                choices: [
+                  { label: "", nextStepId: "conclusion", feedback: "", quality: "optimal" },
+                  { label: "", nextStepId: "conclusion", feedback: "", quality: "poor" },
+                ],
+              },
+            ],
+          });
+        }}
+      >
+        <Plus className="mr-1 h-3 w-3" /> Ajouter une étape
+      </Button>
 
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-500">Conclusion</label>

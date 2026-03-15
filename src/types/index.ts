@@ -52,7 +52,9 @@ export interface ModuleContent {
 
 export interface ScenariosContent {
   title: string;
+  description?: string;
   context: string;
+  role?: string;
   steps: Array<{
     id: string;
     narrative: string;
