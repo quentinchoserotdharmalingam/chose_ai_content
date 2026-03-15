@@ -11,7 +11,7 @@ model Resource {
   id             String   @id @default(cuid())
   title          String?
   description    String?
-  pdfUrl         String
+  pdfUrl         String?
   extractedText  String?  @db.Text
   analysis       String?  @db.Text
   objective      String?  @db.Text
