@@ -81,7 +81,7 @@ export function UploadStep({ onUploaded }: UploadStepProps) {
           {uploading ? (
             <>
               <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-              <p className="text-sm text-gray-500">Upload de {fileName}...</p>
+              <p className="text-sm text-gray-500">Extraction du texte de {fileName}...</p>
             </>
           ) : fileName ? (
             <>
