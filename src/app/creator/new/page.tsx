@@ -10,9 +10,10 @@ import {
   ExtensionsStep,
   createDefaultExtensions,
 } from "@/components/creator/ExtensionsStep";
+import { PublishStep } from "@/components/creator/PublishStep";
 import type { AnalysisResult, FormatSlug, ExtensionSlug, ExtensionConfig } from "@/types";
 
-type Step = "upload" | "analysis" | "objective" | "generate" | "preview" | "extensions";
+type Step = "upload" | "analysis" | "objective" | "generate" | "preview" | "extensions" | "publish";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "upload", label: "Upload" },
@@ -21,13 +22,17 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "generate", label: "Génération" },
   { key: "preview", label: "Preview" },
   { key: "extensions", label: "Extensions" },
+  { key: "publish", label: "Publication" },
 ];
 
 export default function NewResourcePage() {
   const [currentStep, setCurrentStep] = useState<Step>("upload");
   const [resourceId, setResourceId] = useState<string | null>(null);
+  const [resourceTitle, setResourceTitle] = useState("");
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [objective, setObjective] = useState("");
+  const [tone, setTone] = useState("professional");
+  const [language, setLanguage] = useState("fr");
   const [selectedFormats, setSelectedFormats] = useState<FormatSlug[]>([
     "synthese",
     "flashcards",
@@ -42,7 +47,6 @@ export default function NewResourcePage() {
 
   const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
 
-  // Allow navigating back to completed steps
   const handleStepClick = (stepIndex: number) => {
     if (stepIndex < currentIndex) {
       setCurrentStep(STEPS[stepIndex].key);
@@ -51,14 +55,14 @@ export default function NewResourcePage() {
 
   return (
     <div>
-      {/* Step indicator — clickable for completed steps */}
-      <div className="mb-8 flex items-center gap-2">
+      {/* Step indicator */}
+      <div className="mb-8 flex items-center gap-1 overflow-x-auto sm:gap-2">
         {STEPS.map((step, i) => (
-          <div key={step.key} className="flex items-center gap-2">
+          <div key={step.key} className="flex items-center gap-1 sm:gap-2">
             <button
               onClick={() => handleStepClick(i)}
               disabled={i >= currentIndex}
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
+              className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors sm:h-8 sm:w-8 sm:text-sm ${
                 i < currentIndex
                   ? "cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
                   : i === currentIndex
@@ -69,7 +73,7 @@ export default function NewResourcePage() {
               {i < currentIndex ? "✓" : i + 1}
             </button>
             <span
-              className={`hidden text-sm sm:inline ${
+              className={`hidden text-sm md:inline ${
                 i === currentIndex
                   ? "font-medium text-gray-900"
                   : i < currentIndex
@@ -81,7 +85,7 @@ export default function NewResourcePage() {
               {step.label}
             </span>
             {i < STEPS.length - 1 && (
-              <div className={`h-px w-6 ${i < currentIndex ? "bg-blue-600" : "bg-gray-200"}`} />
+              <div className={`h-px w-4 sm:w-6 ${i < currentIndex ? "bg-blue-600" : "bg-gray-200"}`} />
             )}
           </div>
         ))}
@@ -90,8 +94,9 @@ export default function NewResourcePage() {
       {/* Step content */}
       {currentStep === "upload" && (
         <UploadStep
-          onUploaded={(id) => {
+          onUploaded={(id, title) => {
             setResourceId(id);
+            if (title) setResourceTitle(title);
             setCurrentStep("analysis");
           }}
         />
@@ -114,12 +119,16 @@ export default function NewResourcePage() {
           onObjectiveChange={setObjective}
           selectedFormats={selectedFormats}
           onFormatsChange={setSelectedFormats}
+          tone={tone}
+          onToneChange={setTone}
+          language={language}
+          onLanguageChange={setLanguage}
           onNext={async () => {
             if (!resourceId) return;
             await fetch(`/api/resources/${resourceId}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ objective }),
+              body: JSON.stringify({ objective, tone, language }),
             });
             setCurrentStep("generate");
           }}
@@ -153,11 +162,16 @@ export default function NewResourcePage() {
           extensions={extensions}
           onExtensionsChange={setExtensions}
           onBack={() => setCurrentStep("preview")}
-          onNext={() => {
-            // In a real app, this would save extensions config and publish
-            // For POC, just redirect to dashboard
-            window.location.href = "/creator";
-          }}
+          onNext={() => setCurrentStep("publish")}
+        />
+      )}
+
+      {currentStep === "publish" && resourceId && (
+        <PublishStep
+          resourceId={resourceId}
+          initialTitle={resourceTitle}
+          formats={selectedFormats}
+          onBack={() => setCurrentStep("extensions")}
         />
       )}
     </div>

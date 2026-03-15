@@ -7,7 +7,10 @@ export const maxDuration = 60;
 export async function GET() {
   const resources = await prisma.resource.findMany({
     orderBy: { createdAt: "desc" },
-    include: { contents: { select: { format: true } } },
+    include: {
+      contents: { select: { format: true } },
+      sessions: { select: { completed: true } },
+    },
   });
   return NextResponse.json(resources);
 }

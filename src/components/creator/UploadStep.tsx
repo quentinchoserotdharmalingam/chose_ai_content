@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface UploadStepProps {
-  onUploaded: (resourceId: string) => void;
+  onUploaded: (resourceId: string, title?: string) => void;
 }
 
 export function UploadStep({ onUploaded }: UploadStepProps) {
@@ -35,7 +35,7 @@ export function UploadStep({ onUploaded }: UploadStepProps) {
 
         if (!res.ok) throw new Error(data.error || "Erreur upload");
 
-        onUploaded(data.id);
+        onUploaded(data.id, data.title || file.name.replace(".pdf", ""));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erreur lors de l'upload");
         setUploading(false);

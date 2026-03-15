@@ -203,6 +203,71 @@ Le bouton "Configurer les extensions" en étape 5 n'est accessible qu'après val
 
 ---
 
+## Étape 7 — Publication
+
+### Fonctionnalité
+
+Le créateur finalise sa ressource avant publication :
+- **Titre** : Modifiable (pré-rempli avec le nom du PDF)
+- **Description** : Texte libre visible par les enrollees avant consommation
+- **Format par défaut** : Le format proposé en premier à l'enrollee (il peut changer librement)
+- **Récapitulatif** : Résumé des formats activés et du format par défaut
+
+### Publication
+
+Le bouton "Publier" met à jour le statut de la ressource en `published` et redirige vers un écran de confirmation avec accès rapide au preview enrollee et au dashboard.
+
+---
+
+## Configuration ton & langue
+
+### Ajout à l'étape Objectif
+
+Le créateur peut configurer le ton et la langue du contenu généré :
+
+**Tons disponibles :**
+| Ton | Description |
+|-----|-------------|
+| Professionnel | Formel et structuré (défaut) |
+| Décontracté | Accessible et convivial |
+| Pédagogique | Didactique et encourageant |
+| Concis | Droit au but, factuel |
+
+**Langues disponibles :** Français (défaut), English, Español, Deutsch
+
+Ces paramètres sont sauvegardés en base et utilisés lors de la génération du contenu par l'IA.
+
+---
+
+## Dashboard créateur enrichi
+
+### Améliorations
+
+- **Statistiques rapides** : 4 compteurs en haut (total ressources, publiées, sessions, complétées)
+- **Informations enrichies** par ressource : titre, description, statut avec libellé français, icônes des formats activés, nombre de sessions, date de création
+- **Menu contextuel** (⋮) avec actions :
+  - **Dupliquer** : Crée une copie complète de la ressource avec tous ses contenus générés (statut "generated")
+  - **Supprimer** : Avec confirmation
+- **API duplication** : `POST /api/resources/[id]/duplicate`
+
+---
+
+## Entrée enrollee
+
+### Landing page enrollee (`/consume`)
+
+Page dédiée listant toutes les ressources publiées/générées accessibles à l'enrollee :
+- Grille responsive de cards
+- Chaque card affiche : titre, description (tronquée), badges des formats activés
+- Clic → sélecteur de format de la ressource
+
+### Navigation
+
+- Header enrichi avec deux liens : "Créateur" et "Enrollee"
+- Landing page (`/`) avec séparation claire des deux rôles (Créateur RH / Enrollee Apprenant)
+
+---
+
 ## Changelog
 
 | Date | Entrée |
@@ -210,3 +275,4 @@ Le bouton "Configurer les extensions" en étape 5 n'est accessible qu'après val
 | 14/03/2026 | Création PRD V2 discovery complet (~2300 lignes). 5 formats, 6 extensions, flow créateur 8 étapes, expérience enrollee, contrat API 6 flux, architecture micro-app. |
 | 15/03/2026 | Ajout section "Améliorations du flow créateur" : édition inline, regénération avec instructions, validation par format, navigation retour wizard. |
 | 15/03/2026 | Ajout étape 6 "Extensions" au wizard : configuration des 6 extensions activables, timeline de prévisualisation des actions HeyTeam. Mode POC (pas d'appel API réel). |
+| 15/03/2026 | Ajout étape 7 "Publication", config ton/langue, dashboard enrichi (stats, duplication, menu contextuel), landing enrollee, polish mobile. |
