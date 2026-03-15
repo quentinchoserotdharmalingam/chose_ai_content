@@ -5,11 +5,19 @@ const globalForPrisma = globalThis as unknown as { prisma: InstanceType<typeof P
 
 function createPrismaClient() {
   const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL;
-  if (!connectionString) throw new Error("DATABASE_URL is not set");
+  if (!connectionString) {
+    throw new Error("POSTGRES_PRISMA_URL or DATABASE_URL must be set");
+  }
   const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma || createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+// Lazy initialization — only connect when actually used at runtime
+export const prisma = new Proxy({} as InstanceType<typeof PrismaClient>, {
+  get(_target, prop) {
+    if (!globalForPrisma.prisma) {
+      globalForPrisma.prisma = createPrismaClient();
+    }
+    return (globalForPrisma.prisma as Record<string | symbol, unknown>)[prop];
+  },
+});
