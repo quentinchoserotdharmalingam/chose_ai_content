@@ -6,9 +6,13 @@ import { AnalysisStep } from "@/components/creator/AnalysisStep";
 import { ObjectiveStep } from "@/components/creator/ObjectiveStep";
 import { GenerateStep } from "@/components/creator/GenerateStep";
 import { PreviewStep } from "@/components/creator/PreviewStep";
-import type { AnalysisResult, FormatSlug } from "@/types";
+import {
+  ExtensionsStep,
+  createDefaultExtensions,
+} from "@/components/creator/ExtensionsStep";
+import type { AnalysisResult, FormatSlug, ExtensionSlug, ExtensionConfig } from "@/types";
 
-type Step = "upload" | "analysis" | "objective" | "generate" | "preview";
+type Step = "upload" | "analysis" | "objective" | "generate" | "preview" | "extensions";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "upload", label: "Upload" },
@@ -16,6 +20,7 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "objective", label: "Objectif" },
   { key: "generate", label: "Génération" },
   { key: "preview", label: "Preview" },
+  { key: "extensions", label: "Extensions" },
 ];
 
 export default function NewResourcePage() {
@@ -31,6 +36,9 @@ export default function NewResourcePage() {
     "scenarios",
   ]);
   const [generatedContent, setGeneratedContent] = useState<Record<string, object>>({});
+  const [extensions, setExtensions] = useState<Record<ExtensionSlug, ExtensionConfig>>(
+    createDefaultExtensions()
+  );
 
   const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
 
@@ -136,6 +144,20 @@ export default function NewResourcePage() {
           formats={selectedFormats}
           onContentChange={setGeneratedContent}
           onBack={() => setCurrentStep("objective")}
+          onNext={() => setCurrentStep("extensions")}
+        />
+      )}
+
+      {currentStep === "extensions" && resourceId && (
+        <ExtensionsStep
+          extensions={extensions}
+          onExtensionsChange={setExtensions}
+          onBack={() => setCurrentStep("preview")}
+          onNext={() => {
+            // In a real app, this would save extensions config and publish
+            // For POC, just redirect to dashboard
+            window.location.href = "/creator";
+          }}
         />
       )}
     </div>

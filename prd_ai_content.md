@@ -164,9 +164,49 @@ Le champ `version` de FormatContent est déjà incrémenté à chaque regénéra
 
 ---
 
+## Étape 6 — Configuration des extensions (POC)
+
+### Contexte
+
+Le PRD définit 6 extensions activables qui créent automatiquement des objets dans HeyTeam après complétion. Dans le POC, les extensions ne créent pas réellement d'objets via API, mais le créateur peut :
+
+1. **Activer/désactiver** chaque extension individuellement (toutes OFF par défaut)
+2. **Configurer le délai** (J+X après complétion) pour les extensions qui le supportent
+3. **Visualiser la timeline** de toutes les actions qui seraient générées dans HeyTeam
+
+### Les 6 extensions
+
+| Extension | Objet HeyTeam | Déclenchement | Délai configurable |
+|-----------|--------------|---------------|-------------------|
+| ⏰ Rappels espacés | Ressource formation x3 | J+1, J+7, J+30 | Non (fixe) |
+| 🤝 Connexion | Événement / Tâche | J+X configurable | Oui (défaut J+3) |
+| 📝 Questionnaire | Questionnaire natif | J+X configurable | Oui (défaut J+0) |
+| 📧 Email / Notification | Email via notifications | Dès complétion | Non |
+| 🏆 Défi / Challenge | Challenge natif | J+X configurable | Oui (défaut J+7) |
+| 📄 Attestation | Document dynamique | Dès complétion | Non |
+
+### Timeline de prévisualisation
+
+Le composant `ActionsPreview` affiche une timeline chronologique qui montre :
+- L'événement déclencheur ("Complétion de la ressource")
+- Les actions immédiates (dès complétion)
+- Les actions différées (J+1, J+3, J+7, J+30...) groupées par date
+- Pour chaque action : l'icône, le libellé, le type d'objet HeyTeam créé
+- Un badge "POC — non créé" pour indiquer que l'action n'est pas réellement exécutée
+
+### Intégration dans le wizard
+
+Le wizard passe de 5 à 6 étapes :
+1. Upload → 2. Analyse → 3. Objectif → 4. Génération → 5. Preview & Validation → **6. Extensions**
+
+Le bouton "Configurer les extensions" en étape 5 n'est accessible qu'après validation de tous les formats.
+
+---
+
 ## Changelog
 
 | Date | Entrée |
 | --- | --- |
 | 14/03/2026 | Création PRD V2 discovery complet (~2300 lignes). 5 formats, 6 extensions, flow créateur 8 étapes, expérience enrollee, contrat API 6 flux, architecture micro-app. |
 | 15/03/2026 | Ajout section "Améliorations du flow créateur" : édition inline, regénération avec instructions, validation par format, navigation retour wizard. |
+| 15/03/2026 | Ajout étape 6 "Extensions" au wizard : configuration des 6 extensions activables, timeline de prévisualisation des actions HeyTeam. Mode POC (pas d'appel API réel). |

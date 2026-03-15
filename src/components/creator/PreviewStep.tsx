@@ -27,6 +27,7 @@ interface PreviewStepProps {
   formats: FormatSlug[];
   onContentChange?: (content: Record<string, object>) => void;
   onBack?: () => void;
+  onNext?: () => void;
 }
 
 type FormatValidation = Record<string, boolean>;
@@ -37,6 +38,7 @@ export function PreviewStep({
   formats,
   onContentChange,
   onBack,
+  onNext,
 }: PreviewStepProps) {
   const previewableFormats = formats.filter((f) => f !== "chat" && content[f]);
   const [activeFormat, setActiveFormat] = useState<FormatSlug>(
@@ -278,15 +280,16 @@ export function PreviewStep({
             Voir comme enrollee
           </Button>
         </Link>
-        <Link href="/creator">
-          <Button
-            size="lg"
-            disabled={!allValidated}
-            className={!allValidated ? "opacity-50" : ""}
-          >
-            {allValidated ? "Publier" : `Validez tous les formats (${previewableFormats.filter((f) => validation[f]).length}/${previewableFormats.length})`}
-          </Button>
-        </Link>
+        <Button
+          size="lg"
+          disabled={!allValidated}
+          className={!allValidated ? "opacity-50" : ""}
+          onClick={onNext}
+        >
+          {allValidated
+            ? "Configurer les extensions"
+            : `Validez tous les formats (${previewableFormats.filter((f) => validation[f]).length}/${previewableFormats.length})`}
+        </Button>
       </div>
     </div>
   );

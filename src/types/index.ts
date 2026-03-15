@@ -71,6 +71,105 @@ export interface ChatMessage {
   content: string;
 }
 
+// --- Extensions ---
+
+export type ExtensionSlug =
+  | "rappels"
+  | "connexion"
+  | "questionnaire"
+  | "email"
+  | "defi"
+  | "attestation";
+
+export interface ExtensionConfig {
+  enabled: boolean;
+  /** Delay in days after completion (null = immediate) */
+  delayDays?: number | null;
+  /** Extension-specific settings */
+  settings?: Record<string, unknown>;
+}
+
+export interface GeneratedAction {
+  extensionSlug: ExtensionSlug;
+  label: string;
+  heyteamObject: string;
+  triggerLabel: string;
+  delayDays: number | null;
+}
+
+export const EXTENSION_META: Record<
+  ExtensionSlug,
+  {
+    label: string;
+    icon: string;
+    description: string;
+    heyteamObject: string;
+    defaultDelayDays: number | null;
+    delayConfigurable: boolean;
+    /** For rappels: multiple actions generated */
+    multiAction?: { delaysDays: number[]; labels: string[] };
+  }
+> = {
+  rappels: {
+    label: "Rappels espacés",
+    icon: "⏰",
+    description:
+      "Envoie des rappels de révision à intervalles croissants pour ancrer la mémorisation",
+    heyteamObject: "Ressource formation",
+    defaultDelayDays: null,
+    delayConfigurable: false,
+    multiAction: {
+      delaysDays: [1, 7, 30],
+      labels: ["Rappel J+1", "Rappel J+7", "Rappel J+30"],
+    },
+  },
+  connexion: {
+    label: "Connexion",
+    icon: "🤝",
+    description:
+      "Crée un événement ou une tâche pour mettre en pratique avec un pair ou un manager",
+    heyteamObject: "Événement / Tâche",
+    defaultDelayDays: 3,
+    delayConfigurable: true,
+  },
+  questionnaire: {
+    label: "Questionnaire",
+    icon: "📝",
+    description:
+      "Crée un questionnaire natif HeyTeam pour évaluer la compréhension",
+    heyteamObject: "Questionnaire natif",
+    defaultDelayDays: 0,
+    delayConfigurable: true,
+  },
+  email: {
+    label: "Email / Notification",
+    icon: "📧",
+    description:
+      "Envoie un email récapitulatif ou une alerte au manager après complétion",
+    heyteamObject: "Email via notifications",
+    defaultDelayDays: 0,
+    delayConfigurable: false,
+  },
+  defi: {
+    label: "Défi / Challenge",
+    icon: "🏆",
+    description:
+      "Crée un challenge natif pour appliquer les apprentissages en situation réelle",
+    heyteamObject: "Challenge natif",
+    defaultDelayDays: 7,
+    delayConfigurable: true,
+  },
+  attestation: {
+    label: "Attestation",
+    icon: "📄",
+    description:
+      "Génère une attestation ou un document de certification après complétion",
+    heyteamObject: "Document dynamique",
+    defaultDelayDays: 0,
+    delayConfigurable: false,
+  },
+};
+
 export const FORMAT_META: Record<FormatSlug, { label: string; icon: string; duration: string; description: string }> = {
   synthese: {
     label: "Synthèse",
