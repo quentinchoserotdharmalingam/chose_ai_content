@@ -18,11 +18,13 @@ export interface SyntheseContent {
 
 export interface FlashcardsContent {
   title: string;
+  description?: string;
   cards: Array<{
     id: number;
     question: string;
     answer: string;
     hint?: string;
+    category?: string;
     difficulty: "easy" | "medium" | "hard";
   }>;
 }

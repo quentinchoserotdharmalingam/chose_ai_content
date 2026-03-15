@@ -219,11 +219,39 @@ function FlashcardsEditor({
 }) {
   const update = (partial: Partial<FlashcardsContent>) => onChange({ ...content, ...partial });
 
+  const moveCard = (from: number, to: number) => {
+    const cards = [...content.cards];
+    const [moved] = cards.splice(from, 1);
+    cards.splice(to, 0, moved);
+    update({ cards });
+  };
+
+  // Existing categories for autocomplete
+  const categories = [...new Set(content.cards.map((c) => c.category).filter(Boolean))];
+
   return (
     <div className="space-y-4">
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-500">Titre</label>
         <Input value={content.title} onChange={(e) => update({ title: e.target.value })} />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-gray-500">Description</label>
+        <Input
+          value={content.description || ""}
+          onChange={(e) => update({ description: e.target.value })}
+          placeholder="Décrivez le périmètre couvert par ces flashcards..."
+        />
+      </div>
+
+      {/* Stats bar */}
+      <div className="flex gap-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-500">
+        <span>{content.cards.length} cartes</span>
+        <span>|</span>
+        <span className="text-green-600">{content.cards.filter((c) => c.difficulty === "easy").length} faciles</span>
+        <span className="text-blue-600">{content.cards.filter((c) => c.difficulty === "medium").length} moyennes</span>
+        <span className="text-red-600">{content.cards.filter((c) => c.difficulty === "hard").length} difficiles</span>
+        {categories.length > 0 && <span>| {categories.length} catégories</span>}
       </div>
 
       {content.cards?.map((card, i) => (
@@ -231,7 +259,13 @@ function FlashcardsEditor({
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm text-gray-500">Carte {i + 1}</CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" disabled={i === 0} onClick={() => moveCard(i, i - 1)}>
+                  <ChevronUp className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="sm" disabled={i === content.cards.length - 1} onClick={() => moveCard(i, i + 1)}>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
                 <select
                   className="rounded border px-2 py-1 text-xs"
                   value={card.difficulty}
@@ -259,6 +293,24 @@ function FlashcardsEditor({
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Catégorie</label>
+              <Input
+                value={card.category || ""}
+                onChange={(e) => {
+                  const cards = [...content.cards];
+                  cards[i] = { ...cards[i], category: e.target.value || undefined };
+                  update({ cards });
+                }}
+                placeholder="Thème de la carte"
+                list={`categories-${i}`}
+              />
+              {categories.length > 0 && (
+                <datalist id={`categories-${i}`}>
+                  {categories.map((c) => <option key={c} value={c!} />)}
+                </datalist>
+              )}
+            </div>
+            <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Question</label>
               <Textarea
                 rows={2}
@@ -283,7 +335,7 @@ function FlashcardsEditor({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Indice (optionnel)</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Indice</label>
               <Input
                 value={card.hint || ""}
                 onChange={(e) => {
@@ -291,6 +343,7 @@ function FlashcardsEditor({
                   cards[i] = { ...cards[i], hint: e.target.value || undefined };
                   update({ cards });
                 }}
+                placeholder="Amorce orientant vers la réponse..."
               />
             </div>
           </CardContent>
@@ -305,9 +358,10 @@ function FlashcardsEditor({
             cards: [
               ...content.cards,
               {
-                id: content.cards.length + 1,
+                id: Math.max(0, ...content.cards.map((c) => c.id)) + 1,
                 question: "",
                 answer: "",
+                category: categories[0] || undefined,
                 difficulty: "medium" as const,
               },
             ],
