@@ -31,12 +31,16 @@ export interface FlashcardsContent {
 
 export interface ModuleContent {
   title: string;
+  description?: string;
   estimatedDuration: string;
+  objective?: string;
   steps: Array<{
     id: number;
     type: "lesson" | "quiz";
     title?: string;
     content?: string;
+    keyPoints?: string[];
+    example?: string;
     question?: string;
     options?: Array<{
       label: string;

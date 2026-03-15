@@ -384,6 +384,16 @@ function ModuleEditor({
 }) {
   const update = (partial: Partial<ModuleContent>) => onChange({ ...content, ...partial });
 
+  const moveStep = (from: number, to: number) => {
+    const steps = [...content.steps];
+    const [moved] = steps.splice(from, 1);
+    steps.splice(to, 0, moved);
+    update({ steps });
+  };
+
+  const lessonCount = content.steps.filter((s) => s.type === "lesson").length;
+  const quizCount = content.steps.filter((s) => s.type === "quiz").length;
+
   return (
     <div className="space-y-4">
       <div className="flex gap-3">
@@ -400,22 +410,56 @@ function ModuleEditor({
         </div>
       </div>
 
+      <div>
+        <label className="mb-1 block text-xs font-medium text-gray-500">Description</label>
+        <Input
+          value={content.description || ""}
+          onChange={(e) => update({ description: e.target.value })}
+          placeholder="Ce que l'apprenant va maîtriser..."
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-xs font-medium text-gray-500">Objectif pédagogique</label>
+        <Input
+          value={content.objective || ""}
+          onChange={(e) => update({ objective: e.target.value })}
+          placeholder="Ce que l'apprenant saura faire à la fin..."
+        />
+      </div>
+
+      {/* Stats bar */}
+      <div className="flex gap-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-500">
+        <span>{content.steps.length} étapes</span>
+        <span>|</span>
+        <span className="text-blue-600">{lessonCount} leçons</span>
+        <span className="text-purple-600">{quizCount} quiz</span>
+      </div>
+
       {content.steps?.map((step, i) => (
         <Card key={step.id}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm text-gray-500">
-                Étape {i + 1} — {step.type === "lesson" ? "Leçon" : "Quiz"}
+                Étape {i + 1} — {step.type === "lesson" ? "📖 Leçon" : "❓ Quiz"}
               </CardTitle>
-              {content.steps.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => update({ steps: content.steps.filter((_, j) => j !== i) })}
-                >
-                  <Trash2 className="h-3 w-3" />
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" disabled={i === 0} onClick={() => moveStep(i, i - 1)}>
+                  <ChevronUp className="h-3 w-3" />
                 </Button>
-              )}
+                <Button variant="ghost" size="sm" disabled={i === content.steps.length - 1} onClick={() => moveStep(i, i + 1)}>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+                {content.steps.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => update({ steps: content.steps.filter((_, j) => j !== i) })}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -444,6 +488,39 @@ function ModuleEditor({
                     }}
                   />
                 </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">
+                    Points clés (un par ligne)
+                  </label>
+                  <Textarea
+                    rows={2}
+                    value={step.keyPoints?.join("\n") || ""}
+                    onChange={(e) => {
+                      const steps = [...content.steps];
+                      steps[i] = {
+                        ...steps[i],
+                        keyPoints: e.target.value.split("\n").filter(Boolean),
+                      };
+                      update({ steps });
+                    }}
+                    placeholder="Point clé 1&#10;Point clé 2"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">
+                    Exemple (optionnel)
+                  </label>
+                  <Textarea
+                    rows={2}
+                    value={step.example || ""}
+                    onChange={(e) => {
+                      const steps = [...content.steps];
+                      steps[i] = { ...steps[i], example: e.target.value || undefined };
+                      update({ steps });
+                    }}
+                    placeholder="Exemple concret ou mise en situation..."
+                  />
+                </div>
               </>
             ) : (
               <>
@@ -460,7 +537,7 @@ function ModuleEditor({
                   />
                 </div>
                 {step.options?.map((option, j) => (
-                  <div key={j} className="ml-4 space-y-2 rounded border p-3">
+                  <div key={j} className={`ml-4 space-y-2 rounded border p-3 ${option.correct ? "border-green-300 bg-green-50/50" : ""}`}>
                     <div className="flex items-center gap-2">
                       <label className="flex items-center gap-1 text-xs">
                         <input
@@ -488,6 +565,21 @@ function ModuleEditor({
                           update({ steps });
                         }}
                       />
+                      {(step.options?.length || 0) > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const steps = [...content.steps];
+                            const options = [...(steps[i].options || [])];
+                            options.splice(j, 1);
+                            steps[i] = { ...steps[i], options };
+                            update({ steps });
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                     <Input
                       value={option.explanation}
@@ -502,11 +594,70 @@ function ModuleEditor({
                     />
                   </div>
                 ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const steps = [...content.steps];
+                    const options = [...(steps[i].options || [])];
+                    options.push({ label: "", correct: false, explanation: "" });
+                    steps[i] = { ...steps[i], options };
+                    update({ steps });
+                  }}
+                >
+                  <Plus className="mr-1 h-3 w-3" /> Ajouter une option
+                </Button>
               </>
             )}
           </CardContent>
         </Card>
       ))}
+
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            update({
+              steps: [
+                ...content.steps,
+                {
+                  id: Math.max(0, ...content.steps.map((s) => s.id)) + 1,
+                  type: "lesson",
+                  title: "",
+                  content: "",
+                  keyPoints: [],
+                },
+              ],
+            })
+          }
+        >
+          <Plus className="mr-1 h-3 w-3" /> Leçon
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            update({
+              steps: [
+                ...content.steps,
+                {
+                  id: Math.max(0, ...content.steps.map((s) => s.id)) + 1,
+                  type: "quiz",
+                  question: "",
+                  options: [
+                    { label: "", correct: true, explanation: "" },
+                    { label: "", correct: false, explanation: "" },
+                    { label: "", correct: false, explanation: "" },
+                  ],
+                },
+              ],
+            })
+          }
+        >
+          <Plus className="mr-1 h-3 w-3" /> Quiz
+        </Button>
+      </div>
     </div>
   );
 }
