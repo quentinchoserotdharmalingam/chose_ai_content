@@ -317,6 +317,193 @@ Ce message n'est pas visible dans l'UI mais permet à l'agent IA de se présente
 
 ---
 
+## Pulse — Micro-interview récurrente
+
+### Vue d'ensemble
+
+Le **Pulse** est une variante légère de l'interview IA, conçue pour des suivis récurrents et rapides (~3 min). Le collaborateur donne un **score de 1 à 10** à une question, puis l'IA pose des **questions de suivi adaptatives** dont la profondeur varie selon le score donné.
+
+### Positionnement
+
+- Même modèle de données que l'Interview (`InterviewResource` avec `type: "pulse"`)
+- Wizard de configuration en **2 étapes** (Configuration → Publication)
+- Accès collaborateur par lien direct (`/pulse/[id]`)
+- Fréquence configurable : hebdomadaire, bi-mensuel, mensuel
+
+---
+
+### Configuration créateur (admin/RH)
+
+#### Paramètres
+
+| Paramètre | Description | Obligatoire | Défaut |
+|---|---|---|---|
+| **Titre** | Nom du pulse (ex: "Bien-être hebdomadaire") | Oui | — |
+| **Question score** | Question à laquelle le collaborateur répond avec un score 1-10 | Oui | — |
+| **Thème** | Onboarding, satisfaction, rétention, personnalisé | Oui | satisfaction |
+| **Ton** | Bienveillant, formel, direct, décontracté | Oui | bienveillant |
+| **Fréquence** | Hebdomadaire, bi-mensuel, mensuel | Oui | hebdomadaire |
+| **Questions de suivi IA (max)** | Nombre max de questions de suivi (1-5) | Oui | 3 |
+
+#### Suggestion IA dans le wizard
+
+Le créateur dispose d'un bouton **"Générer titre et question via IA"** (icône Sparkles, style purple) qui pré-remplit le titre et la question score en fonction du thème, ton et fréquence sélectionnés.
+
+| Étape | Endpoint | Modèle | Données générées |
+|---|---|---|---|
+| Configuration | `POST /api/interviews/[id]/suggest-pulse-content` | Haiku | Titre + question score |
+
+- Le pulse est auto-sauvegardé (`ensureSaved()`) avant l'appel IA
+- Le créateur peut modifier librement les suggestions après génération
+
+#### Wizard (2 étapes)
+
+```
+1. Configuration   → Titre, question score, thème, ton, fréquence, max follow-ups
+                     + bouton "Générer titre et question via IA"
+2. Publication     → Récapitulatif + publier
+```
+
+Le stepper est centré avec des labels ("Configuration" / "Publication") et une ligne de connexion fixe entre les deux étapes.
+
+---
+
+### Déroulement du pulse (collaborateur)
+
+```
+1. Identification    → Le collaborateur entre son prénom
+2. Score             → Sélection d'un score de 1 à 10 (échelle visuelle colorée)
+3. Suivi IA          → L'IA pose entre 1 et {maxFollowUps} questions adaptatives
+4. Clôture           → Message de remerciement + "Vous pouvez fermer cette page"
+```
+
+### Profondeur adaptative selon le score
+
+L'IA adapte le nombre et la profondeur de ses questions en fonction du score donné ET du maxFollowUps configuré :
+
+| Score | Comportement | Questions (pour max=5) |
+|---|---|---|
+| **8-10** (élevé) | Exploration brève et positive | 1-2 questions |
+| **5-7** (mitigé) | Exploration nuancée (positif + pistes d'amélioration) | 1-3 questions |
+| **1-4** (bas) | Exploration empathique et approfondie | 3-5 questions |
+
+La formule de scaling est proportionnelle au `maxFollowUps` configuré :
+- Score élevé : `ceil(max * 0.4)` questions max
+- Score mitigé : `ceil(max * 0.6)` questions max
+- Score bas : `ceil(max * 0.6)` à `max` questions
+
+### Règles de l'agent IA (Pulse)
+
+1. UNE SEULE question par message
+2. Maximum 2 phrases par message (hors question)
+3. Vouvoiement (sauf ton décontracté)
+4. Ne mentionne JAMAIS être une IA
+5. Réponses en français
+6. Pas de superlatifs — ton sobre et professionnel
+7. Enchaîne directement sans accuser réception systématiquement
+8. Clôture : bref remerciement + "Merci pour ce retour. Vous pouvez maintenant fermer cette page."
+
+---
+
+### Analyse post-pulse
+
+Analyse légère générée après complétion :
+
+```json
+{
+  "sentiment": "positif | mitigé | négatif",
+  "keyInsight": "Une phrase résumant l'insight principal",
+  "themes": ["thème1", "thème2"],
+  "verbatim": "La citation la plus révélatrice du collaborateur",
+  "actionSuggestion": "Une suggestion d'action concrète (ou null si score élevé)"
+}
+```
+
+- Modèle : **Claude Haiku** (analyse rapide, volume potentiellement élevé)
+- Déclenchée à la complétion de la session
+
+---
+
+### Architecture technique (Pulse)
+
+#### Champs spécifiques en base
+
+| Champ | Type | Description |
+|---|---|---|
+| `type` | String | `"pulse"` |
+| `pulseQuestion` | String? | La question score (1-10) |
+| `pulseFrequency` | String? | `"weekly"` / `"biweekly"` / `"monthly"` |
+| `pulseMaxFollowUps` | Int | Max questions de suivi (1-5, défaut 3) |
+
+Le champ `pulseScore` est stocké sur la session (`InterviewSession.pulseScore`).
+
+#### Routes API spécifiques
+
+```
+# Suggestion IA pour configuration Pulse
+POST   /api/interviews/[id]/suggest-pulse-content    → Suggérer titre + question score
+
+# Stats agrégées par pulse
+GET    /api/interviews/[id]/pulse-stats              → Score moyen, tendance, sentiments
+```
+
+Les routes existantes (`/chat`, `/sessions`, `/complete`) sont partagées entre Interview et Pulse, avec un branchement conditionnel basé sur `interview.type`.
+
+#### Pages UI
+
+```
+# Créateur
+/creator/interview/new-pulse         → Wizard création pulse (2 étapes)
+/creator/interview/[id]              → Détail pulse + sessions + stats
+
+# Collaborateur
+/pulse/[id]                          → Page pulse (score + chat)
+```
+
+#### Modèles IA
+
+| Usage | Modèle | Max tokens |
+|---|---|---|
+| Chat pulse (suivi) | Claude Haiku | 200 |
+| Analyse pulse | Claude Haiku | 1000 |
+| Suggestion contenu pulse | Claude Haiku | 500 |
+
+---
+
+### Périmètre Pulse MVP
+
+#### Inclus
+
+- [x] Création et configuration pulse (wizard 2 étapes)
+- [x] Suggestion IA du titre et de la question score
+- [x] Score 1-10 avec suivi adaptatif (1-5 questions max)
+- [x] Profondeur adaptative selon le score ET le maxFollowUps
+- [x] Analyse légère post-pulse (sentiment, insight, thèmes, verbatim, suggestion)
+- [x] Dashboard créateur avec onglet Pulse
+- [x] Stats agrégées (score moyen, tendance, sentiments)
+- [x] Stepper UI centré avec labels
+- [x] Accès collaborateur par lien direct
+
+#### Exclu (post-MVP)
+
+- [ ] Récurrence automatique programmée (envoi automatique hebdo/bi-mensuel/mensuel)
+- [ ] Comparaison temporelle des scores d'un même collaborateur
+- [ ] Dashboard agrégé multi-pulse
+- [ ] Export des tendances (CSV, PDF)
+- [ ] Alertes automatiques sur scores bas
+- [ ] Injection des données collaborateur HeyTeam
+
+---
+
+## Changelog
+
+| Date | Entrée |
+|---|---|
+| 16/03/2026 | Ajout section Pulse complète : configuration, wizard 2 étapes, profondeur adaptative, analyse légère, architecture technique. |
+| 16/03/2026 | Pulse : suggestion IA du titre et question score (`suggest-pulse-content`), max follow-ups passé de 3 à 5, stepper UI centré avec labels. |
+
+---
+
 ## Notes & décisions ouvertes
 
 _Section à compléter au fil du développement._
