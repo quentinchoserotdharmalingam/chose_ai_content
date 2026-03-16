@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Send, Loader2, LogOut, MessageCircle } from "lucide-react";
+import { Send, Loader2, LogOut, Bot, ShieldCheck, Info } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -97,6 +97,11 @@ export default function InterviewChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: sid, messages: msgs }),
       });
+
+      if (!res.ok) {
+        console.error("Chat API error:", res.status, await res.text());
+        return;
+      }
 
       const reader = res.body?.getReader();
       if (!reader) return;
@@ -204,12 +209,35 @@ export default function InterviewChatPage() {
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-white p-4">
         <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
           <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-coral/10">
-            <MessageCircle className="h-6 w-6 text-coral" />
+            <Bot className="h-6 w-6 text-coral" />
           </div>
           <h1 className="mb-2 text-xl font-semibold">{interview.title}</h1>
-          <p className="mb-6 text-sm text-gray-500">
-            Bienvenue ! Cet échange est confidentiel. Vos réponses nous aideront à améliorer votre expérience.
+
+          <p className="mb-4 text-sm text-gray-600">
+            Vous allez échanger avec un <strong>assistant IA</strong> qui vous posera des questions de manière conversationnelle, comme dans un échange naturel.
           </p>
+
+          <div className="mb-6 space-y-2.5">
+            <div className="flex items-start gap-2.5 rounded-lg bg-blue-50 p-3">
+              <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
+              <p className="text-xs text-blue-700">
+                <strong>Confidentialité</strong> — Vos réponses sont traitées de manière confidentielle et servent uniquement à améliorer votre expérience.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5 rounded-lg bg-amber-50 p-3">
+              <Bot className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+              <p className="text-xs text-amber-800">
+                <strong>Intelligence artificielle</strong> — Cet échange est mené par une IA. Il n&apos;y a pas de bonne ou de mauvaise réponse : exprimez-vous librement.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5 rounded-lg bg-gray-50 p-3">
+              <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
+              <p className="text-xs text-gray-600">
+                Vous pouvez <strong>interrompre et reprendre</strong> à tout moment. Comptez environ {interview.maxQuestions > 15 ? "15–20" : "5–10"} minutes.
+              </p>
+            </div>
+          </div>
+
           <div className="mb-4">
             <label className="mb-1.5 block text-sm font-medium">Votre prénom</label>
             <input
@@ -247,9 +275,15 @@ export default function InterviewChatPage() {
               <span className="text-xl">✓</span>
             </div>
             <h2 className="mb-2 text-lg font-semibold">Merci pour vos réponses !</h2>
-            <p className="text-sm text-gray-500">
-              Votre interview a été enregistrée. Vos réponses seront analysées de manière confidentielle.
+            <p className="mb-4 text-sm text-gray-600">
+              Votre interview a bien été enregistrée. Une analyse sera générée automatiquement par l&apos;IA à partir de vos réponses.
             </p>
+            <div className="rounded-lg bg-blue-50 p-3">
+              <p className="text-xs text-blue-700">
+                <ShieldCheck className="mb-0.5 mr-1 inline h-3.5 w-3.5" />
+                Vos réponses sont traitées de manière confidentielle et ne sont accessibles qu&apos;aux personnes habilitées.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -260,16 +294,26 @@ export default function InterviewChatPage() {
   return (
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
-        <h1 className="text-sm font-medium">{interview.title}</h1>
-        <button
-          onClick={handleComplete}
-          disabled={completing || messages.length < 4}
-          className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
-        >
-          {completing ? <Loader2 className="h-3 w-3 animate-spin" /> : <LogOut className="h-3 w-3" />}
-          Terminer
-        </button>
+      <div className="border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-coral/10">
+              <Bot className="h-3.5 w-3.5 text-coral" />
+            </div>
+            <div>
+              <h1 className="text-sm font-medium leading-tight">{interview.title}</h1>
+              <p className="text-[10px] text-gray-400">Interview menée par IA</p>
+            </div>
+          </div>
+          <button
+            onClick={handleComplete}
+            disabled={completing || messages.length < 4}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+          >
+            {completing ? <Loader2 className="h-3 w-3 animate-spin" /> : <LogOut className="h-3 w-3" />}
+            Terminer
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -280,18 +324,29 @@ export default function InterviewChatPage() {
               key={i}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-coral text-white"
-                    : "bg-white border border-gray-200 text-gray-800"
-                }`}
-              >
-                {msg.content || (
-                  <span className="flex items-center gap-1.5 text-gray-400">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  </span>
+              {msg.role === "assistant" && (
+                <div className="mr-2 mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-coral/10">
+                  <Bot className="h-3.5 w-3.5 text-coral" />
+                </div>
+              )}
+              <div className="max-w-[75%]">
+                {msg.role === "assistant" && i === 0 && (
+                  <span className="mb-1 block text-[10px] font-medium text-gray-400">Assistant IA</span>
                 )}
+                <div
+                  className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-coral text-white"
+                      : "bg-white border border-gray-200 text-gray-800"
+                  }`}
+                >
+                  {msg.content || (
+                    <span className="flex items-center gap-1.5 text-gray-400">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span className="text-xs">L&apos;IA rédige sa réponse...</span>
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -301,24 +356,29 @@ export default function InterviewChatPage() {
 
       {/* Input */}
       <div className="border-t border-gray-200 bg-white px-4 py-3">
-        <div className="mx-auto flex max-w-2xl items-end gap-2">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Votre réponse..."
-            rows={1}
-            disabled={streaming}
-            className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || streaming}
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
-          >
-            {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </button>
+        <div className="mx-auto max-w-2xl">
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Votre réponse..."
+              rows={1}
+              disabled={streaming}
+              className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || streaming}
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
+            >
+              {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </button>
+          </div>
+          <p className="mt-1.5 text-center text-[10px] text-gray-400">
+            Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
+          </p>
         </div>
       </div>
     </div>

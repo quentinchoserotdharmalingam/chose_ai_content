@@ -73,7 +73,13 @@ export async function POST(
     });
   }
 
-  const stream = getInterviewChatStream(config, messages, assistantQuestionCount);
+  // For the first message (empty conversation), inject an initialization prompt
+  // so the AI agent introduces itself and asks the first question
+  const chatMessages = messages.length === 0
+    ? [{ role: "user" as const, content: `Bonjour, je m'appelle ${config.participantName || "un collaborateur"}. Je suis prêt pour l'interview.` }]
+    : messages;
+
+  const stream = getInterviewChatStream(config, chatMessages, assistantQuestionCount);
 
   const encoder = new TextEncoder();
   let fullResponse = "";

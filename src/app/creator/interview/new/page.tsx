@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Loader2, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Check, Sparkles, Bot, Info } from "lucide-react";
 import {
   INTERVIEW_THEME_META,
   INTERVIEW_TONE_META,
@@ -278,7 +278,17 @@ export default function NewInterviewPage() {
       {currentStep === "config" && (
         <div>
           <h2 className="mb-2 text-xl font-semibold">Configuration de l&apos;interview</h2>
-          <p className="mb-6 text-sm text-gray-500">Définissez le thème, le ton et les paramètres généraux.</p>
+          <p className="mb-4 text-sm text-gray-500">Définissez le thème, le ton et les paramètres généraux.</p>
+
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+            <Bot className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
+            <div className="text-sm text-blue-800">
+              <p className="font-medium">Comment fonctionne l&apos;interview IA ?</p>
+              <p className="mt-1 text-xs text-blue-600">
+                Un assistant IA mènera la conversation avec le collaborateur de manière naturelle et adaptative. Le collaborateur sera clairement informé qu&apos;il échange avec une IA. Ses réponses sont confidentielles et analysées automatiquement selon la structure que vous définirez.
+              </p>
+            </div>
+          </div>
 
           <div className="space-y-6">
             <div>
@@ -618,7 +628,17 @@ export default function NewInterviewPage() {
       {currentStep === "publish" && (
         <div>
           <h2 className="mb-2 text-xl font-semibold">Récapitulatif</h2>
-          <p className="mb-6 text-sm text-gray-500">Vérifiez la configuration avant de publier.</p>
+          <p className="mb-4 text-sm text-gray-500">Vérifiez la configuration avant de publier.</p>
+
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+            <div className="text-sm text-amber-800">
+              <p className="font-medium">Ce que verra le collaborateur</p>
+              <p className="mt-1 text-xs text-amber-700">
+                Avant de commencer, le collaborateur sera informé que l&apos;échange est mené par une intelligence artificielle. Il verra également des garanties sur la confidentialité de ses réponses et pourra interrompre l&apos;interview à tout moment.
+              </p>
+            </div>
+          </div>
 
           <div className="space-y-4">
             <div className="rounded-xl border border-gray-200 p-5">
