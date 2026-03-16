@@ -372,27 +372,26 @@ export default function InterviewChatPage() {
             Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
           </p>
           <div className="flex items-end gap-2">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                // Auto-resize textarea
-                const el = e.target;
-                el.style.height = "auto";
-                el.style.height = Math.min(el.scrollHeight, 120) + "px";
-              }}
-              onKeyDown={handleKeyDown}
-              onFocus={scrollToBottom}
-              placeholder="Votre réponse..."
-              rows={2}
-              disabled={streaming}
-              className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
-            />
+            <div className="relative flex-1">
+              <div
+                aria-hidden="true"
+                className="invisible min-h-[44px] max-h-[40dvh] whitespace-pre-wrap break-words rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed"
+              >{input || "X"}&nbsp;</div>
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={scrollToBottom}
+                placeholder="Votre réponse..."
+                disabled={streaming}
+                className="absolute inset-0 resize-none overflow-hidden rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
+              />
+            </div>
             <button
               onClick={handleSend}
               disabled={!input.trim() || streaming}
-              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
             >
               {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
