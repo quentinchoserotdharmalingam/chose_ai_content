@@ -115,8 +115,276 @@ Le tracking (formats ouverts, temps passé, scores) est envoyé en continu indé
 
 ---
 
+## Améliorations du flow créateur — Édition & Validation du contenu généré
+
+### Contexte
+
+Le flow créateur actuel est linéaire et sans retour : une fois le contenu généré (étape 4), le créateur peut uniquement le prévisualiser (étape 5) puis publier. Il ne peut ni modifier le contenu, ni regénérer un format spécifique, ni valider individuellement chaque format. Cette rigidité limite le contrôle qualité et l'appropriation du contenu par le RH.
+
+### Améliorations implémentées
+
+#### 1. Regénération par format avec instructions
+
+Le créateur peut regénérer un format individuel depuis le preview, avec un champ d'instructions optionnel pour guider l'IA (ex: "Plus de détails sur le chapitre 3", "Ton plus décontracté", "Simplifie les questions").
+
+- **API** : `POST /api/resources/[id]/regenerate` avec `{ format, instructions? }`
+- **UX** : Bouton "Regénérer" par onglet de format, modale avec champ instructions
+- **Versioning** : Le champ `version` de FormatContent est incrémenté à chaque regénération
+
+#### 2. Édition inline du contenu généré
+
+Le créateur peut éditer directement le contenu JSON structuré de chaque format : modifier une question de flashcard, reformuler une section de synthèse, corriger une option de quiz, ajuster un narratif de scénario.
+
+- **API** : `PATCH /api/resources/[id]/format-content` avec `{ format, content }`
+- **UX** : Mode édition/lecture toggle par format, éditeurs spécifiques par type de contenu
+- **Éditeurs par format** :
+  - **Synthèse** : Édition titre, sections (heading, content, keyPoints), takeaways
+  - **Flashcards** : Édition question, réponse, indice, difficulté par carte
+  - **Module** : Édition titre/contenu des lessons, question/options des quiz
+  - **Scénarios** : Édition narratif, choix, feedback, qualité par étape
+
+#### 3. Validation format par format
+
+Chaque format a un statut de validation individuel (brouillon / validé). Le créateur valide manuellement chaque format avant de pouvoir publier la ressource.
+
+- **UX** : Badge de statut + bouton "Valider ce format" par onglet
+- **Règle** : La publication n'est possible que lorsque tous les formats activés sont validés
+- **État** : Stocké côté client dans le flow créateur (pas de nouveau champ en base pour le POC)
+
+#### 4. Navigation retour dans le wizard
+
+Le créateur peut revenir aux étapes précédentes depuis n'importe quelle étape du wizard (modifier l'objectif, changer les formats activés), puis regénérer les formats impactés.
+
+- **UX** : Clic sur les étapes précédentes dans le stepper pour y revenir
+- **Logique** : Retour à l'étape objectif → possibilité de modifier puis regénérer
+
+#### 5. Historique des versions (prévu)
+
+Le champ `version` de FormatContent est déjà incrémenté à chaque regénération. Une future itération permettra au créateur de visualiser et restaurer des versions précédentes.
+
+---
+
+## Étape 6 — Configuration des extensions (POC)
+
+### Contexte
+
+Le PRD définit 6 extensions activables qui créent automatiquement des objets dans HeyTeam après complétion. Dans le POC, les extensions ne créent pas réellement d'objets via API, mais le créateur peut :
+
+1. **Activer/désactiver** chaque extension individuellement (toutes OFF par défaut)
+2. **Configurer le délai** (J+X après complétion) pour les extensions qui le supportent
+3. **Visualiser la timeline** de toutes les actions qui seraient générées dans HeyTeam
+
+### Les 6 extensions
+
+| Extension | Objet HeyTeam | Déclenchement | Délai configurable |
+|-----------|--------------|---------------|-------------------|
+| ⏰ Rappels espacés | Ressource formation x3 | J+1, J+7, J+30 | Non (fixe) |
+| 🤝 Connexion | Événement / Tâche | J+X configurable | Oui (défaut J+3) |
+| 📝 Questionnaire | Questionnaire natif | J+X configurable | Oui (défaut J+0) |
+| 📧 Email / Notification | Email via notifications | Dès complétion | Non |
+| 🏆 Défi / Challenge | Challenge natif | J+X configurable | Oui (défaut J+7) |
+| 📄 Attestation | Document dynamique | Dès complétion | Non |
+
+### Timeline de prévisualisation
+
+Le composant `ActionsPreview` affiche une timeline chronologique qui montre :
+- L'événement déclencheur ("Complétion de la ressource")
+- Les actions immédiates (dès complétion)
+- Les actions différées (J+1, J+3, J+7, J+30...) groupées par date
+- Pour chaque action : l'icône, le libellé, le type d'objet HeyTeam créé
+- Un badge "POC — non créé" pour indiquer que l'action n'est pas réellement exécutée
+
+### Intégration dans le wizard
+
+Le wizard passe de 5 à 6 étapes :
+1. Upload → 2. Analyse → 3. Objectif → 4. Génération → 5. Preview & Validation → **6. Extensions**
+
+Le bouton "Configurer les extensions" en étape 5 n'est accessible qu'après validation de tous les formats.
+
+---
+
+## Étape 7 — Publication
+
+### Fonctionnalité
+
+Le créateur finalise sa ressource avant publication :
+- **Titre** : Modifiable (pré-rempli avec le nom du PDF)
+- **Description** : Texte libre visible par les enrollees avant consommation
+- **Format par défaut** : Le format proposé en premier à l'enrollee (il peut changer librement)
+- **Récapitulatif** : Résumé des formats activés et du format par défaut
+
+### Publication
+
+Le bouton "Publier" met à jour le statut de la ressource en `published` et redirige vers un écran de confirmation avec accès rapide au preview enrollee et au dashboard.
+
+---
+
+## Configuration ton & langue
+
+### Ajout à l'étape Objectif
+
+Le créateur peut configurer le ton et la langue du contenu généré :
+
+**Tons disponibles :**
+| Ton | Description |
+|-----|-------------|
+| Professionnel | Formel et structuré (défaut) |
+| Décontracté | Accessible et convivial |
+| Pédagogique | Didactique et encourageant |
+| Concis | Droit au but, factuel |
+
+**Langues disponibles :** Français (défaut), English, Español, Deutsch
+
+Ces paramètres sont sauvegardés en base et utilisés lors de la génération du contenu par l'IA.
+
+---
+
+## Dashboard créateur enrichi
+
+### Améliorations
+
+- **Statistiques rapides** : 4 compteurs en haut (total ressources, publiées, sessions, complétées)
+- **Informations enrichies** par ressource : titre, description, statut avec libellé français, icônes des formats activés, nombre de sessions, date de création
+- **Menu contextuel** (⋮) avec actions :
+  - **Dupliquer** : Crée une copie complète de la ressource avec tous ses contenus générés (statut "generated")
+  - **Supprimer** : Avec confirmation
+- **API duplication** : `POST /api/resources/[id]/duplicate`
+
+---
+
+## Entrée enrollee
+
+### Landing page enrollee (`/consume`)
+
+Page dédiée listant toutes les ressources publiées/générées accessibles à l'enrollee :
+- Grille responsive de cards
+- Chaque card affiche : titre, description (tronquée), badges des formats activés
+- Clic → sélecteur de format de la ressource
+
+### Navigation
+
+- Header enrichi avec deux liens : "Créateur" et "Enrollee"
+- Landing page (`/`) avec séparation claire des deux rôles (Créateur RH / Enrollee Apprenant)
+
+---
+
+## Refonte format par format — Expérience créateur & employé
+
+### Contexte
+
+Chaque format a été retravaillé en profondeur pour offrir la meilleure expérience possible côté créateur (éditeur riche) et côté employé (consommation engageante). Les améliorations couvrent 3 axes par format : prompt IA enrichi, renderer employé refondu, éditeur créateur amélioré.
+
+### 📋 Synthèse
+
+**Prompt** : Persona expert en communication, introduction contextualisante, emojis par section, citation/highlight, multi-paragraphes.
+
+**Renderer employé** :
+- Barre de progression sticky au scroll
+- Table des matières cliquable avec section active surlignée
+- Introduction avec paragraphe d'accroche
+- Emojis de section, blocs "highlight" (citations)
+- Animations d'entrée échelonnées (staggered)
+- Bouton retour en haut
+
+**Éditeur créateur** :
+- Réordonnancement des sections (haut/bas)
+- Champ introduction
+- Champ emoji + highlight par section
+- Points clés éditables (un par ligne)
+
+### 🃏 Flashcards
+
+**Prompt** : Persona expert en active recall, 8-12 cartes, catégories thématiques, types de questions variés (rappel, compréhension, application), indices obligatoires, difficulté calibrée.
+
+**Renderer employé** :
+- Mode shuffle (mélange aléatoire des cartes)
+- Auto-évaluation par carte : Maîtrisé / Hésité / À revoir
+- Système de scoring en fin de session
+- Écran résultats avec ventilation par catégorie de réponse
+- Barre de progression segmentée colorée selon les évaluations
+- Badges de catégorie et difficulté
+- Animations de swipe (glissement)
+- Auto-advance après évaluation
+- Mode "Revoir les erreurs"
+
+**Éditeur créateur** :
+- Réordonnancement des cartes (haut/bas)
+- Champ description du deck
+- Champ catégorie avec datalist autocomplete (catégories existantes)
+- Barre de stats : nombre de cartes, répartition facile/moyen/difficile, nombre de catégories
+
+### 📖 Module structuré
+
+**Prompt** : Persona expert en ingénierie pédagogique, 7-10 étapes, alternance leçon/quiz, points clés par leçon (2-4), exemples concrets, 3-4 options par quiz avec distracteurs plausibles, explications pédagogiques par option.
+
+**Renderer employé** :
+- Points de progression cliquables (dots) avec icônes leçon/quiz
+- Couleurs de statut : vert (complété/correct), rouge (erreur), bleu (en cours)
+- Badge objectif pédagogique
+- Carte leçon avec encart "À retenir" (keyPoints) et encart "Exemple" (ambre)
+- Carte quiz avec lettres A/B/C, sélection, explication animée, feedback coloré
+- Scoring global en fin de module (% de quiz réussis)
+- Écran résultats avec ventilation correct/incorrect + revue des erreurs
+- Transitions animées entre étapes (slide directionnel)
+- Navigation libre avant/arrière + reset
+
+**Éditeur créateur** :
+- Réordonnancement des étapes (haut/bas)
+- Champs description et objectif pédagogique
+- Points clés éditables par leçon (un par ligne)
+- Champ exemple optionnel par leçon
+- Ajout/suppression d'options de quiz
+- Surbrillance verte sur les options correctes
+- Boutons "Ajouter leçon" et "Ajouter quiz" séparés
+- Barre de stats : nombre d'étapes, répartition leçons/quiz
+
+### 🎭 Mises en situation
+
+**Prompt** : Persona expert en experiential learning, 4-6 étapes de décision, rôle incarné défini, narratifs immersifs (contexte + tension), 2-3 choix par étape (optimal/acceptable/mauvais), feedbacks avec conséquences concrètes, conclusion synthétique.
+
+**Renderer employé** :
+- Badge du rôle incarné (avec icône UserCircle)
+- Contexte immersif affiché au démarrage
+- Barre de progression avec dots colorés selon la qualité des choix (vert/ambre/rouge)
+- Feedback après chaque choix avec icône et couleur selon la qualité
+- Bouton "Continuer" explicite (pas d'auto-advance)
+- Scoring de pertinence : optimal = 2pts, acceptable = 1pt, mauvais = 0pt
+- Écran résultats : score %, ventilation optimal/acceptable/mauvais
+- Revue complète du parcours (chaque choix + feedback)
+- Bloc conclusion avec synthèse des bonnes pratiques
+- Animations de transition entre étapes
+
+**Éditeur créateur** :
+- Réordonnancement des étapes (haut/bas)
+- Champs description et rôle incarné
+- Bordures colorées selon la qualité du choix (vert optimal, rouge mauvais)
+- Champ nextStepId éditable par choix
+- Ajout/suppression de choix par étape
+- Bouton "Ajouter une étape" avec choix pré-configurés
+- Barre de stats : nombre d'étapes, répartition des qualités
+
+### 💬 Chat questionneur
+
+**Prompt** : Persona tuteur socratique expert en maïeutique, 10 règles comportementales enrichies, support du ton personnalisé, format de réponse guidé (gras, listes, concision), exemples et analogies encouragés, chaque réponse termine par une question.
+
+**Renderer employé** :
+- Header avec compteur d'échanges
+- Avatars user (bleu) et bot (gris) avec icônes distinctes
+- Suggestions de questions après le premier message (3 chips cliquables)
+- Bouton reset de conversation
+- Animations d'entrée des messages
+- Input amélioré avec placeholder contextuel
+- État loading sur le bouton d'envoi
+- Hauteur fixe avec scroll interne (520px)
+
+---
+
 ## Changelog
 
 | Date | Entrée |
 | --- | --- |
 | 14/03/2026 | Création PRD V2 discovery complet (~2300 lignes). 5 formats, 6 extensions, flow créateur 8 étapes, expérience enrollee, contrat API 6 flux, architecture micro-app. |
+| 15/03/2026 | Ajout section "Améliorations du flow créateur" : édition inline, regénération avec instructions, validation par format, navigation retour wizard. |
+| 15/03/2026 | Ajout étape 6 "Extensions" au wizard : configuration des 6 extensions activables, timeline de prévisualisation des actions HeyTeam. Mode POC (pas d'appel API réel). |
+| 15/03/2026 | Ajout étape 7 "Publication", config ton/langue, dashboard enrichi (stats, duplication, menu contextuel), landing enrollee, polish mobile. |
+| 16/03/2026 | Refonte complète des 5 formats : prompts enrichis (persona expert), renderers employé (scoring, animations, résultats), éditeurs créateur (réordonnancement, champs enrichis, stats). |

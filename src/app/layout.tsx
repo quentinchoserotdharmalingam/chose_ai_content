@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Header } from "@/components/shared/Header";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Ressource IA — POC",
   description: "Prototype de la Ressource IA multi-format",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

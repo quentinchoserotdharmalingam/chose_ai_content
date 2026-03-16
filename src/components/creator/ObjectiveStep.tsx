@@ -11,10 +11,28 @@ interface ObjectiveStepProps {
   onObjectiveChange: (value: string) => void;
   selectedFormats: FormatSlug[];
   onFormatsChange: (formats: FormatSlug[]) => void;
+  tone: string;
+  onToneChange: (value: string) => void;
+  language: string;
+  onLanguageChange: (value: string) => void;
   onNext: () => void;
 }
 
 const ALL_FORMATS: FormatSlug[] = ["synthese", "flashcards", "chat", "module", "scenarios"];
+
+const TONES = [
+  { value: "professional", label: "Professionnel", description: "Formel et structuré" },
+  { value: "casual", label: "Décontracté", description: "Accessible et convivial" },
+  { value: "pedagogical", label: "Pédagogique", description: "Didactique et encourageant" },
+  { value: "concise", label: "Concis", description: "Droit au but, factuel" },
+];
+
+const LANGUAGES = [
+  { value: "fr", label: "Français" },
+  { value: "en", label: "English" },
+  { value: "es", label: "Español" },
+  { value: "de", label: "Deutsch" },
+];
 
 export function ObjectiveStep({
   analysis,
@@ -22,6 +40,10 @@ export function ObjectiveStep({
   onObjectiveChange,
   selectedFormats,
   onFormatsChange,
+  tone,
+  onToneChange,
+  language,
+  onLanguageChange,
   onNext,
 }: ObjectiveStepProps) {
   const toggleFormat = (format: FormatSlug) => {
@@ -71,6 +93,54 @@ export function ObjectiveStep({
           placeholder="À l'issue de cette ressource, l'apprenant sera capable de..."
           rows={3}
         />
+      </div>
+
+      {/* Tone & Language */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Ton</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {TONES.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => onToneChange(t.value)}
+                className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                  tone === t.value
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div>
+                  <p className="font-medium">{t.label}</p>
+                  <p className="text-xs text-gray-500">{t.description}</p>
+                </div>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Langue</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l.value}
+                onClick={() => onLanguageChange(l.value)}
+                className={`flex w-full items-center rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors ${
+                  language === l.value
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Format selection */}

@@ -15,7 +15,7 @@ export function Header() {
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold text-blue-600">
           <Brain className="h-5 w-5" />
-          <span>Ressource IA</span>
+          <span className="hidden sm:inline">Ressource IA</span>
         </Link>
 
         <nav className="flex items-center gap-1">
@@ -29,8 +29,17 @@ export function Header() {
             Créateur
           </Link>
           <Link
+            href="/consume"
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              isConsume ? "bg-purple-50 text-purple-600" : "text-gray-600 hover:text-gray-900"
+            )}
+          >
+            Enrollee
+          </Link>
+          <Link
             href="/creator/new"
-            className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white transition-colors hover:bg-blue-700"
           >
             <Plus className="h-4 w-4" />
           </Link>
