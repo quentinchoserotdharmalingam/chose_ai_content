@@ -112,8 +112,8 @@ export function FlashcardsRenderer({ content }: Props) {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-            <Trophy className="h-8 w-8 text-blue-600" />
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-coral-light">
+            <Trophy className="h-8 w-8 text-coral" />
           </div>
           <h3 className="text-xl font-bold">{data.title}</h3>
           <p className="mt-1 text-sm text-gray-500">
@@ -122,9 +122,9 @@ export function FlashcardsRenderer({ content }: Props) {
         </div>
 
         {/* Score */}
-        <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-6 text-center">
-          <p className="text-4xl font-bold text-blue-600">{score}%</p>
-          <p className="mt-1 text-sm text-blue-700">Score de maîtrise</p>
+        <div className="rounded-xl border-2 border-blue-200 bg-coral-light p-6 text-center">
+          <p className="text-4xl font-bold text-coral">{score}%</p>
+          <p className="mt-1 text-sm text-coral">Score de maîtrise</p>
         </div>
 
         {/* Breakdown */}
@@ -197,7 +197,7 @@ export function FlashcardsRenderer({ content }: Props) {
 
   const difficultyConfig = {
     easy: { label: "Facile", border: "border-green-200", bg: "bg-green-50", text: "text-green-700" },
-    medium: { label: "Moyen", border: "border-blue-200", bg: "bg-blue-50", text: "text-blue-700" },
+    medium: { label: "Moyen", border: "border-blue-200", bg: "bg-coral-light", text: "text-coral" },
     hard: { label: "Difficile", border: "border-red-200", bg: "bg-red-50", text: "text-red-700" },
   };
   const diff = difficultyConfig[card.difficulty] || difficultyConfig.medium;
@@ -231,7 +231,7 @@ export function FlashcardsRenderer({ content }: Props) {
         {results.length > 0 && (
           <button
             onClick={handleFinish}
-            className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+            className="flex items-center gap-1 text-xs text-coral hover:underline"
           >
             <BarChart3 className="h-3 w-3" />
             {results.length}/{total}
@@ -242,7 +242,7 @@ export function FlashcardsRenderer({ content }: Props) {
           variant="ghost"
           size="sm"
           onClick={handleShuffle}
-          className={shuffled ? "text-blue-600" : ""}
+          className={shuffled ? "text-coral" : ""}
         >
           <Shuffle className="h-4 w-4" />
         </Button>
@@ -259,7 +259,7 @@ export function FlashcardsRenderer({ content }: Props) {
               onClick={() => goTo(i)}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
                 i === currentIndex
-                  ? "bg-blue-600"
+                  ? "bg-coral"
                   : result?.rating === "knew"
                   ? "bg-green-400"
                   : result?.rating === "hesitated"

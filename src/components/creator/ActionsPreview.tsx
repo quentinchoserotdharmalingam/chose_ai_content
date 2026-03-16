@@ -78,7 +78,7 @@ function TimelineNode({
   isFirst?: boolean;
 }) {
   const dotColors = {
-    blue: "bg-blue-500",
+    blue: "bg-coral-light0",
     gray: "bg-gray-400",
     green: "bg-green-500",
     amber: "bg-amber-500",

@@ -249,7 +249,7 @@ function FlashcardsEditor({
         <span>{content.cards.length} cartes</span>
         <span>|</span>
         <span className="text-green-600">{content.cards.filter((c) => c.difficulty === "easy").length} faciles</span>
-        <span className="text-blue-600">{content.cards.filter((c) => c.difficulty === "medium").length} moyennes</span>
+        <span className="text-coral">{content.cards.filter((c) => c.difficulty === "medium").length} moyennes</span>
         <span className="text-red-600">{content.cards.filter((c) => c.difficulty === "hard").length} difficiles</span>
         {categories.length > 0 && <span>| {categories.length} catégories</span>}
       </div>
@@ -432,7 +432,7 @@ function ModuleEditor({
       <div className="flex gap-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-500">
         <span>{content.steps.length} étapes</span>
         <span>|</span>
-        <span className="text-blue-600">{lessonCount} leçons</span>
+        <span className="text-coral">{lessonCount} leçons</span>
         <span className="text-purple-600">{quizCount} quiz</span>
       </div>
 

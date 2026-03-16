@@ -22,7 +22,7 @@ export function FormatSelector({ resourceId, enabledFormats }: Props) {
                 <div>
                   <p className="font-medium">{meta.label}</p>
                   <p className="text-xs text-gray-500">{meta.description}</p>
-                  <p className="mt-1 text-xs font-medium text-blue-600">{meta.duration}</p>
+                  <p className="mt-1 text-xs font-medium text-coral">{meta.duration}</p>
                 </div>
               </CardContent>
             </Card>

@@ -27,7 +27,7 @@ const REMINDER_META: Record<number, { label: string; badge: string; description:
     label: "Rappel J+7",
     badge: "J+7",
     description: "Consolidation — reformulation et rappel actif",
-    color: "bg-blue-100 text-blue-700 border-blue-200",
+    color: "bg-coral-light text-coral border-coral/30",
   },
   30: {
     label: "Rappel J+30",
@@ -94,11 +94,11 @@ export function RappelConfigPanel({ settings, onChange, resourceId }: RappelConf
       </CardHeader>
       <CardContent className="space-y-5">
         {/* AI Generate button */}
-        <div className="rounded-lg border border-dashed border-blue-300 bg-blue-50/30 p-4">
+        <div className="rounded-lg border border-dashed border-coral/40 bg-coral-light/50 p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-blue-800">Génération par IA</p>
-              <p className="text-xs text-blue-600">
+              <p className="text-sm font-medium text-coral-dark">Génération par IA</p>
+              <p className="text-xs text-coral">
                 Génère automatiquement le contenu des 3 rappels à partir de la formation
               </p>
             </div>
@@ -106,7 +106,7 @@ export function RappelConfigPanel({ settings, onChange, resourceId }: RappelConf
               size="sm"
               onClick={handleGenerateAI}
               disabled={generating}
-              className="flex-shrink-0 bg-blue-600 hover:bg-blue-700"
+              className="flex-shrink-0 bg-coral hover:bg-coral-dark"
             >
               {generating ? (
                 <>
@@ -148,7 +148,7 @@ export function RappelConfigPanel({ settings, onChange, resourceId }: RappelConf
                 onClick={() => setActiveDay(day)}
                 className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                   activeDay === day
-                    ? "border-blue-300 bg-blue-50 text-blue-700"
+                    ? "border-coral/40 bg-coral-light text-coral"
                     : "border-gray-200 text-gray-600 hover:bg-gray-50"
                 }`}
               >
@@ -212,8 +212,8 @@ export function RappelConfigPanel({ settings, onChange, resourceId }: RappelConf
                   <div
                     key={day}
                     onClick={() => setActiveDay(day)}
-                    className={`cursor-pointer rounded-lg border bg-white p-3 transition-colors hover:border-blue-200 ${
-                      activeDay === day ? "border-blue-300 ring-1 ring-blue-200" : "border-gray-200"
+                    className={`cursor-pointer rounded-lg border bg-white p-3 transition-colors hover:border-coral/30 ${
+                      activeDay === day ? "border-coral/40 ring-1 ring-coral/30" : "border-gray-200"
                     }`}
                   >
                     <div className="flex items-center gap-2">

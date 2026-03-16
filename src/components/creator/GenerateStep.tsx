@@ -113,7 +113,7 @@ export function GenerateStep({ resourceId, formats, onGenerated }: GenerateStepP
                 s === "done" ? "border-green-200 bg-green-50" : s === "error" ? "border-red-200 bg-red-50" : "border-gray-200"
               }`}
             >
-              {s === "generating" && <Loader2 className="h-5 w-5 animate-spin text-blue-600" />}
+              {s === "generating" && <Loader2 className="h-5 w-5 animate-spin text-coral" />}
               {s === "done" && <Check className="h-5 w-5 text-green-600" />}
               {s === "error" && <AlertCircle className="h-5 w-5 text-red-600" />}
               {s === "pending" && <div className="h-5 w-5 rounded-full border-2 border-gray-300" />}

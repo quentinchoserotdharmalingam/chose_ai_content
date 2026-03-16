@@ -104,17 +104,17 @@ export function ModuleRenderer({ content }: Props) {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-            <Trophy className="h-8 w-8 text-blue-600" />
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-coral-light">
+            <Trophy className="h-8 w-8 text-coral" />
           </div>
           <h3 className="text-xl font-bold">{data.title}</h3>
           <p className="mt-1 text-sm text-gray-500">Module terminé !</p>
         </div>
 
         {/* Score */}
-        <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-6 text-center">
-          <p className="text-4xl font-bold text-blue-600">{score}%</p>
-          <p className="mt-1 text-sm text-blue-700">
+        <div className="rounded-xl border-2 border-blue-200 bg-coral-light p-6 text-center">
+          <p className="text-4xl font-bold text-coral">{score}%</p>
+          <p className="mt-1 text-sm text-coral">
             {correctCount} / {totalQuizzes} quiz réussis
           </p>
         </div>
@@ -179,7 +179,7 @@ export function ModuleRenderer({ content }: Props) {
 
       {/* Objective badge */}
       {data.objective && (
-        <div className="flex items-start gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">
+        <div className="flex items-start gap-2 rounded-lg bg-coral-light px-3 py-2 text-sm text-coral">
           <Target className="mt-0.5 h-4 w-4 flex-shrink-0" />
           <span>{data.objective}</span>
         </div>
@@ -190,7 +190,7 @@ export function ModuleRenderer({ content }: Props) {
         <div className="flex items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
             <motion.div
-              className="h-full rounded-full bg-blue-500"
+              className="h-full rounded-full bg-coral-light0"
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.3 }}
             />
@@ -212,7 +212,7 @@ export function ModuleRenderer({ content }: Props) {
                 onClick={() => goTo(i)}
                 className={`flex h-6 flex-1 items-center justify-center rounded-md text-xs transition-colors ${
                   isCurrent
-                    ? "bg-blue-600 text-white"
+                    ? "bg-coral text-white"
                     : qResult?.correct === false
                     ? "bg-red-100 text-red-600"
                     : isCompleted || qResult?.correct
@@ -303,12 +303,12 @@ export function ModuleRenderer({ content }: Props) {
 // --- Lesson Card ---
 function LessonCard({ step }: { step: ModuleContent["steps"][number] }) {
   return (
-    <div className="rounded-xl border-2 border-blue-200 bg-blue-50/50 p-5 sm:p-6">
+    <div className="rounded-xl border-2 border-blue-200 bg-coral-light/50 p-5 sm:p-6">
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100">
-          <BookOpen className="h-3.5 w-3.5 text-blue-600" />
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-coral-light">
+          <BookOpen className="h-3.5 w-3.5 text-coral" />
         </span>
-        <span className="text-xs font-medium uppercase text-blue-600">Leçon</span>
+        <span className="text-xs font-medium uppercase text-coral">Leçon</span>
       </div>
 
       {step.title && <h4 className="mb-3 text-base font-semibold text-gray-900">{step.title}</h4>}
@@ -332,7 +332,7 @@ function LessonCard({ step }: { step: ModuleContent["steps"][number] }) {
           <div className="space-y-1.5">
             {step.keyPoints.map((point, i) => (
               <div key={i} className="flex items-start gap-2 text-sm">
-                <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-coral-light0" />
                 <span className="text-gray-700">{point}</span>
               </div>
             ))}

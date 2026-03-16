@@ -67,9 +67,9 @@ export default function NewResourcePage() {
                 disabled={i >= currentIndex}
                 className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors sm:h-8 sm:w-8 sm:text-sm ${
                   i < currentIndex
-                    ? "cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
+                    ? "cursor-pointer bg-coral text-white hover:bg-coral-dark"
                     : i === currentIndex
-                    ? "bg-blue-100 text-blue-600 ring-2 ring-blue-600"
+                    ? "bg-coral-light text-coral ring-2 ring-coral"
                     : "bg-gray-100 text-gray-400"
                 }`}
               >
@@ -88,7 +88,7 @@ export default function NewResourcePage() {
                 {step.label}
               </span>
               {i < STEPS.length - 1 && (
-                <div className={`mx-0.5 h-px flex-1 sm:mx-0 ${i < currentIndex ? "bg-blue-600" : "bg-gray-200"}`} />
+                <div className={`mx-0.5 h-px flex-1 sm:mx-0 ${i < currentIndex ? "bg-coral" : "bg-gray-200"}`} />
               )}
             </div>
           ))}

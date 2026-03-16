@@ -129,7 +129,7 @@ export function PublishStep({
                       onClick={() => setDefaultFormat(format)}
                       className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                         defaultFormat === format
-                          ? "border-blue-500 bg-blue-50"
+                          ? "border-blue-500 bg-coral-light"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
