@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
   Loader2,
-  MessageCircle,
   RotateCcw,
   Sparkles,
   Bot,
@@ -19,10 +18,25 @@ interface Props {
 }
 
 const SUGGESTIONS = [
-  "Quels sont les points clés à retenir ?",
-  "Peux-tu m'expliquer le concept principal ?",
+  "Quels sont les points clés ?",
+  "Pouvez-vous m'expliquer le concept principal ?",
   "Comment appliquer cela concrètement ?",
 ];
+
+/** Render basic markdown: **bold** */
+function renderMarkdown(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={i} className="font-semibold">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
 
 export function ChatRenderer({ resourceId }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -60,7 +74,7 @@ export function ChatRenderer({ resourceId }: Props) {
           resourceId,
           messages:
             currentMessages.length === 0
-              ? [{ role: "user" as const, content: "Bonjour, je suis prêt à apprendre." }]
+              ? [{ role: "user" as const, content: "Salut !" }]
               : currentMessages,
         }),
       });
@@ -107,7 +121,7 @@ export function ChatRenderer({ resourceId }: Props) {
       console.error("Chat error:", error);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Désolé, une erreur est survenue. Réessayez." },
+        { role: "assistant", content: "Désolé, une erreur est survenue. Veuillez réessayer." },
       ]);
     } finally {
       setStreaming(false);
@@ -129,7 +143,10 @@ export function ChatRenderer({ resourceId }: Props) {
   const handleReset = () => {
     setMessages([]);
     setInitialized(false);
-    setTimeout(() => setInitialized(true), 100);
+    setTimeout(() => {
+      setInitialized(true);
+      sendMessage([]);
+    }, 100);
   };
 
   const userMessageCount = messages.filter((m) => m.role === "user").length;
@@ -141,10 +158,10 @@ export function ChatRenderer({ resourceId }: Props) {
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100">
-            <MessageCircle className="h-3.5 w-3.5 text-blue-600" />
+            <Bot className="h-3.5 w-3.5 text-blue-600" />
           </div>
           <div>
-            <p className="text-sm font-medium">Chat questionneur</p>
+            <p className="text-sm font-medium">Coach</p>
             <p className="text-xs text-gray-400">
               {userMessageCount} échange{userMessageCount !== 1 ? "s" : ""}
             </p>
@@ -167,22 +184,27 @@ export function ChatRenderer({ resourceId }: Props) {
               className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (
-                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gray-100">
-                  <Bot className="h-3.5 w-3.5 text-gray-500" />
+                <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-50">
+                  <Bot className="h-3 w-3 text-blue-500" />
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
                   msg.role === "user"
                     ? "bg-blue-600 text-white"
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {msg.content || <Loader2 className="h-4 w-4 animate-spin" />}
+                {msg.content ? renderMarkdown(msg.content) : (
+                  <span className="flex items-center gap-1.5 text-gray-400">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span className="text-xs">Réflexion...</span>
+                  </span>
+                )}
               </div>
               {msg.role === "user" && (
-                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
-                  <User className="h-3.5 w-3.5 text-blue-600" />
+                <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
+                  <User className="h-3 w-3 text-blue-600" />
                 </div>
               )}
             </motion.div>
@@ -194,18 +216,14 @@ export function ChatRenderer({ resourceId }: Props) {
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="space-y-1.5 pt-2"
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-1.5 pt-2"
           >
-            <div className="flex items-center gap-1 text-xs text-gray-400">
-              <Sparkles className="h-3 w-3" />
-              <span>Suggestions</span>
-            </div>
             {SUGGESTIONS.map((suggestion, i) => (
               <button
                 key={i}
                 onClick={() => handleSend(suggestion)}
-                className="block w-full rounded-lg border border-dashed border-gray-200 px-3 py-2 text-left text-xs text-gray-500 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-500 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
               >
                 {suggestion}
               </button>
@@ -225,12 +243,13 @@ export function ChatRenderer({ resourceId }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Posez une question sur le contenu..."
+            placeholder="Posez votre question..."
             disabled={streaming}
-            className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           />
           <Button
             size="icon"
+            className="rounded-full"
             onClick={() => handleSend()}
             disabled={streaming || !input.trim()}
           >
