@@ -392,7 +392,7 @@ export const INTERVIEW_THEME_META: Record<InterviewTheme, { label: string; icon:
   custom: {
     label: "Personnalisé",
     icon: "⚙️",
-    description: "Thème d'entretien sur mesure",
+    description: "Thème d'interview sur mesure",
   },
 };
 

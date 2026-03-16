@@ -208,7 +208,7 @@ export default function CreatorDashboard() {
                   </div>
                   <div>
                     <p className="text-[13px] font-medium text-ht-text">Interview IA</p>
-                    <p className="text-[12px] text-ht-text-secondary">Entretien adaptatif avec analyse</p>
+                    <p className="text-[12px] text-ht-text-secondary">Interview adaptative avec analyse</p>
                   </div>
                 </Link>
                 <button
@@ -542,14 +542,14 @@ function InterviewsTab({
       <div className="py-16 text-center">
         <MessageSquare className="mx-auto mb-4 h-12 w-12 text-ht-text-inactive" />
         <p className="text-[13px] text-ht-text-secondary">
-          {search ? "Aucun résultat pour cette recherche" : "Aucun entretien IA pour le moment"}
+          {search ? "Aucun résultat pour cette recherche" : "Aucune interview IA pour le moment"}
         </p>
         {!search && (
           <Link
             href="/creator/interview/new"
             className="mt-4 inline-block rounded-lg border border-ht-border-secondary px-4 py-2 text-[13px] font-medium text-ht-text transition-all duration-200 hover:bg-ht-fill-secondary"
           >
-            Créer mon premier entretien IA
+            Créer ma première interview IA
           </Link>
         )}
       </div>

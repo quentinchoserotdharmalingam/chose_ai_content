@@ -86,7 +86,7 @@ export default function NewInterviewPage() {
 
   const saveInterview = async () => {
     const payload = {
-      title: title || "Nouvel entretien",
+      title: title || "Nouvelle interview",
       description: description || null,
       theme: theme === "custom" ? customTheme || "custom" : theme,
       tone,
@@ -224,12 +224,12 @@ export default function NewInterviewPage() {
       {/* Step content */}
       {currentStep === "config" && (
         <div>
-          <h2 className="mb-2 text-xl font-semibold">Configuration de l&apos;entretien</h2>
+          <h2 className="mb-2 text-xl font-semibold">Configuration de l&apos;interview</h2>
           <p className="mb-6 text-sm text-gray-500">Définissez le thème, le ton et les paramètres généraux.</p>
 
           <div className="space-y-6">
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Titre de l&apos;entretien</label>
+              <label className="mb-1.5 block text-sm font-medium">Titre de l&apos;interview</label>
               <input
                 type="text"
                 value={title}
@@ -251,7 +251,7 @@ export default function NewInterviewPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">Thème de l&apos;entretien</label>
+              <label className="mb-2 block text-sm font-medium">Thème de l&apos;interview</label>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {(Object.entries(INTERVIEW_THEME_META) as [InterviewTheme, typeof INTERVIEW_THEME_META.onboarding][]).map(([key, meta]) => (
                   <button
@@ -281,7 +281,7 @@ export default function NewInterviewPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">Ton de l&apos;entretien</label>
+              <label className="mb-2 block text-sm font-medium">Ton de l&apos;interview</label>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {(Object.entries(INTERVIEW_TONE_META) as [InterviewTone, typeof INTERVIEW_TONE_META.bienveillant][]).map(([key, meta]) => (
                   <button
@@ -330,7 +330,7 @@ export default function NewInterviewPage() {
 
       {currentStep === "scope" && (
         <div>
-          <h2 className="mb-2 text-xl font-semibold">Périmètre de l&apos;entretien</h2>
+          <h2 className="mb-2 text-xl font-semibold">Périmètre de l&apos;interview</h2>
           <p className="mb-6 text-sm text-gray-500">Définissez les sujets à explorer et ceux à éviter.</p>
 
           <div className="space-y-6">
@@ -368,14 +368,14 @@ export default function NewInterviewPage() {
       {currentStep === "questions" && (
         <div>
           <h2 className="mb-2 text-xl font-semibold">Questions structurantes</h2>
-          <p className="mb-6 text-sm text-gray-500">Définissez les questions fixes et les points de passage de l&apos;entretien.</p>
+          <p className="mb-6 text-sm text-gray-500">Définissez les questions fixes et les points de passage de l&apos;interview.</p>
 
           <div className="space-y-8">
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-medium">Questions d&apos;ancrage</h3>
-                  <p className="text-xs text-gray-500">Posées au début de l&apos;entretien, dans l&apos;ordre défini</p>
+                  <p className="text-xs text-gray-500">Posées au début de l&apos;interview, dans l&apos;ordre défini</p>
                 </div>
                 <button
                   onClick={() => addQuestion("anchor")}
@@ -412,7 +412,7 @@ export default function NewInterviewPage() {
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-medium">Questions de passage</h3>
-                  <p className="text-xs text-gray-500">Intercalées au moment pertinent pendant l&apos;entretien</p>
+                  <p className="text-xs text-gray-500">Intercalées au moment pertinent pendant l&apos;interview</p>
                 </div>
                 <button
                   onClick={() => addQuestion("checkpoint")}
@@ -452,7 +452,7 @@ export default function NewInterviewPage() {
         <div>
           <h2 className="mb-2 text-xl font-semibold">Structure d&apos;analyse</h2>
           <p className="mb-6 text-sm text-gray-500">
-            Configurez les dimensions d&apos;analyse qui seront produites après chaque entretien.
+            Configurez les dimensions d&apos;analyse qui seront produites après chaque interview.
           </p>
 
           <div className="mb-4 flex gap-2">
@@ -617,7 +617,7 @@ export default function NewInterviewPage() {
             className="flex items-center gap-2 rounded-full bg-coral px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-coral-dark disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            Publier l&apos;entretien
+            Publier l&apos;interview
           </button>
         ) : (
           <button

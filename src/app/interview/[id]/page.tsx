@@ -193,7 +193,7 @@ export default function InterviewChatPage() {
   if (!interview || interview.status !== "published") {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-gray-500">Cet entretien n&apos;est pas disponible.</p>
+        <p className="text-gray-500">Cette interview n&apos;est pas disponible.</p>
       </div>
     );
   }
@@ -227,7 +227,7 @@ export default function InterviewChatPage() {
             disabled={!participantName.trim()}
             className="w-full rounded-full bg-coral py-2.5 text-sm font-semibold text-white hover:bg-coral-dark disabled:opacity-50"
           >
-            Commencer l&apos;échange
+            Commencer l&apos;interview
           </button>
         </div>
       </div>
@@ -248,7 +248,7 @@ export default function InterviewChatPage() {
             </div>
             <h2 className="mb-2 text-lg font-semibold">Merci pour vos réponses !</h2>
             <p className="text-sm text-gray-500">
-              Votre entretien a été enregistré. Vos réponses seront analysées de manière confidentielle.
+              Votre interview a été enregistrée. Vos réponses seront analysées de manière confidentielle.
             </p>
           </div>
         </div>
