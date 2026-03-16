@@ -36,13 +36,24 @@ export default function InterviewChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
+
+  // Scroll to bottom when mobile keyboard opens (visual viewport resize)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handleResize = () => scrollToBottom();
+    vv.addEventListener("resize", handleResize);
+    return () => vv.removeEventListener("resize", handleResize);
+  }, [scrollToBottom]);
 
   // Load interview data
   useEffect(() => {
@@ -372,6 +383,7 @@ export default function InterviewChatPage() {
                 el.style.height = Math.min(el.scrollHeight, 120) + "px";
               }}
               onKeyDown={handleKeyDown}
+              onFocus={scrollToBottom}
               placeholder="Votre réponse..."
               rows={2}
               disabled={streaming}
