@@ -292,7 +292,7 @@ export default function InterviewChatPage() {
 
   // Chat interface
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
+    <div className="flex h-dvh flex-col bg-gray-50">
       {/* Header */}
       <div className="border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-4 py-3">
@@ -355,30 +355,36 @@ export default function InterviewChatPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-200 bg-white px-4 py-3">
+      <div className="border-t border-gray-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-3">
         <div className="mx-auto max-w-2xl">
+          <p className="mb-2 text-center text-[10px] text-gray-400">
+            Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
+          </p>
           <div className="flex items-end gap-2">
             <textarea
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                // Auto-resize textarea
+                const el = e.target;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 120) + "px";
+              }}
               onKeyDown={handleKeyDown}
               placeholder="Votre réponse..."
-              rows={1}
+              rows={2}
               disabled={streaming}
-              className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
+              className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || streaming}
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
+              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
             >
               {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
           </div>
-          <p className="mt-1.5 text-center text-[10px] text-gray-400">
-            Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
-          </p>
         </div>
       </div>
     </div>

@@ -15,7 +15,8 @@ const client = new Anthropic();
 export function getInterviewChatStream(
   config: InterviewPromptParams,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
-  questionCount: number
+  questionCount: number,
+  isFirstMessage = false
 ) {
   const systemPrompt = getInterviewSystemPrompt(config);
   const contextNote =
@@ -23,9 +24,10 @@ export function getInterviewChatStream(
       ? `\n[Contexte interne — invisible pour le collaborateur : ${questionCount} questions posées sur ${config.maxQuestions} max]`
       : "";
 
+  // Use Haiku for the first greeting message (faster), Sonnet for the rest
   return client.messages.stream({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 400,
+    model: isFirstMessage ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-20250514",
+    max_tokens: isFirstMessage ? 250 : 400,
     system: systemPrompt + contextNote,
     messages,
   });
