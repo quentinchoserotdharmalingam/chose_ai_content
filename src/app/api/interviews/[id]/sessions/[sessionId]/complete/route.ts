@@ -28,37 +28,33 @@ export async function POST(
     return NextResponse.json({ error: "Session déjà terminée" }, { status: 400 });
   }
 
-  // Mark session as completed
+  // Mark session as completed immediately
   await prisma.interviewSession.update({
     where: { id: sessionId },
     data: { status: "completed", completedAt: new Date() },
   });
 
-  // Determine analysis template
-  let analysisTemplate: AnalysisTemplateDimension[];
-  if (session.interviewResource.analysisTemplate) {
-    analysisTemplate = JSON.parse(session.interviewResource.analysisTemplate);
-  } else {
-    const theme = session.interviewResource.theme as keyof typeof DEFAULT_ANALYSIS_TEMPLATES;
-    analysisTemplate = DEFAULT_ANALYSIS_TEMPLATES[theme] || DEFAULT_ANALYSIS_TEMPLATES.onboarding;
-  }
-
-  // Generate analysis
+  // Launch analysis generation in background (don't block the response)
   const messages = session.messages.map((m) => ({ role: m.role, content: m.content }));
 
-  if (messages.length < 2) {
-    return NextResponse.json({ error: "Pas assez de messages pour générer une analyse" }, { status: 400 });
+  if (messages.length >= 2) {
+    let analysisTemplate: AnalysisTemplateDimension[];
+    if (session.interviewResource.analysisTemplate) {
+      analysisTemplate = JSON.parse(session.interviewResource.analysisTemplate);
+    } else {
+      const theme = session.interviewResource.theme as keyof typeof DEFAULT_ANALYSIS_TEMPLATES;
+      analysisTemplate = DEFAULT_ANALYSIS_TEMPLATES[theme] || DEFAULT_ANALYSIS_TEMPLATES.onboarding;
+    }
+
+    // Fire and forget — analysis runs in background
+    generateInterviewAnalysis(messages, analysisTemplate)
+      .then(({ summary, rawAnalysis }) =>
+        prisma.interviewAnalysis.create({
+          data: { sessionId, summary, rawAnalysis },
+        })
+      )
+      .catch((err) => console.error("Background analysis generation failed:", err));
   }
 
-  const { summary, rawAnalysis } = await generateInterviewAnalysis(messages, analysisTemplate);
-
-  const analysis = await prisma.interviewAnalysis.create({
-    data: {
-      sessionId,
-      summary,
-      rawAnalysis,
-    },
-  });
-
-  return NextResponse.json(analysis, { status: 201 });
+  return NextResponse.json({ status: "completed" }, { status: 200 });
 }
