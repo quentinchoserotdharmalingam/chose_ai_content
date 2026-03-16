@@ -268,6 +268,117 @@ Page dédiée listant toutes les ressources publiées/générées accessibles à
 
 ---
 
+## Refonte format par format — Expérience créateur & employé
+
+### Contexte
+
+Chaque format a été retravaillé en profondeur pour offrir la meilleure expérience possible côté créateur (éditeur riche) et côté employé (consommation engageante). Les améliorations couvrent 3 axes par format : prompt IA enrichi, renderer employé refondu, éditeur créateur amélioré.
+
+### 📋 Synthèse
+
+**Prompt** : Persona expert en communication, introduction contextualisante, emojis par section, citation/highlight, multi-paragraphes.
+
+**Renderer employé** :
+- Barre de progression sticky au scroll
+- Table des matières cliquable avec section active surlignée
+- Introduction avec paragraphe d'accroche
+- Emojis de section, blocs "highlight" (citations)
+- Animations d'entrée échelonnées (staggered)
+- Bouton retour en haut
+
+**Éditeur créateur** :
+- Réordonnancement des sections (haut/bas)
+- Champ introduction
+- Champ emoji + highlight par section
+- Points clés éditables (un par ligne)
+
+### 🃏 Flashcards
+
+**Prompt** : Persona expert en active recall, 8-12 cartes, catégories thématiques, types de questions variés (rappel, compréhension, application), indices obligatoires, difficulté calibrée.
+
+**Renderer employé** :
+- Mode shuffle (mélange aléatoire des cartes)
+- Auto-évaluation par carte : Maîtrisé / Hésité / À revoir
+- Système de scoring en fin de session
+- Écran résultats avec ventilation par catégorie de réponse
+- Barre de progression segmentée colorée selon les évaluations
+- Badges de catégorie et difficulté
+- Animations de swipe (glissement)
+- Auto-advance après évaluation
+- Mode "Revoir les erreurs"
+
+**Éditeur créateur** :
+- Réordonnancement des cartes (haut/bas)
+- Champ description du deck
+- Champ catégorie avec datalist autocomplete (catégories existantes)
+- Barre de stats : nombre de cartes, répartition facile/moyen/difficile, nombre de catégories
+
+### 📖 Module structuré
+
+**Prompt** : Persona expert en ingénierie pédagogique, 7-10 étapes, alternance leçon/quiz, points clés par leçon (2-4), exemples concrets, 3-4 options par quiz avec distracteurs plausibles, explications pédagogiques par option.
+
+**Renderer employé** :
+- Points de progression cliquables (dots) avec icônes leçon/quiz
+- Couleurs de statut : vert (complété/correct), rouge (erreur), bleu (en cours)
+- Badge objectif pédagogique
+- Carte leçon avec encart "À retenir" (keyPoints) et encart "Exemple" (ambre)
+- Carte quiz avec lettres A/B/C, sélection, explication animée, feedback coloré
+- Scoring global en fin de module (% de quiz réussis)
+- Écran résultats avec ventilation correct/incorrect + revue des erreurs
+- Transitions animées entre étapes (slide directionnel)
+- Navigation libre avant/arrière + reset
+
+**Éditeur créateur** :
+- Réordonnancement des étapes (haut/bas)
+- Champs description et objectif pédagogique
+- Points clés éditables par leçon (un par ligne)
+- Champ exemple optionnel par leçon
+- Ajout/suppression d'options de quiz
+- Surbrillance verte sur les options correctes
+- Boutons "Ajouter leçon" et "Ajouter quiz" séparés
+- Barre de stats : nombre d'étapes, répartition leçons/quiz
+
+### 🎭 Mises en situation
+
+**Prompt** : Persona expert en experiential learning, 4-6 étapes de décision, rôle incarné défini, narratifs immersifs (contexte + tension), 2-3 choix par étape (optimal/acceptable/mauvais), feedbacks avec conséquences concrètes, conclusion synthétique.
+
+**Renderer employé** :
+- Badge du rôle incarné (avec icône UserCircle)
+- Contexte immersif affiché au démarrage
+- Barre de progression avec dots colorés selon la qualité des choix (vert/ambre/rouge)
+- Feedback après chaque choix avec icône et couleur selon la qualité
+- Bouton "Continuer" explicite (pas d'auto-advance)
+- Scoring de pertinence : optimal = 2pts, acceptable = 1pt, mauvais = 0pt
+- Écran résultats : score %, ventilation optimal/acceptable/mauvais
+- Revue complète du parcours (chaque choix + feedback)
+- Bloc conclusion avec synthèse des bonnes pratiques
+- Animations de transition entre étapes
+
+**Éditeur créateur** :
+- Réordonnancement des étapes (haut/bas)
+- Champs description et rôle incarné
+- Bordures colorées selon la qualité du choix (vert optimal, rouge mauvais)
+- Champ nextStepId éditable par choix
+- Ajout/suppression de choix par étape
+- Bouton "Ajouter une étape" avec choix pré-configurés
+- Barre de stats : nombre d'étapes, répartition des qualités
+
+### 💬 Chat questionneur
+
+**Prompt** : Persona tuteur socratique expert en maïeutique, 10 règles comportementales enrichies, support du ton personnalisé, format de réponse guidé (gras, listes, concision), exemples et analogies encouragés, chaque réponse termine par une question.
+
+**Renderer employé** :
+- Header avec compteur d'échanges
+- Avatars user (bleu) et bot (gris) avec icônes distinctes
+- Suggestions de questions après le premier message (3 chips cliquables)
+- Bouton reset de conversation
+- Animations d'entrée des messages
+- Input amélioré avec placeholder contextuel
+- État loading sur le bouton d'envoi
+- Hauteur fixe avec scroll interne (520px)
+
+---
+
 ## Changelog
 
 | Date | Entrée |
@@ -276,3 +387,4 @@ Page dédiée listant toutes les ressources publiées/générées accessibles à
 | 15/03/2026 | Ajout section "Améliorations du flow créateur" : édition inline, regénération avec instructions, validation par format, navigation retour wizard. |
 | 15/03/2026 | Ajout étape 6 "Extensions" au wizard : configuration des 6 extensions activables, timeline de prévisualisation des actions HeyTeam. Mode POC (pas d'appel API réel). |
 | 15/03/2026 | Ajout étape 7 "Publication", config ton/langue, dashboard enrichi (stats, duplication, menu contextuel), landing enrollee, polish mobile. |
+| 16/03/2026 | Refonte complète des 5 formats : prompts enrichis (persona expert), renderers employé (scoring, animations, résultats), éditeurs créateur (réordonnancement, champs enrichis, stats). |
