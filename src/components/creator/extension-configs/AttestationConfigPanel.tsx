@@ -35,7 +35,7 @@ export function AttestationConfigPanel({ settings, onChange }: AttestationConfig
                 key={type.value}
                 className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
                   settings.templateType === type.value
-                    ? "border-blue-300 bg-blue-50/50"
+                    ? "border-coral/40 bg-coral-light"
                     : "border-gray-200 hover:bg-gray-50"
                 }`}
               >

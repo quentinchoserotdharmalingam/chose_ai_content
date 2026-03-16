@@ -123,17 +123,17 @@ export function ScenariosRenderer({ content }: Props) {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-            <Trophy className="h-8 w-8 text-blue-600" />
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-coral-light">
+            <Trophy className="h-8 w-8 text-coral" />
           </div>
           <h3 className="text-xl font-bold">{data.title}</h3>
           <p className="mt-1 text-sm text-gray-500">Scénario terminé</p>
         </div>
 
         {/* Score */}
-        <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-6 text-center">
-          <p className="text-4xl font-bold text-blue-600">{stats.score}%</p>
-          <p className="mt-1 text-sm text-blue-700">Score de pertinence</p>
+        <div className="rounded-xl border-2 border-ht-primary/30 bg-coral-light p-6 text-center">
+          <p className="text-4xl font-bold text-coral">{stats.score}%</p>
+          <p className="mt-1 text-sm text-coral">Score de pertinence</p>
         </div>
 
         {/* Breakdown */}
@@ -176,9 +176,9 @@ export function ScenariosRenderer({ content }: Props) {
         </div>
 
         {/* Conclusion */}
-        <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 p-5">
-          <p className="mb-2 text-xs font-semibold uppercase text-blue-600">Conclusion</p>
-          <p className="text-sm leading-relaxed text-blue-800">{data.conclusion}</p>
+        <div className="rounded-xl border-2 border-ht-primary/30 bg-gradient-to-br from-ht-primary-warm to-ht-primary-warm/50 p-5">
+          <p className="mb-2 text-xs font-semibold uppercase text-coral">Conclusion</p>
+          <p className="text-sm leading-relaxed text-coral-dark">{data.conclusion}</p>
         </div>
 
         <Button onClick={handleReset} variant="outline" className="w-full">

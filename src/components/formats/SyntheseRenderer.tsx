@@ -62,7 +62,7 @@ export function SyntheseRenderer({ content }: Props) {
         <div className="flex items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
             <motion.div
-              className="h-full rounded-full bg-blue-500"
+              className="h-full rounded-full bg-coral-light0"
               initial={{ width: 0 }}
               animate={{ width: `${readProgress}%` }}
               transition={{ duration: 0.3 }}
@@ -110,7 +110,7 @@ export function SyntheseRenderer({ content }: Props) {
                 onClick={() => scrollToSection(i)}
                 className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm transition-colors ${
                   activeSection === i
-                    ? "bg-blue-50 text-blue-700 font-medium"
+                    ? "bg-coral-light text-coral font-medium"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
@@ -153,8 +153,8 @@ export function SyntheseRenderer({ content }: Props) {
 
                 {/* Highlight quote */}
                 {section.highlight && (
-                  <blockquote className="border-l-3 border-blue-400 bg-blue-50/50 py-2 pl-4 pr-3">
-                    <p className="text-sm font-medium italic text-blue-800">
+                  <blockquote className="border-l-3 border-ht-primary/60 bg-coral-light/50 py-2 pl-4 pr-3">
+                    <p className="text-sm font-medium italic text-coral-dark">
                       &ldquo;{section.highlight}&rdquo;
                     </p>
                   </blockquote>
@@ -169,7 +169,7 @@ export function SyntheseRenderer({ content }: Props) {
                     <div className="space-y-1.5">
                       {section.keyPoints.map((point, j) => (
                         <div key={j} className="flex items-start gap-2 text-sm">
-                          <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                          <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-coral-light0" />
                           <span className="text-gray-700">{point}</span>
                         </div>
                       ))}
@@ -190,9 +190,9 @@ export function SyntheseRenderer({ content }: Props) {
           transition={{ delay: 0.2 + (data.sections?.length || 0) * 0.08 }}
           className="mt-6"
         >
-          <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50">
+          <Card className="border-ht-primary/30 bg-gradient-to-br from-ht-primary-warm to-ht-primary-warm/50">
             <CardHeader>
-              <CardTitle className="text-base text-blue-800">
+              <CardTitle className="text-base text-coral-dark">
                 Ce qu&apos;il faut retenir
               </CardTitle>
             </CardHeader>
@@ -200,10 +200,10 @@ export function SyntheseRenderer({ content }: Props) {
               <ul className="space-y-3">
                 {data.takeaways.map((takeaway, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm">
-                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-200 text-xs font-bold text-blue-800">
+                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-ht-primary-warm text-xs font-bold text-coral-dark">
                       {i + 1}
                     </span>
-                    <span className="text-blue-800">{takeaway}</span>
+                    <span className="text-coral-dark">{takeaway}</span>
                   </li>
                 ))}
               </ul>

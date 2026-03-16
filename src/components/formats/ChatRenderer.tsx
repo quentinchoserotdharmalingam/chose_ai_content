@@ -157,8 +157,8 @@ export function ChatRenderer({ resourceId }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100">
-            <Bot className="h-3.5 w-3.5 text-blue-600" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-coral-light">
+            <Bot className="h-3.5 w-3.5 text-coral" />
           </div>
           <div>
             <p className="text-sm font-medium">Coach</p>
@@ -184,14 +184,14 @@ export function ChatRenderer({ resourceId }: Props) {
               className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (
-                <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-50">
-                  <Bot className="h-3 w-3 text-blue-500" />
+                <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-coral-light">
+                  <Bot className="h-3 w-3 text-ht-primary-warm0" />
                 </div>
               )}
               <div
                 className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-blue-600 text-white"
+                    ? "bg-coral text-white"
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
@@ -203,8 +203,8 @@ export function ChatRenderer({ resourceId }: Props) {
                 )}
               </div>
               {msg.role === "user" && (
-                <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
-                  <User className="h-3 w-3 text-blue-600" />
+                <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-coral-light">
+                  <User className="h-3 w-3 text-coral" />
                 </div>
               )}
             </motion.div>
@@ -223,7 +223,7 @@ export function ChatRenderer({ resourceId }: Props) {
               <button
                 key={i}
                 onClick={() => handleSend(suggestion)}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-500 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-500 transition-colors hover:border-coral/40 hover:bg-coral-light hover:text-coral"
               >
                 {suggestion}
               </button>
@@ -245,7 +245,7 @@ export function ChatRenderer({ resourceId }: Props) {
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Posez votre question..."
             disabled={streaming}
-            className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ht-primary disabled:opacity-50"
           />
           <Button
             size="icon"

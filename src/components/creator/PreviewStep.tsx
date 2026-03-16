@@ -159,7 +159,7 @@ export function PreviewStep({
             }}
             className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeFormat === format
-                ? "bg-blue-600 text-white"
+                ? "bg-coral text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -234,8 +234,8 @@ export function PreviewStep({
 
       {/* Regeneration modal */}
       {showRegenModal && (
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="mb-2 text-sm font-medium text-blue-800">
+        <div className="mb-4 rounded-lg border border-ht-primary/30 bg-coral-light p-4">
+          <p className="mb-2 text-sm font-medium text-coral-dark">
             Regénérer {FORMAT_META[activeFormat].label}
           </p>
           <Textarea

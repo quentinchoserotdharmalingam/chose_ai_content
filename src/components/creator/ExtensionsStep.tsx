@@ -110,7 +110,7 @@ export function ExtensionsStep({
               key={slug}
               className={`transition-colors ${
                 config.enabled
-                  ? "border-blue-300 bg-blue-50/50"
+                  ? "border-coral/40 bg-coral-light"
                   : "border-gray-200"
               }`}
             >
@@ -119,7 +119,7 @@ export function ExtensionsStep({
                 <button
                   onClick={() => toggle(slug)}
                   className={`mt-1 flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${
-                    config.enabled ? "bg-blue-600" : "bg-gray-300"
+                    config.enabled ? "bg-coral" : "bg-gray-300"
                   }`}
                 >
                   <span
@@ -168,7 +168,7 @@ export function ExtensionsStep({
                       {meta.multiAction.delaysDays.map((d, i) => (
                         <span
                           key={d}
-                          className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700"
+                          className="rounded-full bg-coral-light px-2 py-0.5 text-xs text-coral"
                         >
                           {meta.multiAction!.labels[i]}
                         </span>
@@ -196,7 +196,7 @@ export function ExtensionsStep({
         <div className="mb-6">
           <button
             onClick={() => setShowPreview(!showPreview)}
-            className="text-sm font-medium text-blue-600 hover:underline"
+            className="text-sm font-medium text-coral hover:underline"
           >
             {showPreview ? "Masquer" : "Voir"} la timeline des{" "}
             {generatedActions.length} action(s) qui seront créées

@@ -1,19 +1,95 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
+  /* Typography */
+  --font-family: 'Poppins', sans-serif;
+
+  /* Text Colors */
+  --text-primary: #272727;
+  --text-secondary: #A4A4A4;
+  --text-active: #FF6058;
+  --text-inactive: #DDDDDD;
+
+  /* Fill Colors */
+  --fill-primary: #FFFFFF;
+  --fill-secondary: #F7F7F7;
+  --fill-container: #FBFBFB;
+  --fill-active: #FF6058;
+  --fill-active-warm: #FCEDEC;
+
+  /* Border Colors */
+  --border-primary: #F5F4F4;
+  --border-secondary: #DDDDDD;
+  --border-active: #FF6058;
+
+  /* Semantic */
+  --color-success: #53B483;
+  --color-success-warm: #EFFDF6;
+  --color-error: #F34141;
+  --color-error-warm: #FEF2F2;
+  --color-warning: #E9A23B;
+  --color-warning-warm: #FEFAF5;
+  --color-info: #2563EB;
+  --color-info-warm: #F4F7FE;
+
+  /* Shadows */
+  --shadow-1: 0px 1px 3px 0px rgba(47, 43, 67, 0.10), 0px -1px 0px 0px rgba(47, 43, 67, 0.10) inset;
+  --shadow-2: 0px -1px 0px 0px rgba(47, 43, 67, 0.10) inset, 0px 4px 8px 0px rgba(47, 43, 67, 0.10);
+  --shadow-3: 0px 6px 12px 0px rgba(47, 43, 67, 0.10);
+  --shadow-4: 0px 8px 24px 0px rgba(47, 43, 67, 0.10);
+  --focus-ring: 0px 0px 0px 3px rgba(222, 222, 222, 0.48);
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-default: 8px;
+  --radius-block: 12px;
+  --radius-full: 100px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--fill-primary);
+  --color-foreground: var(--text-primary);
+  --color-ht-primary: #FF6058;
+  --color-ht-primary-dark: #F64A49;
+  --color-ht-primary-warm: #FCEDEC;
+  --color-ht-text: #272727;
+  --color-ht-text-secondary: #A4A4A4;
+  --color-ht-text-inactive: #DDDDDD;
+  --color-ht-border: #F5F4F4;
+  --color-ht-border-secondary: #DDDDDD;
+  --color-ht-fill-secondary: #F7F7F7;
+  --color-ht-fill-container: #FBFBFB;
+  --color-ht-success: #53B483;
+  --color-ht-success-warm: #EFFDF6;
+  --color-ht-error: #F34141;
+  --color-ht-error-warm: #FEF2F2;
+  --color-ht-warning: #E9A23B;
+  --color-ht-warning-warm: #FEFAF5;
+  --color-ht-info: #2563EB;
+  --color-ht-info-warm: #F4F7FE;
+  /* Keep coral aliases for backward compat */
+  --color-coral: #FF6058;
+  --color-coral-dark: #F64A49;
+  --color-coral-light: #FCEDEC;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --shadow-ht-1: 0px 1px 3px 0px rgba(47, 43, 67, 0.10), 0px -1px 0px 0px rgba(47, 43, 67, 0.10) inset;
+  --shadow-ht-2: 0px -1px 0px 0px rgba(47, 43, 67, 0.10) inset, 0px 4px 8px 0px rgba(47, 43, 67, 0.10);
+  --shadow-ht-3: 0px 6px 12px 0px rgba(47, 43, 67, 0.10);
+  --shadow-ht-4: 0px 8px 24px 0px rgba(47, 43, 67, 0.10);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--fill-primary);
+  color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  line-height: 20px;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.02em;
 }

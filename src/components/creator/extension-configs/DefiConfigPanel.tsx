@@ -71,7 +71,7 @@ export function DefiConfigPanel({ settings, onChange }: DefiConfigPanelProps) {
             <label
               className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
                 settings.validatorType === "auto"
-                  ? "border-blue-300 bg-blue-50/50"
+                  ? "border-coral/40 bg-coral-light"
                   : "border-gray-200 hover:bg-gray-50"
               }`}
             >
@@ -90,7 +90,7 @@ export function DefiConfigPanel({ settings, onChange }: DefiConfigPanelProps) {
             <label
               className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
                 settings.validatorType === "role"
-                  ? "border-blue-300 bg-blue-50/50"
+                  ? "border-coral/40 bg-coral-light"
                   : "border-gray-200 hover:bg-gray-50"
               }`}
             >
@@ -114,7 +114,7 @@ export function DefiConfigPanel({ settings, onChange }: DefiConfigPanelProps) {
                     onClick={() => onChange({ ...settings, validatorRole: role.value })}
                     className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                       settings.validatorRole === role.value
-                        ? "border-blue-300 bg-blue-100 font-medium text-blue-700"
+                        ? "border-coral/40 bg-coral-light font-medium text-coral"
                         : "border-gray-200 hover:bg-gray-50"
                     }`}
                   >
@@ -127,7 +127,7 @@ export function DefiConfigPanel({ settings, onChange }: DefiConfigPanelProps) {
             <label
               className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
                 settings.validatorType === "user"
-                  ? "border-blue-300 bg-blue-50/50"
+                  ? "border-coral/40 bg-coral-light"
                   : "border-gray-200 hover:bg-gray-50"
               }`}
             >

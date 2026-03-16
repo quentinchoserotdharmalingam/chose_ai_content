@@ -61,7 +61,7 @@ export function EmailConfigPanel({ settings, onChange, resourceId }: EmailConfig
             <label
               className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
                 settings.recipientType === "role"
-                  ? "border-blue-300 bg-blue-50/50"
+                  ? "border-coral/40 bg-coral-light"
                   : "border-gray-200 hover:bg-gray-50"
               }`}
             >
@@ -85,7 +85,7 @@ export function EmailConfigPanel({ settings, onChange, resourceId }: EmailConfig
                     onClick={() => onChange({ ...settings, recipientRole: role.value })}
                     className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                       settings.recipientRole === role.value
-                        ? "border-blue-300 bg-blue-100 font-medium text-blue-700"
+                        ? "border-coral/40 bg-coral-light font-medium text-coral"
                         : "border-gray-200 hover:bg-gray-50"
                     }`}
                   >
@@ -98,7 +98,7 @@ export function EmailConfigPanel({ settings, onChange, resourceId }: EmailConfig
             <label
               className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
                 settings.recipientType === "user"
-                  ? "border-blue-300 bg-blue-50/50"
+                  ? "border-coral/40 bg-coral-light"
                   : "border-gray-200 hover:bg-gray-50"
               }`}
             >
@@ -127,11 +127,11 @@ export function EmailConfigPanel({ settings, onChange, resourceId }: EmailConfig
         </div>
 
         {/* AI Generate button */}
-        <div className="rounded-lg border border-dashed border-blue-300 bg-blue-50/30 p-4">
+        <div className="rounded-lg border border-dashed border-coral/40 bg-coral-light/50 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-800">Generation par IA</p>
-              <p className="text-xs text-blue-600">
+              <p className="text-sm font-medium text-coral-dark">Generation par IA</p>
+              <p className="text-xs text-coral">
                 Genere automatiquement un email base sur le contenu de la formation
               </p>
             </div>
@@ -139,7 +139,7 @@ export function EmailConfigPanel({ settings, onChange, resourceId }: EmailConfig
               size="sm"
               onClick={handleGenerateAI}
               disabled={generating}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-coral hover:bg-coral-dark"
             >
               {generating ? (
                 <>

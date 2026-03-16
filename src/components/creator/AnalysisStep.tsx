@@ -38,7 +38,7 @@ export function AnalysisStep({ resourceId, onAnalyzed }: AnalysisStepProps) {
   if (loading) {
     return (
       <div className="flex flex-col items-center gap-4 py-16">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+        <Loader2 className="h-10 w-10 animate-spin text-coral" />
         <p className="text-sm text-gray-500">Analyse du document en cours...</p>
         <p className="text-xs text-gray-400">Extraction du texte + analyse IA</p>
       </div>
@@ -66,7 +66,7 @@ export function AnalysisStep({ resourceId, onAnalyzed }: AnalysisStepProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="h-4 w-4 text-blue-600" />
+              <Sparkles className="h-4 w-4 text-coral" />
               Résumé
             </CardTitle>
           </CardHeader>
@@ -85,7 +85,7 @@ export function AnalysisStep({ resourceId, onAnalyzed }: AnalysisStepProps) {
                 {analysis.topics.map((topic) => (
                   <span
                     key={topic}
-                    className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                    className="rounded-full bg-coral-light px-3 py-1 text-xs font-medium text-coral"
                   >
                     {topic}
                   </span>

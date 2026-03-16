@@ -53,7 +53,7 @@ export function UploadStep({ onUploaded }: UploadStepProps) {
 
       <Card
         className={`cursor-pointer border-2 border-dashed transition-colors ${
-          dragging ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+          dragging ? "border-ht-primary/60 bg-coral-light" : "border-gray-200 hover:border-gray-300"
         }`}
         onDragOver={(e) => {
           e.preventDefault();
@@ -80,12 +80,12 @@ export function UploadStep({ onUploaded }: UploadStepProps) {
         <CardContent className="flex flex-col items-center gap-4 py-12">
           {uploading ? (
             <>
-              <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+              <Loader2 className="h-10 w-10 animate-spin text-coral" />
               <p className="text-sm text-gray-500">Extraction du texte de {fileName}...</p>
             </>
           ) : fileName ? (
             <>
-              <FileText className="h-10 w-10 text-blue-600" />
+              <FileText className="h-10 w-10 text-coral" />
               <p className="text-sm font-medium">{fileName}</p>
             </>
           ) : (

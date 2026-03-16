@@ -25,7 +25,7 @@ export function FormatNav({ resourceId, enabledFormats }: Props) {
               href={`/consume/${resourceId}/${format}`}
               className={cn(
                 "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-xs transition-colors sm:px-3",
-                isActive ? "bg-blue-50 text-blue-600" : "text-gray-500 hover:text-gray-700"
+                isActive ? "bg-coral-light text-coral" : "text-gray-500 hover:text-gray-700"
               )}
             >
               <span className="text-lg">{meta.icon}</span>

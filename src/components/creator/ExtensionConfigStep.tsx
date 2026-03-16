@@ -126,7 +126,7 @@ export function ExtensionConfigStep({
               onClick={() => setActiveTab(slug)}
               className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === slug
-                  ? "bg-blue-600 text-white"
+                  ? "bg-coral text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
