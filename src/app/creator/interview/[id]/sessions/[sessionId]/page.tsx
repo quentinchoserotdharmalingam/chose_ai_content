@@ -212,7 +212,7 @@ export default function SessionDetailPage() {
 
           {/* Dimensions */}
           {analysisData?.dimensions && (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {Object.entries(analysisData.dimensions).map(([key, value]) => (
                 <div key={key} className="rounded-xl border border-gray-200 bg-white p-4">
                   <h4 className="mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">

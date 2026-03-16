@@ -150,33 +150,33 @@ export default function CreatorDashboard() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-2 flex items-start justify-between">
+      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-[28px] font-medium tracking-[-0.02em] text-ht-text">
+          <h1 className="text-[22px] sm:text-[28px] font-medium tracking-[-0.02em] text-ht-text">
             Contenu IA
           </h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Search */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ht-text-secondary" />
             <input
               type="text"
               placeholder="Rechercher"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-10 w-[200px] rounded-lg border border-ht-border bg-white pl-9 pr-3 text-[13px] text-ht-text placeholder:text-ht-text-secondary transition-all duration-200 focus:border-ht-border-secondary focus:outline-none focus:shadow-[var(--focus-ring)]"
+              className="h-10 w-full sm:w-[200px] rounded-lg border border-ht-border bg-white pl-9 pr-3 text-[13px] text-ht-text placeholder:text-ht-text-secondary transition-all duration-200 focus:border-ht-border-secondary focus:outline-none focus:shadow-[var(--focus-ring)]"
             />
           </div>
           {/* Filter */}
-          <button className="flex h-10 w-10 items-center justify-center rounded-lg border border-ht-border text-ht-text-secondary transition-all duration-200 hover:bg-ht-fill-secondary hover:text-ht-text">
+          <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ht-border text-ht-text-secondary transition-all duration-200 hover:bg-ht-fill-secondary hover:text-ht-text">
             <SlidersHorizontal className="h-4 w-4" />
           </button>
           {/* Add button — pill shape per spec */}
           <div className="relative" ref={addMenuRef}>
             <button
               onClick={() => setShowAddMenu(!showAddMenu)}
-              className="h-10 rounded-full bg-ht-primary px-6 text-[13px] font-semibold text-white shadow-ht-1 transition-all duration-200 hover:bg-ht-primary-dark"
+              className="h-10 shrink-0 rounded-full bg-ht-primary px-4 sm:px-6 text-[13px] font-semibold text-white shadow-ht-1 transition-all duration-200 hover:bg-ht-primary-dark"
             >
               Ajouter
             </button>
@@ -277,7 +277,63 @@ export default function CreatorDashboard() {
         </div>
       ) : (
         <>
-          <div className="overflow-visible rounded-xl border border-ht-border bg-white">
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {paginatedResources.map((resource) => {
+              const status = STATUS_STYLES[resource.status] || STATUS_STYLES.draft;
+              const formats = parseFormats(resource.enabledFormats);
+              return (
+                <div key={resource.id} className="rounded-xl border border-ht-border bg-white p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-medium text-ht-text truncate">{resource.title || "Sans titre"}</p>
+                      <div className="mt-2 flex items-center gap-3">
+                        {formats.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            {formats.map((f) => (
+                              <span key={f} className="text-[14px] leading-none">{FORMAT_META[f]?.icon}</span>
+                            ))}
+                          </div>
+                        )}
+                        <span className={`text-[12px] font-medium ${status.color}`}>{status.label}</span>
+                      </div>
+                    </div>
+                    <div className="relative ml-2">
+                      <button
+                        onClick={() => setOpenMenu(openMenu === resource.id ? null : resource.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-ht-text-secondary hover:bg-ht-fill-secondary"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                      {openMenu === resource.id && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
+                          <div className="absolute right-0 z-50 w-48 rounded-lg border border-ht-border bg-white py-1 shadow-ht-3 top-full mt-1">
+                            {(resource.status === "generated" || resource.status === "published") && (
+                              <Link href={`/consume/${resource.id}`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
+                                <Eye className="h-4 w-4 text-ht-text-secondary" /> Voir comme enrollee
+                              </Link>
+                            )}
+                            {(resource.status === "generated" || resource.status === "published") && (
+                              <button className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => handleDuplicate(resource)}>
+                                <Copy className="h-4 w-4 text-ht-text-secondary" /> Dupliquer
+                              </button>
+                            )}
+                            <button className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-error hover:bg-ht-error-warm" onClick={() => handleDelete(resource.id)}>
+                              <Trash2 className="h-4 w-4" /> Supprimer
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-visible rounded-xl border border-ht-border bg-white">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-ht-border">
@@ -505,7 +561,60 @@ function InterviewsTab({
       <p className="mb-5 text-[13px] font-medium text-ht-text-secondary">
         {filtered.length} résultat{filtered.length !== 1 ? "s" : ""}
       </p>
-      <div className="overflow-visible rounded-xl border border-ht-border bg-white">
+
+      {/* Mobile cards */}
+      <div className="space-y-3 md:hidden">
+        {filtered.map((interview) => {
+          const completedSessions = interview.sessions.filter((s) => s.status === "completed").length;
+          return (
+            <div key={interview.id} className="rounded-xl border border-ht-border bg-white p-4">
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-medium text-ht-text truncate">{interview.title}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-[12px] text-ht-text-secondary">{themeLabel(interview.theme)}</span>
+                    <span className="text-[12px] text-ht-text-secondary">{completedSessions}/{interview.sessions.length} sessions</span>
+                    <span className={`text-[12px] font-medium ${interview.status === "published" ? "text-ht-success" : "text-ht-text-secondary"}`}>
+                      {interview.status === "published" ? "Publié" : "Brouillon"}
+                    </span>
+                  </div>
+                </div>
+                <div className="relative ml-2">
+                  <button
+                    onClick={() => setOpenMenu(openMenu === interview.id ? null : interview.id)}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ht-text-secondary hover:bg-ht-fill-secondary"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                  {openMenu === interview.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
+                      <div className="absolute right-0 z-50 w-52 rounded-lg border border-ht-border bg-white py-1 shadow-ht-3 top-full mt-1">
+                        {interview.status === "published" && (
+                          <Link href={`/interview/${interview.id}`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
+                            <Eye className="h-4 w-4 text-ht-text-secondary" /> Tester
+                          </Link>
+                        )}
+                        {interview.sessions.length > 0 && (
+                          <Link href={`/creator/interview/${interview.id}/sessions`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
+                            <Search className="h-4 w-4 text-ht-text-secondary" /> Sessions
+                          </Link>
+                        )}
+                        <button className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-error hover:bg-ht-error-warm" onClick={() => { onDelete(interview.id); setOpenMenu(null); }}>
+                          <Trash2 className="h-4 w-4" /> Supprimer
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block overflow-visible rounded-xl border border-ht-border bg-white">
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-ht-border">
@@ -554,31 +663,17 @@ function InterviewsTab({
                           <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
                           <div className="absolute right-0 z-50 w-52 rounded-lg border border-ht-border bg-white py-1 shadow-ht-3 top-full mt-1">
                             {interview.status === "published" && (
-                              <Link
-                                href={`/interview/${interview.id}`}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text transition-colors hover:bg-ht-fill-secondary"
-                                onClick={() => setOpenMenu(null)}
-                              >
-                                <Eye className="h-4 w-4 text-ht-text-secondary" />
-                                Tester comme collaborateur
+                              <Link href={`/interview/${interview.id}`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
+                                <Eye className="h-4 w-4 text-ht-text-secondary" /> Tester comme collaborateur
                               </Link>
                             )}
                             {interview.sessions.length > 0 && (
-                              <Link
-                                href={`/creator/interview/${interview.id}/sessions`}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text transition-colors hover:bg-ht-fill-secondary"
-                                onClick={() => setOpenMenu(null)}
-                              >
-                                <Search className="h-4 w-4 text-ht-text-secondary" />
-                                Voir les sessions
+                              <Link href={`/creator/interview/${interview.id}/sessions`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
+                                <Search className="h-4 w-4 text-ht-text-secondary" /> Voir les sessions
                               </Link>
                             )}
-                            <button
-                              className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-error transition-colors hover:bg-ht-error-warm"
-                              onClick={() => { onDelete(interview.id); setOpenMenu(null); }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Supprimer
+                            <button className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-error hover:bg-ht-error-warm" onClick={() => { onDelete(interview.id); setOpenMenu(null); }}>
+                              <Trash2 className="h-4 w-4" /> Supprimer
                             </button>
                           </div>
                         </>

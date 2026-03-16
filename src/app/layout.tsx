@@ -22,8 +22,8 @@ export default function RootLayout({
     <html lang="fr">
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Sidebar />
-        <main className="ml-[200px] min-h-screen bg-white">
-          <div className="px-8 py-6">{children}</div>
+        <main className="min-h-screen bg-white lg:ml-[200px]">
+          <div className="px-4 py-4 pt-16 sm:px-6 sm:py-6 lg:px-8 lg:pt-6">{children}</div>
         </main>
       </body>
     </html>
