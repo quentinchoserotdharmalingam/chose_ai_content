@@ -58,39 +58,41 @@ export default function NewResourcePage() {
   return (
     <div>
       {/* Step indicator */}
-      <div className="mb-8 flex items-center gap-1 overflow-x-auto sm:gap-2">
-        {STEPS.map((step, i) => (
-          <div key={step.key} className="flex items-center gap-1 sm:gap-2">
-            <button
-              onClick={() => handleStepClick(i)}
-              disabled={i >= currentIndex}
-              className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors sm:h-8 sm:w-8 sm:text-sm ${
-                i < currentIndex
-                  ? "cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
-                  : i === currentIndex
-                  ? "bg-blue-100 text-blue-600 ring-2 ring-blue-600"
-                  : "bg-gray-100 text-gray-400"
-              }`}
-            >
-              {i < currentIndex ? "✓" : i + 1}
-            </button>
-            <span
-              className={`hidden text-sm md:inline ${
-                i === currentIndex
-                  ? "font-medium text-gray-900"
-                  : i < currentIndex
-                  ? "cursor-pointer text-gray-600 hover:text-gray-900"
-                  : "text-gray-400"
-              }`}
-              onClick={() => handleStepClick(i)}
-            >
-              {step.label}
-            </span>
-            {i < STEPS.length - 1 && (
-              <div className={`h-px w-4 sm:w-6 ${i < currentIndex ? "bg-blue-600" : "bg-gray-200"}`} />
-            )}
-          </div>
-        ))}
+      <div className="mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex items-center justify-between gap-0 sm:gap-2">
+          {STEPS.map((step, i) => (
+            <div key={step.key} className="flex min-w-0 flex-1 items-center gap-0 sm:gap-2">
+              <button
+                onClick={() => handleStepClick(i)}
+                disabled={i >= currentIndex}
+                className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors sm:h-8 sm:w-8 sm:text-sm ${
+                  i < currentIndex
+                    ? "cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
+                    : i === currentIndex
+                    ? "bg-blue-100 text-blue-600 ring-2 ring-blue-600"
+                    : "bg-gray-100 text-gray-400"
+                }`}
+              >
+                {i < currentIndex ? "✓" : i + 1}
+              </button>
+              <span
+                className={`hidden text-sm md:inline ${
+                  i === currentIndex
+                    ? "font-medium text-gray-900"
+                    : i < currentIndex
+                    ? "cursor-pointer text-gray-600 hover:text-gray-900"
+                    : "text-gray-400"
+                }`}
+                onClick={() => handleStepClick(i)}
+              >
+                {step.label}
+              </span>
+              {i < STEPS.length - 1 && (
+                <div className={`mx-0.5 h-px flex-1 sm:mx-0 ${i < currentIndex ? "bg-blue-600" : "bg-gray-200"}`} />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Step content */}
