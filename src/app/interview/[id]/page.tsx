@@ -32,6 +32,7 @@ export default function InterviewChatPage() {
   const [participantName, setParticipantName] = useState("");
   const [showNamePrompt, setShowNamePrompt] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [readyToComplete, setReadyToComplete] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -155,7 +156,7 @@ export default function InterviewChatPage() {
       }
 
       if (maxReached) {
-        setCompleted(true);
+        setReadyToComplete(true);
       }
     } catch {
       // Silent for POC
@@ -365,37 +366,53 @@ export default function InterviewChatPage() {
         </div>
       </div>
 
-      {/* Input */}
+      {/* Input / Complete CTA */}
       <div className="border-t border-gray-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-3">
         <div className="mx-auto max-w-2xl">
-          <p className="mb-2 text-center text-[10px] text-gray-400">
-            Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
-          </p>
-          <div className="flex items-end gap-2">
-            <div className="relative flex-1">
-              <div
-                aria-hidden="true"
-                className="invisible min-h-[44px] max-h-[40dvh] whitespace-pre-wrap break-words rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed"
-              >{input || "X"}&nbsp;</div>
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={scrollToBottom}
-                placeholder="Votre réponse..."
-                disabled={streaming}
-                className="absolute inset-0 resize-none overflow-hidden rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
-              />
+          {readyToComplete ? (
+            <div className="py-2 text-center">
+              <p className="mb-3 text-xs text-gray-500">L&apos;interview est terminée. Merci pour vos réponses.</p>
+              <button
+                onClick={handleComplete}
+                disabled={completing}
+                className="inline-flex items-center gap-2 rounded-full bg-coral px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-coral-dark disabled:opacity-50"
+              >
+                {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+                Terminer l&apos;interview
+              </button>
             </div>
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || streaming}
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
-            >
-              {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </button>
-          </div>
+          ) : (
+            <>
+              <p className="mb-2 text-center text-[10px] text-gray-400">
+                Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
+              </p>
+              <div className="flex items-end gap-2">
+                <div className="relative flex-1">
+                  <div
+                    aria-hidden="true"
+                    className="invisible min-h-[44px] max-h-[40dvh] whitespace-pre-wrap break-words rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed"
+                  >{input || "X"}&nbsp;</div>
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={scrollToBottom}
+                    placeholder="Votre réponse..."
+                    disabled={streaming}
+                    className="absolute inset-0 resize-none overflow-hidden rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
+                  />
+                </div>
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || streaming}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
+                >
+                  {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
