@@ -184,7 +184,10 @@ GET    /api/interviews/[id]                          → Détail interview + ses
 PATCH  /api/interviews/[id]                          → Modifier configuration
 DELETE /api/interviews/[id]                          → Supprimer interview
 
-# Suggestion IA pour la configuration
+# Suggestions IA pour la configuration
+POST   /api/interviews/[id]/suggest-title            → Suggérer titre + description
+POST   /api/interviews/[id]/suggest-scope            → Suggérer périmètre (zones verte/rouge)
+POST   /api/interviews/[id]/suggest-questions         → Suggérer questions d'ancrage + passage
 POST   /api/interviews/[id]/suggest-analysis         → Suggérer une structure d'analyse
 
 # Entretien (collaborateur)
@@ -222,6 +225,31 @@ GET    /api/interviews/[id]/sessions/[sid]/analysis    → Consulter l'analyse
 5. Publication     → Récapitulatif + publier
 ```
 
+### Suggestions IA dans le wizard
+
+Chaque étape du wizard dispose d'un bouton **"Générer via IA"** (icône Sparkles) qui appelle un endpoint dédié pour pré-remplir les champs :
+
+| Étape | Endpoint | Modèle | Données générées |
+|---|---|---|---|
+| Configuration | `POST /api/interviews/[id]/suggest-title` | Haiku | Titre + description |
+| Périmètre | `POST /api/interviews/[id]/suggest-scope` | Haiku | Zone verte + zone rouge |
+| Questions | `POST /api/interviews/[id]/suggest-questions` | Haiku | Questions d'ancrage + de passage |
+| Analyse | `POST /api/interviews/[id]/suggest-analysis` | Haiku | Dimensions d'analyse (template) |
+
+- L'interview est auto-sauvegardée (`ensureSaved()`) avant chaque appel IA pour que l'endpoint ait accès aux paramètres déjà configurés
+- Les suggestions utilisent le modèle **Claude Haiku** (rapide, peu coûteux) pour la génération de suggestions
+- Le créateur peut modifier librement les suggestions après génération
+
+### Initialisation du chat
+
+Lors du démarrage d'une nouvelle session (aucun message existant), le backend injecte automatiquement un message d'introduction avec le prénom du participant :
+
+```
+"Bonjour, je m'appelle {participantName}. Je suis prêt pour l'interview."
+```
+
+Ce message n'est pas visible dans l'UI mais permet à l'agent IA de se présenter et de poser sa première question de manière naturelle et personnalisée.
+
 ### Contraintes techniques
 
 | Contrainte | Valeur |
@@ -229,9 +257,10 @@ GET    /api/interviews/[id]/sessions/[sid]/analysis    → Consulter l'analyse
 | **Streaming** | SSE (Server-Sent Events), comme le chat Content existant |
 | **Modèle IA (entretien)** | Claude Sonnet (contexte riche, relances adaptatives) |
 | **Modèle IA (analyse)** | Claude Sonnet (analyse post-entretien) |
+| **Modèle IA (suggestions)** | Claude Haiku (génération rapide dans le wizard) |
 | **Volumétrie messages** | ~20-30 messages par entretien |
 | **Persistence** | Tous les messages stockés en base (reprise possible) |
-| **Max tokens / réponse** | ~300 tokens (réponses concises, 1 question à la fois) |
+| **Max tokens / réponse** | ~400 tokens (réponses concises, 1 question à la fois) |
 
 ---
 
@@ -242,7 +271,7 @@ GET    /api/interviews/[id]/sessions/[sid]/analysis    → Consulter l'analyse
 - [x] CRUD ressource Interview (créer, configurer, publier)
 - [x] Wizard de création en 5 étapes
 - [x] Configuration complète : thème, ton, périmètre, questions, limites, analyse
-- [x] Suggestion IA de la structure d'analyse
+- [x] Suggestions IA à chaque étape du wizard (titre, périmètre, questions, analyse)
 - [x] Entretien conversationnel streaming (chat adaptatif)
 - [x] Persistence des messages (quitter/reprendre)
 - [x] Clôture manuelle par le collaborateur
@@ -251,6 +280,13 @@ GET    /api/interviews/[id]/sessions/[sid]/analysis    → Consulter l'analyse
 - [x] Consultation verbatim + analyse par l'admin
 - [x] Dashboard créateur avec onglet Interviews
 - [x] Accès collaborateur par lien direct
+- [x] UI responsive mobile (sidebar toggle, layouts adaptatifs)
+- [x] Labels UI en français : "Interview" (et non "Entretien")
+
+### Bugs corrigés
+
+- **Initialisation du chat** : l'envoi d'un tableau de messages vide à l'API Claude causait une erreur silencieuse. Corrigé par injection d'un message d'introduction côté backend.
+- **Responsive mobile** : sidebar fixe qui cassait le layout sur mobile. Corrigé avec un hamburger toggle + overlay + layouts carte pour les tableaux.
 
 ### Exclu (post-MVP)
 
@@ -262,6 +298,22 @@ GET    /api/interviews/[id]/sessions/[sid]/analysis    → Consulter l'analyse
 - [ ] Enrichissement avec signaux HeyTeam (ancienneté, engagement)
 - [ ] Comparaison temporelle entre entretiens d'un même collaborateur
 - [ ] Export des résultats (CSV, PDF)
+
+---
+
+## Design & UX
+
+### Responsive
+
+- **Desktop** : sidebar fixe 200px à gauche, contenu principal avec margin-left
+- **Mobile** (< `lg`) : sidebar masquée, hamburger en haut à gauche, overlay au tap
+- La page d'interview collaborateur (`/interview/[id]`) utilise un layout dédié `fixed inset-0 z-[60]` qui recouvre entièrement la sidebar
+- Les tableaux de données (dashboard, sessions) basculent en **cards** sur mobile (`md:hidden` / `hidden md:block`)
+
+### Terminologie UI
+
+- Labels affichés : **"Interview IA"** (et non "Entretien")
+- Cohérence dans tous les composants : dashboard, wizard, chat, sessions
 
 ---
 
