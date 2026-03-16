@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
   const interview = await prisma.interviewResource.create({
     data: {
-      title: body.title || "Nouvel entretien",
+      title: body.title || "Nouvelle interview",
       description: body.description || null,
       theme: body.theme || "onboarding",
       tone: body.tone || "bienveillant",

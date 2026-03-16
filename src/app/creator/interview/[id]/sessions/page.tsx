@@ -68,7 +68,7 @@ export default function InterviewSessionsPage() {
       {data.sessions.length === 0 ? (
         <div className="py-16 text-center">
           <MessageCircle className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-          <p className="text-sm text-gray-500">Aucune session pour cet entretien</p>
+          <p className="text-sm text-gray-500">Aucune session pour cette interview</p>
         </div>
       ) : (
         <div className="space-y-3">
