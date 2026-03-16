@@ -10,14 +10,13 @@ import {
   Trash2,
   Copy,
   Eye,
-  FileText,
   Sparkles,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
-  MessageSquare,
+  Plus,
 } from "lucide-react";
-import { FORMAT_META, INTERVIEW_THEME_META, type FormatSlug, type InterviewTheme } from "@/types";
+import { FORMAT_META, type FormatSlug } from "@/types";
 
 interface Resource {
   id: string;
@@ -41,53 +40,23 @@ const STATUS_STYLES: Record<string, { label: string; color: string }> = {
   published: { label: "Publié", color: "text-ht-success" },
 };
 
-interface InterviewResource {
-  id: string;
-  title: string;
-  description: string | null;
-  theme: string;
-  tone: string;
-  status: string;
-  createdAt: string;
-  sessions: Array<{ id: string; status: string; participantName: string | null }>;
-}
-
 const ITEMS_PER_PAGE = 10;
-
-type Tab = "content" | "interviews";
 
 export default function CreatorDashboard() {
   const [resources, setResources] = useState<Resource[]>([]);
-  const [interviews, setInterviews] = useState<InterviewResource[]>([]);
-  const [activeTab, setActiveTab] = useState<Tab>("content");
   const [loading, setLoading] = useState(true);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [showAddMenu, setShowAddMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const addMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/resources").then((res) => res.json()),
-      fetch("/api/interviews").then((res) => res.json()),
-    ])
-      .then(([resourcesData, interviewsData]) => {
-        setResources(resourcesData);
-        setInterviews(interviewsData);
+    fetch("/api/resources")
+      .then((res) => res.json())
+      .then((data) => {
+        setResources(data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
-        setShowAddMenu(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -150,14 +119,11 @@ export default function CreatorDashboard() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-[22px] sm:text-[28px] font-medium tracking-[-0.02em] text-ht-text">
-            Contenu IA
-          </h1>
-        </div>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <h1 className="text-[22px] sm:text-[28px] font-medium tracking-[-0.02em] text-ht-text">
+          Formation IA
+        </h1>
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Search */}
           <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ht-text-secondary" />
             <input
@@ -168,92 +134,21 @@ export default function CreatorDashboard() {
               className="h-10 w-full sm:w-[200px] rounded-lg border border-ht-border bg-white pl-9 pr-3 text-[13px] text-ht-text placeholder:text-ht-text-secondary transition-all duration-200 focus:border-ht-border-secondary focus:outline-none focus:shadow-[var(--focus-ring)]"
             />
           </div>
-          {/* Filter */}
           <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ht-border text-ht-text-secondary transition-all duration-200 hover:bg-ht-fill-secondary hover:text-ht-text">
             <SlidersHorizontal className="h-4 w-4" />
           </button>
-          {/* Add button — pill shape per spec */}
-          <div className="relative" ref={addMenuRef}>
-            <button
-              onClick={() => setShowAddMenu(!showAddMenu)}
-              className="h-10 shrink-0 rounded-full bg-ht-primary px-4 sm:px-6 text-[13px] font-semibold text-white shadow-ht-1 transition-all duration-200 hover:bg-ht-primary-dark"
-            >
-              Ajouter
-            </button>
-            {showAddMenu && (
-              <div className="absolute right-0 z-30 mt-2 w-64 rounded-xl border border-ht-border bg-white py-2 shadow-ht-3">
-                <p className="px-4 py-1.5 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">
-                  Type de ressource
-                </p>
-                <Link
-                  href="/creator/new"
-                  className="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 hover:bg-ht-fill-secondary"
-                  onClick={() => setShowAddMenu(false)}
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ht-primary-warm">
-                    <Sparkles className="h-4 w-4 text-ht-primary" />
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-medium text-ht-text">Ressource IA</p>
-                    <p className="text-[12px] text-ht-text-secondary">Générer du contenu depuis un PDF</p>
-                  </div>
-                </Link>
-                <Link
-                  href="/creator/interview/new"
-                  className="flex items-center gap-3 px-4 py-2.5 transition-all duration-200 hover:bg-ht-fill-secondary"
-                  onClick={() => setShowAddMenu(false)}
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100">
-                    <MessageSquare className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-medium text-ht-text">Interview IA</p>
-                    <p className="text-[12px] text-ht-text-secondary">Interview adaptative avec analyse</p>
-                  </div>
-                </Link>
-                <button
-                  className="flex w-full items-center gap-3 px-4 py-2.5 opacity-40 cursor-not-allowed"
-                  disabled
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ht-fill-secondary">
-                    <FileText className="h-4 w-4 text-ht-text-secondary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[13px] font-medium text-ht-text">Fichier</p>
-                    <p className="text-[12px] text-ht-text-secondary">Uploader un document classique</p>
-                  </div>
-                </button>
-              </div>
-            )}
-          </div>
+          <Link
+            href="/creator/new"
+            className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-ht-primary px-4 sm:px-6 text-[13px] font-semibold text-white shadow-ht-1 transition-all duration-200 hover:bg-ht-primary-dark"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Nouvelle formation</span>
+            <span className="sm:hidden">Ajouter</span>
+          </Link>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-5 flex items-center gap-1 border-b border-ht-border">
-        <button
-          onClick={() => { setActiveTab("content"); setCurrentPage(1); setSearch(""); }}
-          className={`px-4 py-2.5 text-[13px] font-medium transition-colors ${
-            activeTab === "content"
-              ? "border-b-2 border-ht-primary text-ht-primary"
-              : "text-ht-text-secondary hover:text-ht-text"
-          }`}
-        >
-          Contenu IA ({resources.length})
-        </button>
-        <button
-          onClick={() => { setActiveTab("interviews"); setCurrentPage(1); setSearch(""); }}
-          className={`px-4 py-2.5 text-[13px] font-medium transition-colors ${
-            activeTab === "interviews"
-              ? "border-b-2 border-ht-primary text-ht-primary"
-              : "text-ht-text-secondary hover:text-ht-text"
-          }`}
-        >
-          Interviews IA ({interviews.length})
-        </button>
-      </div>
-
-      {activeTab === "content" && (<>
+      {(<>
       {/* Result count */}
       <p className="mb-5 text-[13px] font-medium text-ht-text-secondary">
         {filteredResources.length} résultat{filteredResources.length !== 1 ? "s" : ""}
@@ -499,193 +394,6 @@ export default function CreatorDashboard() {
         </>
       )}
       </>)}
-
-      {activeTab === "interviews" && (
-        <InterviewsTab
-          interviews={interviews}
-          search={search}
-          onDelete={(id) => {
-            fetch(`/api/interviews/${id}`, { method: "DELETE" }).then(() =>
-              setInterviews((prev) => prev.filter((i) => i.id !== id))
-            );
-          }}
-        />
-      )}
     </div>
-  );
-}
-
-function InterviewsTab({
-  interviews,
-  search,
-  onDelete,
-}: {
-  interviews: InterviewResource[];
-  search: string;
-  onDelete: (id: string) => void;
-}) {
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-
-  const filtered = interviews.filter((i) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return i.title.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q);
-  });
-
-  const themeLabel = (theme: string) => {
-    const meta = INTERVIEW_THEME_META[theme as InterviewTheme];
-    return meta ? `${meta.icon} ${meta.label}` : theme;
-  };
-
-  if (filtered.length === 0) {
-    return (
-      <div className="py-16 text-center">
-        <MessageSquare className="mx-auto mb-4 h-12 w-12 text-ht-text-inactive" />
-        <p className="text-[13px] text-ht-text-secondary">
-          {search ? "Aucun résultat pour cette recherche" : "Aucune interview IA pour le moment"}
-        </p>
-        {!search && (
-          <Link
-            href="/creator/interview/new"
-            className="mt-4 inline-block rounded-lg border border-ht-border-secondary px-4 py-2 text-[13px] font-medium text-ht-text transition-all duration-200 hover:bg-ht-fill-secondary"
-          >
-            Créer ma première interview IA
-          </Link>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <p className="mb-5 text-[13px] font-medium text-ht-text-secondary">
-        {filtered.length} résultat{filtered.length !== 1 ? "s" : ""}
-      </p>
-
-      {/* Mobile cards */}
-      <div className="space-y-3 md:hidden">
-        {filtered.map((interview) => {
-          const completedSessions = interview.sessions.filter((s) => s.status === "completed").length;
-          return (
-            <div key={interview.id} className="rounded-xl border border-ht-border bg-white p-4">
-              <div className="flex items-start justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-medium text-ht-text truncate">{interview.title}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="text-[12px] text-ht-text-secondary">{themeLabel(interview.theme)}</span>
-                    <span className="text-[12px] text-ht-text-secondary">{completedSessions}/{interview.sessions.length} sessions</span>
-                    <span className={`text-[12px] font-medium ${interview.status === "published" ? "text-ht-success" : "text-ht-text-secondary"}`}>
-                      {interview.status === "published" ? "Publié" : "Brouillon"}
-                    </span>
-                  </div>
-                </div>
-                <div className="relative ml-2">
-                  <button
-                    onClick={() => setOpenMenu(openMenu === interview.id ? null : interview.id)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ht-text-secondary hover:bg-ht-fill-secondary"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-                  {openMenu === interview.id && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
-                      <div className="absolute right-0 z-50 w-52 rounded-lg border border-ht-border bg-white py-1 shadow-ht-3 top-full mt-1">
-                        {interview.status === "published" && (
-                          <Link href={`/interview/${interview.id}`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
-                            <Eye className="h-4 w-4 text-ht-text-secondary" /> Tester
-                          </Link>
-                        )}
-                        {interview.sessions.length > 0 && (
-                          <Link href={`/creator/interview/${interview.id}/sessions`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
-                            <Search className="h-4 w-4 text-ht-text-secondary" /> Sessions
-                          </Link>
-                        )}
-                        <button className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-error hover:bg-ht-error-warm" onClick={() => { onDelete(interview.id); setOpenMenu(null); }}>
-                          <Trash2 className="h-4 w-4" /> Supprimer
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden md:block overflow-visible rounded-xl border border-ht-border bg-white">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-ht-border">
-              <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">Nom</th>
-              <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">Thème</th>
-              <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">Sessions</th>
-              <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">Statut</th>
-              <th className="w-14 px-3 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((interview, idx) => {
-              const isLast = idx === filtered.length - 1;
-              const completedSessions = interview.sessions.filter((s) => s.status === "completed").length;
-              return (
-                <tr
-                  key={interview.id}
-                  className={`transition-all duration-200 hover:bg-ht-fill-container ${!isLast ? "border-b border-ht-border" : ""}`}
-                >
-                  <td className="px-5 py-3.5">
-                    <p className="text-[13px] font-medium text-ht-text">{interview.title}</p>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-[13px] text-ht-text">{themeLabel(interview.theme)}</span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-[13px] text-ht-text">
-                      {completedSessions}/{interview.sessions.length}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className={`text-[13px] font-medium ${interview.status === "published" ? "text-ht-success" : "text-ht-text-secondary"}`}>
-                      {interview.status === "published" ? "Publié" : "Brouillon"}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3.5 text-right">
-                    <div className="relative inline-block">
-                      <button
-                        onClick={() => setOpenMenu(openMenu === interview.id ? null : interview.id)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-ht-text-secondary transition-all duration-200 hover:bg-ht-fill-secondary hover:text-ht-text"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                      {openMenu === interview.id && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
-                          <div className="absolute right-0 z-50 w-52 rounded-lg border border-ht-border bg-white py-1 shadow-ht-3 top-full mt-1">
-                            {interview.status === "published" && (
-                              <Link href={`/interview/${interview.id}`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
-                                <Eye className="h-4 w-4 text-ht-text-secondary" /> Tester comme collaborateur
-                              </Link>
-                            )}
-                            {interview.sessions.length > 0 && (
-                              <Link href={`/creator/interview/${interview.id}/sessions`} className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-text hover:bg-ht-fill-secondary" onClick={() => setOpenMenu(null)}>
-                                <Search className="h-4 w-4 text-ht-text-secondary" /> Voir les sessions
-                              </Link>
-                            )}
-                            <button className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-ht-error hover:bg-ht-error-warm" onClick={() => { onDelete(interview.id); setOpenMenu(null); }}>
-                              <Trash2 className="h-4 w-4" /> Supprimer
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </>
   );
 }

@@ -16,6 +16,7 @@ import {
   Zap,
   Trophy,
   Sparkles,
+  MessageSquare,
   ChevronLeft,
   ChevronUp,
   Menu,
@@ -26,7 +27,8 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/documents", label: "Documents", icon: FileText },
   { href: "/formations", label: "Formations", icon: GraduationCap },
-  { href: "/creator", label: "Contenu IA", icon: Sparkles },
+  { href: "/creator", label: "Formation IA", icon: Sparkles },
+  { href: "/creator/interview", label: "Interview IA", icon: MessageSquare },
   { href: "/questionnaires", label: "Questionnaires", icon: ClipboardList },
   { href: "/quiz", label: "Quiz", icon: HelpCircle },
   { href: "/events", label: "Événements", icon: Calendar },
@@ -118,7 +120,9 @@ export function Sidebar() {
             {NAV_ITEMS.map((item) => {
               const isActive =
                 item.href === "/creator"
-                  ? pathname === "/creator" || pathname?.startsWith("/creator/")
+                  ? pathname === "/creator" || (pathname?.startsWith("/creator/") && !pathname?.startsWith("/creator/interview"))
+                  : item.href === "/creator/interview"
+                  ? pathname === "/creator/interview" || pathname?.startsWith("/creator/interview/")
                   : pathname === item.href || pathname?.startsWith(item.href + "/");
 
               return (
