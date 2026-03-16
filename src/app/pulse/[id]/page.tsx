@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Send, Loader2, Bot, ShieldCheck, Activity } from "lucide-react";
+import { Send, Loader2, Bot, ShieldCheck, Activity, LogOut } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -58,6 +58,15 @@ export default function PulsePage() {
   }, []);
 
   useEffect(() => scrollToBottom(), [messages, scrollToBottom]);
+
+  // Scroll to bottom when mobile keyboard opens (visual viewport resize)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handleResize = () => scrollToBottom();
+    vv.addEventListener("resize", handleResize);
+    return () => vv.removeEventListener("resize", handleResize);
+  }, [scrollToBottom]);
 
   // Load pulse data
   useEffect(() => {
@@ -331,22 +340,21 @@ export default function PulsePage() {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-coral/10">
-              <Activity className="h-3.5 w-3.5 text-coral" />
+              <Bot className="h-3.5 w-3.5 text-coral" />
             </div>
             <div>
               <h1 className="text-sm font-medium leading-tight">{pulse.title}</h1>
-              <p className="text-[10px] text-gray-400">Score : {selectedScore}/10</p>
+              <p className="text-[10px] text-gray-400">Score : {selectedScore}/10 · Suivi par IA</p>
             </div>
           </div>
-          {(readyToComplete || messages.length >= 4) && (
-            <button
-              onClick={handleComplete}
-              disabled={completing}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
-            >
-              {completing ? <Loader2 className="h-3 w-3 animate-spin" /> : "Terminer"}
-            </button>
-          )}
+          <button
+            onClick={handleComplete}
+            disabled={completing || messages.length < 2}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+          >
+            {completing ? <Loader2 className="h-3 w-3 animate-spin" /> : <LogOut className="h-3 w-3" />}
+            Terminer
+          </button>
         </div>
       </div>
 
@@ -354,22 +362,30 @@ export default function PulsePage() {
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-4">
           {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              key={i}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
               {msg.role === "assistant" && (
                 <div className="mr-2 mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-coral/10">
                   <Bot className="h-3.5 w-3.5 text-coral" />
                 </div>
               )}
               <div className="max-w-[75%]">
-                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-coral text-white"
-                    : "bg-white border border-gray-200 text-gray-800"
-                }`}>
+                {msg.role === "assistant" && i === 0 && (
+                  <span className="mb-1 block text-[10px] font-medium text-gray-400">Assistant IA</span>
+                )}
+                <div
+                  className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-coral text-white"
+                      : "bg-white border border-gray-200 text-gray-800"
+                  }`}
+                >
                   {msg.content || (
                     <span className="flex items-center gap-1.5 text-gray-400">
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      <span className="text-xs">L&apos;IA rédige...</span>
+                      <span className="text-xs">L&apos;IA rédige sa réponse...</span>
                     </span>
                   )}
                 </div>
@@ -380,7 +396,7 @@ export default function PulsePage() {
         </div>
       </div>
 
-      {/* Input */}
+      {/* Input / Complete CTA */}
       <div className="border-t border-gray-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-3">
         <div className="mx-auto max-w-2xl">
           {readyToComplete ? (
@@ -391,33 +407,41 @@ export default function PulsePage() {
                 disabled={completing}
                 className="inline-flex items-center gap-2 rounded-full bg-coral px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-coral-dark disabled:opacity-50"
               >
-                {completing && <Loader2 className="h-4 w-4 animate-spin" />}
+                {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
                 Terminer
               </button>
             </div>
           ) : (
-            <div className="flex items-end gap-2">
-              <div className="relative flex-1">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={scrollToBottom}
-                  placeholder="Votre réponse..."
-                  disabled={streaming}
-                  rows={1}
-                  className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
-                />
+            <>
+              <p className="mb-2 text-center text-[10px] text-gray-400">
+                Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
+              </p>
+              <div className="flex items-end gap-2">
+                <div className="relative flex-1">
+                  <div
+                    aria-hidden="true"
+                    className="invisible min-h-[44px] max-h-[40dvh] whitespace-pre-wrap break-words rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed"
+                  >{input || "X"}&nbsp;</div>
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={scrollToBottom}
+                    placeholder="Votre réponse..."
+                    disabled={streaming}
+                    className="absolute inset-0 resize-none overflow-hidden rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
+                  />
+                </div>
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || streaming}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
+                >
+                  {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </button>
               </div>
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || streaming}
-                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
-              >
-                {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </button>
-            </div>
+            </>
           )}
         </div>
       </div>
