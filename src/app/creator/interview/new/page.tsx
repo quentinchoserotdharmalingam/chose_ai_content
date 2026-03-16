@@ -482,7 +482,7 @@ export default function NewInterviewPage() {
             {analysisTemplate.map((dim, i) => (
               <div key={dim.key} className="rounded-xl border border-gray-200 p-4">
                 <div className="mb-3 flex items-start justify-between">
-                  <div className="flex-1 grid grid-cols-2 gap-3">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="mb-1 block text-xs text-gray-500">Libellé</label>
                       <input
