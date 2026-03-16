@@ -20,14 +20,17 @@ export function getPulseSystemPrompt(params: PulsePromptParams): string {
     ? `Le collaborateur s'appelle ${params.participantName}. Utilise son prénom naturellement.`
     : "";
 
-  // Adapt depth based on score
+  // Adapt depth based on score — scale with maxFollowUps
+  const max = params.maxFollowUps;
   let depthInstruction: string;
   if (params.score >= 8) {
     depthInstruction = `Le score est élevé (${params.score}/10). Pose 1 question ouverte courte pour comprendre ce qui contribue positivement, puis clôture. Pas besoin de creuser longuement.`;
   } else if (params.score >= 5) {
-    depthInstruction = `Le score est mitigé (${params.score}/10). Pose 1 à 2 questions pour comprendre les nuances — ce qui va bien et ce qui pourrait être amélioré.`;
+    const upper = Math.min(Math.ceil(max * 0.6), max);
+    depthInstruction = `Le score est mitigé (${params.score}/10). Pose 1 à ${upper} questions pour comprendre les nuances — ce qui va bien et ce qui pourrait être amélioré.`;
   } else {
-    depthInstruction = `Le score est bas (${params.score}/10). Pose 2 à 3 questions avec empathie pour comprendre en profondeur ce qui ne va pas, sans être intrusif. Montre que ce retour est pris au sérieux.`;
+    const lower = Math.max(2, Math.ceil(max * 0.5));
+    depthInstruction = `Le score est bas (${params.score}/10). Pose ${lower} à ${max} questions avec empathie pour comprendre en profondeur ce qui ne va pas, sans être intrusif. Montre que ce retour est pris au sérieux.`;
   }
 
   return `Tu es un agent de suivi IA. Le collaborateur vient de donner un score de ${params.score}/10 à la question : "${params.pulseQuestion}".
