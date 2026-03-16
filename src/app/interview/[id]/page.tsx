@@ -32,6 +32,7 @@ export default function InterviewChatPage() {
   const [participantName, setParticipantName] = useState("");
   const [showNamePrompt, setShowNamePrompt] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [readyToComplete, setReadyToComplete] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -155,7 +156,7 @@ export default function InterviewChatPage() {
       }
 
       if (maxReached) {
-        setCompleted(true);
+        setReadyToComplete(true);
       }
     } catch {
       // Silent for POC
@@ -289,12 +290,19 @@ export default function InterviewChatPage() {
             <p className="mb-4 text-sm text-gray-600">
               Votre interview a bien été enregistrée. Une analyse sera générée automatiquement par l&apos;IA à partir de vos réponses.
             </p>
-            <div className="rounded-lg bg-blue-50 p-3">
+            <div className="mb-6 rounded-lg bg-blue-50 p-3">
               <p className="text-xs text-blue-700">
                 <ShieldCheck className="mb-0.5 mr-1 inline h-3.5 w-3.5" />
                 Vos réponses sont traitées de manière confidentielle et ne sont accessibles qu&apos;aux personnes habilitées.
               </p>
             </div>
+            <button
+              onClick={() => window.close()}
+              className="w-full rounded-full bg-coral py-2.5 text-sm font-semibold text-white hover:bg-coral-dark"
+            >
+              Fermer cette page
+            </button>
+            <p className="mt-3 text-[11px] text-gray-400">Vous pouvez fermer cet onglet en toute sécurité.</p>
           </div>
         </div>
       </div>
@@ -365,38 +373,53 @@ export default function InterviewChatPage() {
         </div>
       </div>
 
-      {/* Input */}
+      {/* Input / Complete CTA */}
       <div className="border-t border-gray-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-3">
         <div className="mx-auto max-w-2xl">
-          <p className="mb-2 text-center text-[10px] text-gray-400">
-            Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
-          </p>
-          <div className="flex items-end gap-2">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                // Auto-resize textarea
-                const el = e.target;
-                el.style.height = "auto";
-                el.style.height = Math.min(el.scrollHeight, 120) + "px";
-              }}
-              onKeyDown={handleKeyDown}
-              onFocus={scrollToBottom}
-              placeholder="Votre réponse..."
-              rows={2}
-              disabled={streaming}
-              className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || streaming}
-              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
-            >
-              {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </button>
-          </div>
+          {readyToComplete ? (
+            <div className="py-2 text-center">
+              <p className="mb-3 text-xs text-gray-500">L&apos;interview est terminée. Merci pour vos réponses.</p>
+              <button
+                onClick={handleComplete}
+                disabled={completing}
+                className="inline-flex items-center gap-2 rounded-full bg-coral px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-coral-dark disabled:opacity-50"
+              >
+                {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+                Terminer l&apos;interview
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="mb-2 text-center text-[10px] text-gray-400">
+                Cet échange est mené par une intelligence artificielle. Vos réponses sont confidentielles.
+              </p>
+              <div className="flex items-end gap-2">
+                <div className="relative flex-1">
+                  <div
+                    aria-hidden="true"
+                    className="invisible min-h-[44px] max-h-[40dvh] whitespace-pre-wrap break-words rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed"
+                  >{input || "X"}&nbsp;</div>
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={scrollToBottom}
+                    placeholder="Votre réponse..."
+                    disabled={streaming}
+                    className="absolute inset-0 resize-none overflow-hidden rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral disabled:opacity-50"
+                  />
+                </div>
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || streaming}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-coral text-white hover:bg-coral-dark disabled:opacity-40"
+                >
+                  {streaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
