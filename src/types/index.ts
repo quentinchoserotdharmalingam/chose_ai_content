@@ -103,13 +103,22 @@ export const ASSIGNEE_ROLES: { value: AssigneeRole; label: string }[] = [
 
 // --- Per-extension settings ---
 
+export interface RappelContent {
+  /** Title for this reminder */
+  title: string;
+  /** Body content (markdown-like) */
+  body: string;
+}
+
 export interface RappelSettings {
-  /** What content to show in reminder tasks */
-  contentType: "synthese" | "points-cles" | "custom";
-  /** Custom content if contentType is "custom" */
-  customContent?: string;
-  /** Which sections to include (indices) */
-  selectedSections?: number[];
+  /** Per-reminder content keyed by delay day */
+  reminders: {
+    1: RappelContent;
+    7: RappelContent;
+    30: RappelContent;
+  };
+  /** Whether the content was AI-generated */
+  aiGenerated?: boolean;
 }
 
 export interface ConnexionSettings {
@@ -199,7 +208,12 @@ export interface ExtensionConfig {
 /** Default settings for each extension */
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettingsMap = {
   rappels: {
-    contentType: "points-cles",
+    reminders: {
+      1: { title: "", body: "" },
+      7: { title: "", body: "" },
+      30: { title: "", body: "" },
+    },
+    aiGenerated: false,
   },
   connexion: {
     eventType: "reunion",

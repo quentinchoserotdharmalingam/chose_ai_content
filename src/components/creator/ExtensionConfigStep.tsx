@@ -64,6 +64,7 @@ export function ExtensionConfigStep({
           <RappelConfigPanel
             settings={getSettings("rappels")}
             onChange={(s) => updateSettings("rappels", s)}
+            resourceId={resourceId}
           />
         );
       case "connexion":
