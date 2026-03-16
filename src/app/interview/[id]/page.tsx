@@ -98,6 +98,11 @@ export default function InterviewChatPage() {
         body: JSON.stringify({ sessionId: sid, messages: msgs }),
       });
 
+      if (!res.ok) {
+        console.error("Chat API error:", res.status, await res.text());
+        return;
+      }
+
       const reader = res.body?.getReader();
       if (!reader) return;
 
