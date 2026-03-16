@@ -220,7 +220,7 @@ export default function CreatorDashboard() {
         </div>
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-ht-border bg-white">
+          <div className="overflow-visible rounded-xl border border-ht-border bg-white">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-ht-border">
@@ -307,10 +307,12 @@ export default function CreatorDashboard() {
                           {openMenu === resource.id && (
                             <>
                               <div
-                                className="fixed inset-0 z-10"
+                                className="fixed inset-0 z-40"
                                 onClick={() => setOpenMenu(null)}
                               />
-                              <div className="absolute right-0 z-20 mt-1 w-48 rounded-lg border border-ht-border bg-white py-1 shadow-ht-3">
+                              <div className={`absolute right-0 z-50 w-48 rounded-lg border border-ht-border bg-white py-1 shadow-ht-3 ${
+                                idx >= paginatedResources.length - 2 ? "bottom-full mb-1" : "top-full mt-1"
+                              }`}>
                                 {(resource.status === "generated" || resource.status === "published") && (
                                   <Link
                                     href={`/consume/${resource.id}`}
