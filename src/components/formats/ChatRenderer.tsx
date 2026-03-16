@@ -18,9 +18,9 @@ interface Props {
 }
 
 const SUGGESTIONS = [
-  "C'est quoi l'idée principale ?",
-  "Explique-moi comme si j'avais 10 ans",
-  "Comment appliquer ça concrètement ?",
+  "Quels sont les points clés ?",
+  "Pouvez-vous m'expliquer le concept principal ?",
+  "Comment appliquer cela concrètement ?",
 ];
 
 /** Render basic markdown: **bold** */
@@ -121,7 +121,7 @@ export function ChatRenderer({ resourceId }: Props) {
       console.error("Chat error:", error);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Désolé, une erreur est survenue. Réessaie." },
+        { role: "assistant", content: "Désolé, une erreur est survenue. Veuillez réessayer." },
       ]);
     } finally {
       setStreaming(false);
@@ -243,7 +243,7 @@ export function ChatRenderer({ resourceId }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Pose ta question..."
+            placeholder="Posez votre question..."
             disabled={streaming}
             className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           />
