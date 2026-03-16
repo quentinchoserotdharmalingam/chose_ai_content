@@ -3,6 +3,9 @@ import {
   getInterviewSystemPrompt,
   getInterviewAnalysisPrompt,
   getSuggestAnalysisTemplatePrompt,
+  getSuggestScopePrompt,
+  getSuggestQuestionsPrompt,
+  getSuggestTitleDescriptionPrompt,
   type InterviewPromptParams,
 } from "@/lib/prompts/interview-system";
 import type { AnalysisTemplateDimension } from "@/types";
@@ -73,4 +76,72 @@ export async function suggestAnalysisTemplate(
   if (!jsonMatch) throw new Error("No JSON array found in suggestion response");
 
   return JSON.parse(jsonMatch[0]) as AnalysisTemplateDimension[];
+}
+
+export async function suggestScope(
+  theme: string,
+  customTheme?: string
+): Promise<{ scopeIn: string; scopeOut: string }> {
+  const prompt = getSuggestScopePrompt(theme, customTheme);
+
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 1500,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const content = response.content[0];
+  if (content.type !== "text") throw new Error("Unexpected response type");
+
+  const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON found");
+
+  return JSON.parse(jsonMatch[0]);
+}
+
+export async function suggestQuestions(
+  theme: string,
+  customTheme?: string,
+  scopeIn?: string,
+  scopeOut?: string,
+  tone?: string
+): Promise<{ anchorQuestions: string[]; checkpointQuestions: string[] }> {
+  const prompt = getSuggestQuestionsPrompt(theme, customTheme, scopeIn, scopeOut, tone);
+
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 2000,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const content = response.content[0];
+  if (content.type !== "text") throw new Error("Unexpected response type");
+
+  const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON found");
+
+  return JSON.parse(jsonMatch[0]);
+}
+
+export async function suggestTitleDescription(
+  theme: string,
+  customTheme?: string,
+  scopeIn?: string,
+  tone?: string
+): Promise<{ title: string; description: string }> {
+  const prompt = getSuggestTitleDescriptionPrompt(theme, customTheme, scopeIn, tone);
+
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 500,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const content = response.content[0];
+  if (content.type !== "text") throw new Error("Unexpected response type");
+
+  const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON found");
+
+  return JSON.parse(jsonMatch[0]);
 }
