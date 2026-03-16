@@ -75,11 +75,12 @@ export async function POST(
 
   // For the first message (empty conversation), inject an initialization prompt
   // so the AI agent introduces itself and asks the first question
-  const chatMessages = messages.length === 0
+  const isFirstMessage = messages.length === 0;
+  const chatMessages = isFirstMessage
     ? [{ role: "user" as const, content: `Bonjour, je m'appelle ${config.participantName || "un collaborateur"}. Je suis prêt pour l'interview.` }]
     : messages;
 
-  const stream = getInterviewChatStream(config, chatMessages, assistantQuestionCount);
+  const stream = getInterviewChatStream(config, chatMessages, assistantQuestionCount, isFirstMessage);
 
   const encoder = new TextEncoder();
   let fullResponse = "";
