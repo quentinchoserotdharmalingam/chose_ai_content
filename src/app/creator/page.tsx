@@ -33,11 +33,11 @@ interface Resource {
   sessions: Array<{ completed: boolean }>;
 }
 
-const STATUS_LABELS: Record<string, { label: string; bg: string; text: string }> = {
-  draft: { label: "Brouillon", bg: "bg-ht-fill-secondary", text: "text-ht-text-secondary" },
-  analyzed: { label: "Analysé", bg: "bg-ht-warning-warm", text: "text-ht-warning" },
-  generated: { label: "Généré", bg: "bg-ht-info-warm", text: "text-ht-info" },
-  published: { label: "Publié", bg: "bg-ht-success-warm", text: "text-ht-success" },
+const STATUS_STYLES: Record<string, { label: string; color: string }> = {
+  draft: { label: "Brouillon", color: "text-ht-text-secondary" },
+  analyzed: { label: "Analysé", color: "text-ht-warning" },
+  generated: { label: "Généré", color: "text-ht-primary" },
+  published: { label: "Publié", color: "text-ht-success" },
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -131,8 +131,12 @@ export default function CreatorDashboard() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-[24px] font-medium text-ht-text">Formations</h1>
+      <div className="mb-2 flex items-start justify-between">
+        <div>
+          <h1 className="text-[28px] font-medium tracking-[-0.02em] text-ht-text">
+            Contenu IA
+          </h1>
+        </div>
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative">
@@ -142,7 +146,7 @@ export default function CreatorDashboard() {
               placeholder="Rechercher"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-10 w-52 rounded-lg border border-ht-border bg-white pl-9 pr-3 text-[13px] text-ht-text placeholder:text-ht-text-secondary transition-all duration-200 focus:border-ht-border-secondary focus:outline-none focus:shadow-[var(--focus-ring)]"
+              className="h-10 w-[200px] rounded-lg border border-ht-border bg-white pl-9 pr-3 text-[13px] text-ht-text placeholder:text-ht-text-secondary transition-all duration-200 focus:border-ht-border-secondary focus:outline-none focus:shadow-[var(--focus-ring)]"
             />
           </div>
           {/* Filter */}
@@ -159,7 +163,7 @@ export default function CreatorDashboard() {
             </button>
             {showAddMenu && (
               <div className="absolute right-0 z-30 mt-2 w-64 rounded-xl border border-ht-border bg-white py-2 shadow-ht-3">
-                <p className="px-4 py-1.5 text-[12px] font-medium text-ht-text-secondary uppercase">
+                <p className="px-4 py-1.5 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">
                   Type de ressource
                 </p>
                 <Link
@@ -194,65 +198,80 @@ export default function CreatorDashboard() {
       </div>
 
       {/* Result count */}
-      <p className="mb-4 text-[13px] font-medium text-ht-text-secondary">
+      <p className="mb-5 text-[13px] font-medium text-ht-text-secondary">
         {filteredResources.length} résultat{filteredResources.length !== 1 ? "s" : ""}
       </p>
 
       {/* Table */}
       {filteredResources.length === 0 ? (
         <div className="py-16 text-center">
-          <FileText className="mx-auto mb-4 h-12 w-12 text-ht-text-inactive" />
+          <Sparkles className="mx-auto mb-4 h-12 w-12 text-ht-text-inactive" />
           <p className="text-[13px] text-ht-text-secondary">
-            {search ? "Aucun résultat pour cette recherche" : "Aucune formation pour le moment"}
+            {search ? "Aucun résultat pour cette recherche" : "Aucun contenu IA pour le moment"}
           </p>
           {!search && (
             <button
               onClick={() => setShowAddMenu(true)}
               className="mt-4 rounded-lg border border-ht-border-secondary px-4 py-2 text-[13px] font-medium text-ht-text transition-all duration-200 hover:bg-ht-fill-secondary"
             >
-              Créer ma première ressource
+              Créer mon premier contenu IA
             </button>
           )}
         </div>
       ) : (
         <>
           <div className="overflow-hidden rounded-xl border border-ht-border bg-white">
-            <table className="w-full">
+            <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-ht-border">
-                  <th className="px-5 py-3 text-left">
-                    <button className="flex items-center gap-1 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text transition-colors">
+                  <th className="border-r border-ht-border px-5 py-3 text-left">
+                    <button className="flex items-center gap-1.5 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text transition-colors">
                       Nom
                       <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
-                  <th className="px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">Formats</th>
-                  <th className="px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">Filtres</th>
-                  <th className="px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">Type</th>
-                  <th className="px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">Statut</th>
-                  <th className="w-12 px-5 py-3"></th>
+                  <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">
+                    Formats
+                  </th>
+                  <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">
+                    Filtres
+                  </th>
+                  <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">
+                    Type
+                  </th>
+                  <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">
+                    Statut
+                  </th>
+                  <th className="w-14 px-3 py-3"></th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedResources.map((resource) => {
-                  const status = STATUS_LABELS[resource.status] || STATUS_LABELS.draft;
+                {paginatedResources.map((resource, idx) => {
+                  const status = STATUS_STYLES[resource.status] || STATUS_STYLES.draft;
                   const formats = parseFormats(resource.enabledFormats);
+                  const isLast = idx === paginatedResources.length - 1;
 
                   return (
                     <tr
                       key={resource.id}
-                      className="border-b border-ht-border transition-all duration-200 hover:bg-ht-fill-container"
+                      className={`transition-all duration-200 hover:bg-ht-fill-container ${
+                        !isLast ? "border-b border-ht-border" : ""
+                      }`}
                     >
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3.5">
                         <p className="text-[13px] font-medium text-ht-text">
                           {resource.title || "Sans titre"}
                         </p>
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3.5">
                         {formats.length > 0 ? (
-                          <div className="flex gap-1">
+                          <div className="flex items-center gap-1.5">
                             {formats.map((f) => (
-                              <span key={f} className="text-[14px]" title={FORMAT_META[f]?.label}>
+                              <span
+                                key={f}
+                                className="text-[16px] leading-none"
+                                title={FORMAT_META[f]?.label}
+                              >
                                 {FORMAT_META[f]?.icon}
                               </span>
                             ))}
@@ -261,21 +280,21 @@ export default function CreatorDashboard() {
                           <span className="text-[12px] text-ht-text-inactive">—</span>
                         )}
                       </td>
-                      <td className="px-5 py-3">
-                        <span className="inline-block rounded-full bg-ht-fill-secondary px-3 py-1 text-[12px] text-ht-text">
+                      <td className="px-5 py-3.5">
+                        <span className="inline-block rounded-full bg-ht-fill-secondary px-3 py-0.5 text-[12px] text-ht-text">
                           Tous les filtres
                         </span>
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3.5">
                         <span className="text-[13px] text-ht-text">Ressource IA</span>
                       </td>
-                      <td className="px-5 py-3">
-                        <span className={`inline-block rounded-full px-3 py-1 text-[12px] font-medium ${status.bg} ${status.text}`}>
+                      <td className="px-5 py-3.5">
+                        <span className={`text-[13px] font-medium ${status.color}`}>
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-5 py-3">
-                        <div className="relative">
+                      <td className="px-3 py-3.5 text-right">
+                        <div className="relative inline-block">
                           <button
                             onClick={() =>
                               setOpenMenu(openMenu === resource.id ? null : resource.id)
@@ -330,13 +349,13 @@ export default function CreatorDashboard() {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Pagination — matches HeyTeam: < 1 2 3 > */}
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-1">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-ht-text transition-all duration-200 hover:bg-ht-fill-secondary disabled:opacity-30"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-ht-border text-ht-text transition-all duration-200 hover:bg-ht-fill-secondary disabled:opacity-30 disabled:border-transparent"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -346,7 +365,7 @@ export default function CreatorDashboard() {
                   onClick={() => setCurrentPage(page)}
                   className={`flex h-8 w-8 items-center justify-center rounded-lg text-[13px] font-medium transition-all duration-200 ${
                     currentPage === page
-                      ? "bg-ht-primary text-white shadow-ht-1"
+                      ? "border border-ht-text bg-white text-ht-text"
                       : "text-ht-text hover:bg-ht-fill-secondary"
                   }`}
                 >
@@ -356,7 +375,7 @@ export default function CreatorDashboard() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-ht-text transition-all duration-200 hover:bg-ht-fill-secondary disabled:opacity-30"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-ht-border text-ht-text transition-all duration-200 hover:bg-ht-fill-secondary disabled:opacity-30 disabled:border-transparent"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

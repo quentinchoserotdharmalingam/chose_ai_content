@@ -14,6 +14,7 @@ import {
   Mail,
   Zap,
   Trophy,
+  Sparkles,
   ChevronLeft,
   ChevronUp,
 } from "lucide-react";
@@ -21,7 +22,8 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/creator", label: "Formations", icon: GraduationCap },
+  { href: "/formations", label: "Formations", icon: GraduationCap },
+  { href: "/creator", label: "Contenu IA", icon: Sparkles },
   { href: "/questionnaires", label: "Questionnaires", icon: ClipboardList },
   { href: "/quiz", label: "Quiz", icon: HelpCircle },
   { href: "/events", label: "Événements", icon: Calendar },
@@ -65,7 +67,7 @@ export function Sidebar() {
             const isActive =
               item.href === "/creator"
                 ? pathname === "/creator" || pathname?.startsWith("/creator/")
-                : pathname === item.href;
+                : pathname === item.href || pathname?.startsWith(item.href + "/");
 
             return (
               <Link
@@ -78,7 +80,7 @@ export function Sidebar() {
                     : "text-ht-text hover:bg-ht-fill-secondary"
                 )}
               >
-                <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-ht-text-secondary")} />
+                <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-ht-text-secondary")} />
                 {item.label}
               </Link>
             );
