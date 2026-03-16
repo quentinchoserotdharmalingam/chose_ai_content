@@ -92,6 +92,102 @@ export type ExtensionSlug =
   | "defi"
   | "attestation";
 
+/** Roles assignable to extension actions */
+export type AssigneeRole = "manager" | "parrain" | "gestionnaire_rh";
+
+export const ASSIGNEE_ROLES: { value: AssigneeRole; label: string }[] = [
+  { value: "manager", label: "Manager" },
+  { value: "parrain", label: "Parrain / Buddy" },
+  { value: "gestionnaire_rh", label: "Gestionnaire RH" },
+];
+
+// --- Per-extension settings ---
+
+export interface RappelSettings {
+  /** What content to show in reminder tasks */
+  contentType: "synthese" | "points-cles" | "custom";
+  /** Custom content if contentType is "custom" */
+  customContent?: string;
+  /** Which sections to include (indices) */
+  selectedSections?: number[];
+}
+
+export interface ConnexionSettings {
+  /** Type of event */
+  eventType: "reunion" | "cafe_virtuel" | "atelier" | "shadowing";
+  /** How to assign the event partner */
+  assigneeType: "role" | "user" | "none";
+  /** Role if assigneeType is "role" */
+  assigneeRole?: AssigneeRole;
+  /** Specific user email/name if assigneeType is "user" */
+  assigneeUser?: string;
+  /** Event title */
+  title?: string;
+  /** Event description */
+  description?: string;
+  /** Duration in minutes */
+  durationMinutes?: number;
+}
+
+export interface EmailSettings {
+  /** How to pick the recipient */
+  recipientType: "role" | "user";
+  /** Role if recipientType is "role" */
+  recipientRole?: AssigneeRole;
+  /** Specific user email if recipientType is "user" */
+  recipientUser?: string;
+  /** Email subject */
+  subject: string;
+  /** Email body (can be AI-generated) */
+  body: string;
+  /** Whether the body was AI-generated */
+  aiGenerated?: boolean;
+}
+
+export interface QuestionnaireSettings {
+  /** Number of questions to generate */
+  questionCount: number;
+  /** Pass threshold percentage (0-100) */
+  passThreshold: number;
+  /** Difficulty */
+  difficulty: "easy" | "mixed" | "hard";
+}
+
+export interface DefiSettings {
+  /** Challenge title */
+  title: string;
+  /** Challenge description / instructions */
+  description: string;
+  /** Duration in days */
+  durationDays: number;
+  /** Assign a validator */
+  validatorType: "role" | "user" | "auto";
+  /** Role if validatorType is "role" */
+  validatorRole?: AssigneeRole;
+  /** Specific user if validatorType is "user" */
+  validatorUser?: string;
+}
+
+export interface AttestationSettings {
+  /** Type of attestation */
+  templateType: "completion" | "success" | "custom";
+  /** Include completion date */
+  includeDate: boolean;
+  /** Include score if applicable */
+  includeScore: boolean;
+  /** Custom title */
+  customTitle?: string;
+}
+
+export type ExtensionSettingsMap = {
+  rappels: RappelSettings;
+  connexion: ConnexionSettings;
+  questionnaire: QuestionnaireSettings;
+  email: EmailSettings;
+  defi: DefiSettings;
+  attestation: AttestationSettings;
+};
+
 export interface ExtensionConfig {
   enabled: boolean;
   /** Delay in days after completion (null = immediate) */
@@ -99,6 +195,43 @@ export interface ExtensionConfig {
   /** Extension-specific settings */
   settings?: Record<string, unknown>;
 }
+
+/** Default settings for each extension */
+export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettingsMap = {
+  rappels: {
+    contentType: "points-cles",
+  },
+  connexion: {
+    eventType: "reunion",
+    assigneeType: "role",
+    assigneeRole: "manager",
+    durationMinutes: 30,
+  },
+  questionnaire: {
+    questionCount: 5,
+    passThreshold: 80,
+    difficulty: "mixed",
+  },
+  email: {
+    recipientType: "role",
+    recipientRole: "manager",
+    subject: "",
+    body: "",
+    aiGenerated: false,
+  },
+  defi: {
+    title: "",
+    description: "",
+    durationDays: 7,
+    validatorType: "role",
+    validatorRole: "manager",
+  },
+  attestation: {
+    templateType: "completion",
+    includeDate: true,
+    includeScore: false,
+  },
+};
 
 export interface GeneratedAction {
   extensionSlug: ExtensionSlug;

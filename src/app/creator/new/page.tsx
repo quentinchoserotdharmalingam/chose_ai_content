@@ -10,10 +10,11 @@ import {
   ExtensionsStep,
   createDefaultExtensions,
 } from "@/components/creator/ExtensionsStep";
+import { ExtensionConfigStep } from "@/components/creator/ExtensionConfigStep";
 import { PublishStep } from "@/components/creator/PublishStep";
 import type { AnalysisResult, FormatSlug, ExtensionSlug, ExtensionConfig } from "@/types";
 
-type Step = "upload" | "analysis" | "objective" | "generate" | "preview" | "extensions" | "publish";
+type Step = "upload" | "analysis" | "objective" | "generate" | "preview" | "extensions" | "extensions-config" | "publish";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "upload", label: "Upload" },
@@ -22,6 +23,7 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "generate", label: "Génération" },
   { key: "preview", label: "Preview" },
   { key: "extensions", label: "Extensions" },
+  { key: "extensions-config", label: "Configuration" },
   { key: "publish", label: "Publication" },
 ];
 
@@ -162,6 +164,19 @@ export default function NewResourcePage() {
           extensions={extensions}
           onExtensionsChange={setExtensions}
           onBack={() => setCurrentStep("preview")}
+          onNext={() => {
+            const hasEnabled = Object.values(extensions).some((e) => e.enabled);
+            setCurrentStep(hasEnabled ? "extensions-config" : "publish");
+          }}
+        />
+      )}
+
+      {currentStep === "extensions-config" && resourceId && (
+        <ExtensionConfigStep
+          extensions={extensions}
+          onExtensionsChange={setExtensions}
+          resourceId={resourceId}
+          onBack={() => setCurrentStep("extensions")}
           onNext={() => setCurrentStep("publish")}
         />
       )}
@@ -171,7 +186,10 @@ export default function NewResourcePage() {
           resourceId={resourceId}
           initialTitle={resourceTitle}
           formats={selectedFormats}
-          onBack={() => setCurrentStep("extensions")}
+          onBack={() => {
+            const hasEnabled = Object.values(extensions).some((e) => e.enabled);
+            setCurrentStep(hasEnabled ? "extensions-config" : "extensions");
+          }}
         />
       )}
     </div>
