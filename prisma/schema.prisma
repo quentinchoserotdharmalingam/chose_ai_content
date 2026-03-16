@@ -50,3 +50,60 @@ model ConsumptionSession {
 
   resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 }
+
+// --- Interview IA ---
+
+model InterviewResource {
+  id                    String   @id @default(cuid())
+  title                 String
+  description           String?
+  theme                 String                          // "onboarding" | "satisfaction" | "retention" | custom
+  tone                  String   @default("bienveillant")
+  scopeIn               String?  @db.Text              // Zone verte — sujets à explorer
+  scopeOut              String?  @db.Text              // Zone rouge — sujets hors périmètre
+  anchorQuestions       String   @default("[]")        // JSON array of strings
+  checkpointQuestions   String   @default("[]")        // JSON array of strings
+  targetDurationMinutes Int      @default(15)
+  maxQuestions          Int      @default(25)
+  analysisTemplate      String?  @db.Text              // JSON — structure d'analyse configurable
+  status                String   @default("draft")     // "draft" | "published"
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  sessions InterviewSession[]
+}
+
+model InterviewSession {
+  id                  String    @id @default(cuid())
+  interviewResourceId String
+  participantName     String?
+  status              String    @default("in_progress") // "in_progress" | "completed" | "abandoned"
+  startedAt           DateTime  @default(now())
+  completedAt         DateTime?
+
+  interviewResource InterviewResource @relation(fields: [interviewResourceId], references: [id], onDelete: Cascade)
+  messages          InterviewMessage[]
+  analysis          InterviewAnalysis?
+}
+
+model InterviewMessage {
+  id               String   @id @default(cuid())
+  sessionId        String
+  role             String                              // "user" | "assistant"
+  content          String   @db.Text
+  isAnchorQuestion Boolean  @default(false)
+  isCheckpoint     Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model InterviewAnalysis {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique
+  summary     String   @db.Text                        // JSON structuré selon analysisTemplate
+  rawAnalysis String   @db.Text                        // Texte complet de l'analyse IA
+  createdAt   DateTime @default(now())
+
+  session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}

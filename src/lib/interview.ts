@@ -1,0 +1,76 @@
+import Anthropic from "@anthropic-ai/sdk";
+import {
+  getInterviewSystemPrompt,
+  getInterviewAnalysisPrompt,
+  getSuggestAnalysisTemplatePrompt,
+  type InterviewPromptParams,
+} from "@/lib/prompts/interview-system";
+import type { AnalysisTemplateDimension } from "@/types";
+
+const client = new Anthropic();
+
+export function getInterviewChatStream(
+  config: InterviewPromptParams,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  questionCount: number
+) {
+  const systemPrompt = getInterviewSystemPrompt(config);
+  const contextNote =
+    questionCount > 0
+      ? `\n[Contexte interne — invisible pour le collaborateur : ${questionCount} questions posées sur ${config.maxQuestions} max]`
+      : "";
+
+  return client.messages.stream({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 400,
+    system: systemPrompt + contextNote,
+    messages,
+  });
+}
+
+export async function generateInterviewAnalysis(
+  messages: Array<{ role: string; content: string }>,
+  analysisTemplate: AnalysisTemplateDimension[]
+): Promise<{ summary: string; rawAnalysis: string }> {
+  const prompt = getInterviewAnalysisPrompt(messages, analysisTemplate);
+
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4000,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const content = response.content[0];
+  if (content.type !== "text") throw new Error("Unexpected response type");
+
+  const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON found in analysis response");
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    summary: JSON.stringify(parsed),
+    rawAnalysis: content.text,
+  };
+}
+
+export async function suggestAnalysisTemplate(
+  theme: string,
+  customTheme?: string,
+  scopeIn?: string
+): Promise<AnalysisTemplateDimension[]> {
+  const prompt = getSuggestAnalysisTemplatePrompt(theme, customTheme, scopeIn);
+
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 2000,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const content = response.content[0];
+  if (content.type !== "text") throw new Error("Unexpected response type");
+
+  const jsonMatch = content.text.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) throw new Error("No JSON array found in suggestion response");
+
+  return JSON.parse(jsonMatch[0]) as AnalysisTemplateDimension[];
+}

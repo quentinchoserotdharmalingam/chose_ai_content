@@ -1,0 +1,27 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string; sessionId: string }> }
+) {
+  const { id, sessionId } = await params;
+
+  const session = await prisma.interviewSession.findUnique({
+    where: { id: sessionId },
+    include: { analysis: true },
+  });
+
+  if (!session || session.interviewResourceId !== id) {
+    return NextResponse.json({ error: "Session introuvable" }, { status: 404 });
+  }
+
+  if (!session.analysis) {
+    return NextResponse.json({ error: "Analyse non disponible" }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ...session.analysis,
+    summary: JSON.parse(session.analysis.summary),
+  });
+}

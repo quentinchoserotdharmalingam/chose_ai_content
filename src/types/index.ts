@@ -328,6 +328,107 @@ export const EXTENSION_META: Record<
   },
 };
 
+// --- Interview IA ---
+
+export type InterviewTheme = "onboarding" | "satisfaction" | "retention" | "custom";
+
+export type InterviewTone = "bienveillant" | "formel" | "direct" | "decontracte";
+
+export type InterviewResourceStatus = "draft" | "published";
+
+export type InterviewSessionStatus = "in_progress" | "completed" | "abandoned";
+
+export interface InterviewConfig {
+  title: string;
+  description?: string;
+  theme: InterviewTheme;
+  customTheme?: string;
+  tone: InterviewTone;
+  scopeIn?: string;
+  scopeOut?: string;
+  anchorQuestions: string[];
+  checkpointQuestions: string[];
+  targetDurationMinutes: number;
+  maxQuestions: number;
+  analysisTemplate?: AnalysisTemplateDimension[];
+}
+
+export interface AnalysisTemplateDimension {
+  key: string;
+  label: string;
+  type: "score_1_10" | "score_low_med_high" | "text" | "list" | "boolean";
+  description?: string;
+}
+
+export interface InterviewAnalysisResult {
+  dimensions: Record<string, unknown>;
+  keyVerbatims: string[];
+  globalSummary: string;
+}
+
+export interface InterviewMessageData {
+  role: "user" | "assistant";
+  content: string;
+  isAnchorQuestion?: boolean;
+  isCheckpoint?: boolean;
+}
+
+export const INTERVIEW_THEME_META: Record<InterviewTheme, { label: string; icon: string; description: string }> = {
+  onboarding: {
+    label: "Onboarding",
+    icon: "🚀",
+    description: "Suivi d'intégration des nouveaux collaborateurs",
+  },
+  satisfaction: {
+    label: "Satisfaction",
+    icon: "😊",
+    description: "Mesure de la satisfaction et du bien-être",
+  },
+  retention: {
+    label: "Rétention",
+    icon: "🔒",
+    description: "Identification des risques de départ",
+  },
+  custom: {
+    label: "Personnalisé",
+    icon: "⚙️",
+    description: "Thème d'entretien sur mesure",
+  },
+};
+
+export const INTERVIEW_TONE_META: Record<InterviewTone, { label: string; description: string }> = {
+  bienveillant: { label: "Bienveillant", description: "Chaleureux et empathique" },
+  formel: { label: "Formel", description: "Professionnel et structuré" },
+  direct: { label: "Direct", description: "Concis et factuel" },
+  decontracte: { label: "Décontracté", description: "Informel et conversationnel" },
+};
+
+export const DEFAULT_ANALYSIS_TEMPLATES: Record<Exclude<InterviewTheme, "custom">, AnalysisTemplateDimension[]> = {
+  onboarding: [
+    { key: "satisfaction_score", label: "Score de satisfaction", type: "score_1_10", description: "Niveau global de satisfaction de l'intégration" },
+    { key: "integration_quality", label: "Qualité de l'intégration", type: "score_low_med_high", description: "Évaluation globale du processus d'intégration" },
+    { key: "positive_themes", label: "Thèmes positifs", type: "list", description: "Points forts identifiés" },
+    { key: "negative_themes", label: "Points d'alerte", type: "list", description: "Difficultés et frustrations" },
+    { key: "departure_risk", label: "Risque de départ", type: "score_low_med_high", description: "Indicateur de risque de départ anticipé" },
+    { key: "suggestions", label: "Suggestions d'amélioration", type: "list", description: "Actions recommandées" },
+  ],
+  satisfaction: [
+    { key: "satisfaction_score", label: "Score de satisfaction", type: "score_1_10", description: "Niveau global de satisfaction" },
+    { key: "positive_themes", label: "Thèmes positifs", type: "list", description: "Sources de satisfaction" },
+    { key: "negative_themes", label: "Points de friction", type: "list", description: "Sources d'insatisfaction" },
+    { key: "engagement_level", label: "Niveau d'engagement", type: "score_low_med_high", description: "Degré d'implication perçu" },
+    { key: "suggestions", label: "Suggestions d'amélioration", type: "list", description: "Pistes d'action" },
+  ],
+  retention: [
+    { key: "departure_risk", label: "Risque de départ", type: "score_low_med_high", description: "Niveau de risque de départ" },
+    { key: "satisfaction_score", label: "Score de satisfaction", type: "score_1_10", description: "Satisfaction globale" },
+    { key: "retention_factors", label: "Facteurs de rétention", type: "list", description: "Ce qui retient le collaborateur" },
+    { key: "push_factors", label: "Facteurs de départ", type: "list", description: "Ce qui pourrait pousser au départ" },
+    { key: "looking_elsewhere", label: "Recherche active", type: "boolean", description: "Le collaborateur regarde-t-il ailleurs ?" },
+    { key: "suggestions", label: "Actions de rétention", type: "list", description: "Leviers recommandés" },
+  ],
+};
+
 export const FORMAT_META: Record<FormatSlug, { label: string; icon: string; duration: string; description: string }> = {
   synthese: {
     label: "Synthèse",
