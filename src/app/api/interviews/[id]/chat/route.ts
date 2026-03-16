@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { getInterviewChatStream } from "@/lib/interview";
+import { getInterviewChatStream, getPulseChatStream } from "@/lib/interview";
 import type { InterviewPromptParams } from "@/lib/prompts/interview-system";
 
 export const maxDuration = 60;
@@ -48,18 +48,7 @@ export async function POST(
   }
 
   const assistantQuestionCount = Math.floor(session._count.messages / 2);
-
-  const config: InterviewPromptParams = {
-    theme: interview.theme,
-    tone: interview.tone,
-    scopeIn: interview.scopeIn || undefined,
-    scopeOut: interview.scopeOut || undefined,
-    anchorQuestions: JSON.parse(interview.anchorQuestions),
-    checkpointQuestions: JSON.parse(interview.checkpointQuestions),
-    targetDurationMinutes: interview.targetDurationMinutes,
-    maxQuestions: interview.maxQuestions,
-    participantName: session.participantName || undefined,
-  };
+  const isPulse = interview.type === "pulse";
 
   // Save user message to DB
   const lastUserMsg = messages[messages.length - 1];
@@ -73,14 +62,52 @@ export async function POST(
     });
   }
 
-  // For the first message (empty conversation), inject an initialization prompt
-  // so the AI agent introduces itself and asks the first question
-  const isFirstMessage = messages.length === 0;
-  const chatMessages = isFirstMessage
-    ? [{ role: "user" as const, content: `Bonjour, je m'appelle ${config.participantName || "un collaborateur"}. Je suis prêt pour l'interview.` }]
-    : messages;
+  let stream;
+  let maxQ: number;
 
-  const stream = getInterviewChatStream(config, chatMessages, assistantQuestionCount, isFirstMessage);
+  if (isPulse) {
+    // Pulse mode: use pulse prompt with score context
+    const pulseScore = session.pulseScore || 5;
+    const isFirstMessage = messages.length === 0;
+    const chatMessages = isFirstMessage
+      ? [{ role: "user" as const, content: `J'ai donné un score de ${pulseScore}/10.` }]
+      : messages;
+
+    stream = getPulseChatStream(
+      {
+        pulseQuestion: interview.pulseQuestion || "",
+        score: pulseScore,
+        tone: interview.tone,
+        theme: interview.theme,
+        maxFollowUps: interview.pulseMaxFollowUps,
+        participantName: session.participantName || undefined,
+      },
+      chatMessages,
+      assistantQuestionCount
+    );
+    maxQ = interview.pulseMaxFollowUps;
+  } else {
+    // Interview mode
+    const config: InterviewPromptParams = {
+      theme: interview.theme,
+      tone: interview.tone,
+      scopeIn: interview.scopeIn || undefined,
+      scopeOut: interview.scopeOut || undefined,
+      anchorQuestions: JSON.parse(interview.anchorQuestions),
+      checkpointQuestions: JSON.parse(interview.checkpointQuestions),
+      targetDurationMinutes: interview.targetDurationMinutes,
+      maxQuestions: interview.maxQuestions,
+      participantName: session.participantName || undefined,
+    };
+
+    const isFirstMessage = messages.length === 0;
+    const chatMessages = isFirstMessage
+      ? [{ role: "user" as const, content: `Bonjour, je m'appelle ${config.participantName || "un collaborateur"}. Je suis prêt pour l'interview.` }]
+      : messages;
+
+    stream = getInterviewChatStream(config, chatMessages, assistantQuestionCount, isFirstMessage);
+    maxQ = interview.maxQuestions;
+  }
 
   const encoder = new TextEncoder();
   let fullResponse = "";
@@ -111,7 +138,7 @@ export async function POST(
 
         // Check if we should auto-close (reached max questions)
         const updatedCount = assistantQuestionCount + 1;
-        if (updatedCount >= interview.maxQuestions) {
+        if (updatedCount >= maxQ) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ meta: "max_questions_reached" })}\n\n`));
         }
 

@@ -51,6 +51,7 @@ export async function POST(
     data: {
       interviewResourceId: id,
       participantName: body.participantName || null,
+      pulseScore: body.pulseScore ?? null,
     },
     include: {
       messages: true,
