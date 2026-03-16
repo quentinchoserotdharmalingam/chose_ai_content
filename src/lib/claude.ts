@@ -47,8 +47,14 @@ export async function generateFormatContent(
   const fn = promptFn[format];
   if (!fn) throw new Error(`Format "${format}" is dynamic and cannot be pre-generated`);
 
-  // Module needs more tokens due to complex nested structure (steps + quizzes + options)
-  const maxTokens = format === "module" ? 4000 : 2500;
+  // Complex formats need more tokens due to nested structures
+  const tokensByFormat: Record<string, number> = {
+    module: 6000,     // 7-10 steps with keyPoints + examples + quiz options
+    scenarios: 5000,  // 4-6 steps with narratives + 2-3 choices + feedbacks
+    synthese: 3000,   // Sections with multi-paragraph content + highlights
+    flashcards: 3000, // 8-12 cards with categories + hints
+  };
+  const maxTokens = tokensByFormat[format] || 2500;
 
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
