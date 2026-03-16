@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Loader2, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Check, Sparkles } from "lucide-react";
 import {
   INTERVIEW_THEME_META,
   INTERVIEW_TONE_META,
@@ -52,6 +52,9 @@ export default function NewInterviewPage() {
     DEFAULT_ANALYSIS_TEMPLATES.onboarding
   );
   const [suggestingAnalysis, setSuggestingAnalysis] = useState(false);
+  const [suggestingScope, setSuggestingScope] = useState(false);
+  const [suggestingQuestions, setSuggestingQuestions] = useState(false);
+  const [suggestingTitle, setSuggestingTitle] = useState(false);
 
   const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
 
@@ -118,15 +121,65 @@ export default function NewInterviewPage() {
     }
   };
 
+  const ensureSaved = async (): Promise<string> => {
+    if (interviewId) {
+      await saveInterview();
+      return interviewId;
+    }
+    return await saveInterview();
+  };
+
+  const handleSuggestTitle = async () => {
+    setSuggestingTitle(true);
+    try {
+      const id = await ensureSaved();
+      const res = await fetch(`/api/interviews/${id}/suggest-title`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.title) setTitle(data.title);
+        if (data.description) setDescription(data.description);
+      }
+    } catch { /* Silent */ } finally {
+      setSuggestingTitle(false);
+    }
+  };
+
+  const handleSuggestScope = async () => {
+    setSuggestingScope(true);
+    try {
+      const id = await ensureSaved();
+      const res = await fetch(`/api/interviews/${id}/suggest-scope`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.scopeIn) setScopeIn(data.scopeIn);
+        if (data.scopeOut) setScopeOut(data.scopeOut);
+      }
+    } catch { /* Silent */ } finally {
+      setSuggestingScope(false);
+    }
+  };
+
+  const handleSuggestQuestions = async () => {
+    setSuggestingQuestions(true);
+    try {
+      const id = await ensureSaved();
+      const res = await fetch(`/api/interviews/${id}/suggest-questions`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.anchorQuestions?.length) setAnchorQuestions(data.anchorQuestions);
+        if (data.checkpointQuestions?.length) setCheckpointQuestions(data.checkpointQuestions);
+      }
+    } catch { /* Silent */ } finally {
+      setSuggestingQuestions(false);
+    }
+  };
+
   const handleNext = async () => {
     const nextIndex = currentIndex + 1;
     if (nextIndex < STEPS.length) {
-      // Auto-save when leaving config step
-      if (currentStep === "config" && !interviewId) {
-        setSaving(true);
-        await saveInterview();
-        setSaving(false);
-      }
+      setSaving(true);
+      await ensureSaved();
+      setSaving(false);
       setCurrentStep(STEPS[nextIndex].key);
     }
   };
@@ -240,7 +293,17 @@ export default function NewInterviewPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Description (optionnel)</label>
+              <div className="flex items-center justify-between">
+                <label className="mb-1.5 block text-sm font-medium">Description (optionnel)</label>
+                <button
+                  onClick={handleSuggestTitle}
+                  disabled={suggestingTitle}
+                  className="mb-1 flex items-center gap-1.5 rounded-lg bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-600 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+                >
+                  {suggestingTitle ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  Générer titre et description
+                </button>
+              </div>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -330,10 +393,22 @@ export default function NewInterviewPage() {
 
       {currentStep === "scope" && (
         <div>
-          <h2 className="mb-2 text-xl font-semibold">Périmètre de l&apos;interview</h2>
-          <p className="mb-6 text-sm text-gray-500">Définissez les sujets à explorer et ceux à éviter.</p>
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Périmètre de l&apos;interview</h2>
+              <p className="mt-1 text-sm text-gray-500">Définissez les sujets à explorer et ceux à éviter.</p>
+            </div>
+            <button
+              onClick={handleSuggestScope}
+              disabled={suggestingScope}
+              className="mt-1 flex shrink-0 items-center gap-1.5 rounded-lg bg-purple-50 px-3 py-2 text-xs font-medium text-purple-600 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+            >
+              {suggestingScope ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              Générer via IA
+            </button>
+          </div>
 
-          <div className="space-y-6">
+          <div className="mt-6 space-y-6">
             <div>
               <div className="mb-2 flex items-center gap-2">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-xs">✓</span>
@@ -367,10 +442,22 @@ export default function NewInterviewPage() {
 
       {currentStep === "questions" && (
         <div>
-          <h2 className="mb-2 text-xl font-semibold">Questions structurantes</h2>
-          <p className="mb-6 text-sm text-gray-500">Définissez les questions fixes et les points de passage de l&apos;interview.</p>
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Questions structurantes</h2>
+              <p className="mt-1 text-sm text-gray-500">Définissez les questions fixes et les points de passage de l&apos;interview.</p>
+            </div>
+            <button
+              onClick={handleSuggestQuestions}
+              disabled={suggestingQuestions}
+              className="mt-1 flex shrink-0 items-center gap-1.5 rounded-lg bg-purple-50 px-3 py-2 text-xs font-medium text-purple-600 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+            >
+              {suggestingQuestions ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              Générer via IA
+            </button>
+          </div>
 
-          <div className="space-y-8">
+          <div className="mt-6 space-y-8">
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <div>
@@ -450,26 +537,24 @@ export default function NewInterviewPage() {
 
       {currentStep === "analysis" && (
         <div>
-          <h2 className="mb-2 text-xl font-semibold">Structure d&apos;analyse</h2>
-          <p className="mb-6 text-sm text-gray-500">
-            Configurez les dimensions d&apos;analyse qui seront produites après chaque interview.
-          </p>
-
-          <div className="mb-4 flex gap-2">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Structure d&apos;analyse</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Configurez les dimensions d&apos;analyse qui seront produites après chaque interview.
+              </p>
+            </div>
             <button
               onClick={handleSuggestAnalysis}
               disabled={suggestingAnalysis || !interviewId}
-              className="rounded-lg bg-coral/10 px-4 py-2 text-sm font-medium text-coral hover:bg-coral/20 disabled:opacity-50"
+              className="mt-1 flex shrink-0 items-center gap-1.5 rounded-lg bg-purple-50 px-3 py-2 text-xs font-medium text-purple-600 hover:bg-purple-100 disabled:opacity-50 transition-colors"
             >
-              {suggestingAnalysis ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Suggestion IA...
-                </span>
-              ) : (
-                "Suggérer via IA"
-              )}
+              {suggestingAnalysis ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              Générer via IA
             </button>
+          </div>
+
+          <div className="mb-4">
             <button
               onClick={addDimension}
               className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"

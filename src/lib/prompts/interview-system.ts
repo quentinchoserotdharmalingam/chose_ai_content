@@ -145,3 +145,75 @@ Exemple :
   { "key": "positive_themes", "label": "Thèmes positifs", "type": "list", "description": "Points forts identifiés" }
 ]`;
 }
+
+export function getSuggestScopePrompt(theme: string, customTheme?: string): string {
+  const themeLabel = customTheme || theme;
+  return `Tu es un expert en entretiens RH. Propose un périmètre adapté pour une interview de type "${themeLabel}".
+
+Génère :
+1. "scopeIn" : les sujets pertinents à explorer activement (zone verte), sous forme de texte libre avec des exemples concrets séparés par des virgules.
+2. "scopeOut" : les sujets sensibles ou hors périmètre à éviter (zone rouge), sous forme de texte libre.
+
+Sois précis et actionnable. Adapte le contenu au thème "${themeLabel}".
+
+Réponds UNIQUEMENT avec du JSON valide :
+{
+  "scopeIn": "...",
+  "scopeOut": "..."
+}`;
+}
+
+export function getSuggestQuestionsPrompt(
+  theme: string,
+  customTheme?: string,
+  scopeIn?: string,
+  scopeOut?: string,
+  tone?: string
+): string {
+  const themeLabel = customTheme || theme;
+  return `Tu es un expert en entretiens RH. Génère des questions pour une interview de type "${themeLabel}".
+
+${scopeIn ? `Sujets à explorer (zone verte) : ${scopeIn}` : ""}
+${scopeOut ? `Sujets à éviter (zone rouge) : ${scopeOut}` : ""}
+${tone ? `Ton souhaité : ${tone}` : ""}
+
+Génère :
+1. "anchorQuestions" : 2-3 questions d'ancrage à poser en début d'interview. Ce sont des questions ouvertes qui permettent d'évaluer l'état général du collaborateur (ex: échelle de satisfaction, ressenti global). Elles cadrent l'interview.
+2. "checkpointQuestions" : 3-5 questions de passage à intercaler pendant l'interview. Ce sont des questions plus ciblées sur des sujets spécifiques importants à couvrir.
+
+Les questions doivent :
+- Être formulées naturellement, comme dans une vraie conversation
+- Être ouvertes (pas de oui/non)
+- Couvrir les sujets de la zone verte
+- Éviter les sujets de la zone rouge
+- Être adaptées au ton demandé
+
+Réponds UNIQUEMENT avec du JSON valide :
+{
+  "anchorQuestions": ["...", "..."],
+  "checkpointQuestions": ["...", "...", "..."]
+}`;
+}
+
+export function getSuggestTitleDescriptionPrompt(
+  theme: string,
+  customTheme?: string,
+  scopeIn?: string,
+  tone?: string
+): string {
+  const themeLabel = customTheme || theme;
+  return `Tu es un expert en entretiens RH. Propose un titre et une description pour une interview de type "${themeLabel}".
+
+${scopeIn ? `Sujets couverts : ${scopeIn}` : ""}
+${tone ? `Ton : ${tone}` : ""}
+
+Génère :
+1. "title" : un titre court et clair (max 60 caractères) pour cette interview. Exemples : "Suivi d'intégration M+1", "Point satisfaction semestriel", "Entretien de rétention Q3".
+2. "description" : une description interne (2-3 phrases max) destinée aux administrateurs RH, expliquant l'objectif de cette interview.
+
+Réponds UNIQUEMENT avec du JSON valide :
+{
+  "title": "...",
+  "description": "..."
+}`;
+}
