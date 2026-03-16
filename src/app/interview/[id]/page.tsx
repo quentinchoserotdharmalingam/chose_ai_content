@@ -290,12 +290,19 @@ export default function InterviewChatPage() {
             <p className="mb-4 text-sm text-gray-600">
               Votre interview a bien été enregistrée. Une analyse sera générée automatiquement par l&apos;IA à partir de vos réponses.
             </p>
-            <div className="rounded-lg bg-blue-50 p-3">
+            <div className="mb-6 rounded-lg bg-blue-50 p-3">
               <p className="text-xs text-blue-700">
                 <ShieldCheck className="mb-0.5 mr-1 inline h-3.5 w-3.5" />
                 Vos réponses sont traitées de manière confidentielle et ne sont accessibles qu&apos;aux personnes habilitées.
               </p>
             </div>
+            <button
+              onClick={() => window.close()}
+              className="w-full rounded-full bg-coral py-2.5 text-sm font-semibold text-white hover:bg-coral-dark"
+            >
+              Fermer cette page
+            </button>
+            <p className="mt-3 text-[11px] text-gray-400">Vous pouvez fermer cet onglet en toute sécurité.</p>
           </div>
         </div>
       </div>
