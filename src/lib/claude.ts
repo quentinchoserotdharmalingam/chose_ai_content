@@ -87,7 +87,7 @@ export function getChatStream(
 ) {
   return client.messages.stream({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 1000,
+    max_tokens: 300,
     system: getChatSystemPrompt(text, objective),
     messages,
   });
