@@ -131,7 +131,7 @@ export default function CreatorDashboard() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-2 flex items-start justify-between">
+      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[28px] font-medium tracking-[-0.02em] text-ht-text">
             Contenu IA
@@ -139,22 +139,22 @@ export default function CreatorDashboard() {
         </div>
         <div className="flex items-center gap-3">
           {/* Search */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ht-text-secondary" />
             <input
               type="text"
               placeholder="Rechercher"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-10 w-[200px] rounded-lg border border-ht-border bg-white pl-9 pr-3 text-[13px] text-ht-text placeholder:text-ht-text-secondary transition-all duration-200 focus:border-ht-border-secondary focus:outline-none focus:shadow-[var(--focus-ring)]"
+              className="h-10 w-full sm:w-[200px] rounded-lg border border-ht-border bg-white pl-9 pr-3 text-[13px] text-ht-text placeholder:text-ht-text-secondary transition-all duration-200 focus:border-ht-border-secondary focus:outline-none focus:shadow-[var(--focus-ring)]"
             />
           </div>
           {/* Filter */}
-          <button className="flex h-10 w-10 items-center justify-center rounded-lg border border-ht-border text-ht-text-secondary transition-all duration-200 hover:bg-ht-fill-secondary hover:text-ht-text">
+          <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ht-border text-ht-text-secondary transition-all duration-200 hover:bg-ht-fill-secondary hover:text-ht-text">
             <SlidersHorizontal className="h-4 w-4" />
           </button>
           {/* Add button — pill shape per spec */}
-          <div className="relative" ref={addMenuRef}>
+          <div className="relative shrink-0" ref={addMenuRef}>
             <button
               onClick={() => setShowAddMenu(!showAddMenu)}
               className="h-10 rounded-full bg-ht-primary px-6 text-[13px] font-semibold text-white shadow-ht-1 transition-all duration-200 hover:bg-ht-primary-dark"
@@ -220,7 +220,7 @@ export default function CreatorDashboard() {
         </div>
       ) : (
         <>
-          <div className="overflow-visible rounded-xl border border-ht-border bg-white">
+          <div className="overflow-x-auto rounded-xl border border-ht-border bg-white">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-ht-border">
@@ -230,13 +230,13 @@ export default function CreatorDashboard() {
                       <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
-                  <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">
+                  <th className="hidden border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary md:table-cell">
                     Formats
                   </th>
-                  <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">
+                  <th className="hidden border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary md:table-cell">
                     Filtres
                   </th>
-                  <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">
+                  <th className="hidden border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary md:table-cell">
                     Type
                   </th>
                   <th className="border-r border-ht-border px-5 py-3 text-left text-[12px] font-medium text-ht-text-secondary">
@@ -263,7 +263,7 @@ export default function CreatorDashboard() {
                           {resource.title || "Sans titre"}
                         </p>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="hidden px-5 py-3.5 md:table-cell">
                         {formats.length > 0 ? (
                           <div className="flex items-center gap-1.5">
                             {formats.map((f) => (
@@ -280,12 +280,12 @@ export default function CreatorDashboard() {
                           <span className="text-[12px] text-ht-text-inactive">—</span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="hidden px-5 py-3.5 md:table-cell">
                         <span className="inline-block rounded-full bg-ht-fill-secondary px-3 py-0.5 text-[12px] text-ht-text">
                           Tous les filtres
                         </span>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="hidden px-5 py-3.5 md:table-cell">
                         <span className="text-[13px] text-ht-text">Ressource IA</span>
                       </td>
                       <td className="px-5 py-3.5">
