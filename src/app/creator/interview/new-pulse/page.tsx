@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Loader2, Check, Activity } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Check, Activity, Sparkles } from "lucide-react";
 import {
   INTERVIEW_THEME_META,
   INTERVIEW_TONE_META,
@@ -28,6 +28,50 @@ export default function NewPulsePage() {
   const [tone, setTone] = useState<InterviewTone>("bienveillant");
   const [frequency, setFrequency] = useState<PulseFrequency>("weekly");
   const [maxFollowUps, setMaxFollowUps] = useState(3);
+  const [suggestingContent, setSuggestingContent] = useState(false);
+
+  const ensureSaved = async (): Promise<string> => {
+    const data = {
+      title: title || "Nouveau pulse",
+      theme,
+      tone,
+      pulseQuestion,
+      pulseFrequency: frequency,
+      pulseMaxFollowUps: maxFollowUps,
+    };
+    if (pulseId) {
+      await fetch(`/api/interviews/${pulseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return pulseId;
+    } else {
+      const res = await fetch("/api/interviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, type: "pulse" }),
+      });
+      const created = await res.json();
+      setPulseId(created.id);
+      return created.id;
+    }
+  };
+
+  const handleSuggestContent = async () => {
+    setSuggestingContent(true);
+    try {
+      const id = await ensureSaved();
+      const res = await fetch(`/api/interviews/${id}/suggest-pulse-content`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.title) setTitle(data.title);
+        if (data.pulseQuestion) setPulseQuestion(data.pulseQuestion);
+      }
+    } catch { /* Silent */ } finally {
+      setSuggestingContent(false);
+    }
+  };
 
   const saveOrCreate = async (data: Record<string, unknown>) => {
     setSaving(true);
@@ -106,22 +150,42 @@ export default function NewPulsePage() {
       </div>
 
       {/* Steps indicator */}
-      <div className="mb-6 flex items-center gap-2">
-        <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-semibold ${
-          currentStep === "config" ? "bg-ht-primary text-white" : "bg-green-100 text-green-600"
-        }`}>
-          {currentStep === "config" ? "1" : <Check className="h-3.5 w-3.5" />}
+      <div className="mb-6 flex items-center justify-center gap-3">
+        <div className="flex items-center gap-2">
+          <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-semibold ${
+            currentStep === "config" ? "bg-ht-primary text-white" : "bg-green-100 text-green-600"
+          }`}>
+            {currentStep === "config" ? "1" : <Check className="h-3.5 w-3.5" />}
+          </div>
+          <span className={`text-[12px] ${currentStep === "config" ? "font-medium text-ht-text" : "text-ht-text-secondary"}`}>
+            Configuration
+          </span>
         </div>
-        <div className="h-px flex-1 bg-ht-border" />
-        <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-semibold ${
-          currentStep === "publish" ? "bg-ht-primary text-white" : "bg-ht-fill-secondary text-ht-text-secondary"
-        }`}>
-          2
+        <div className="h-px w-12 bg-ht-border" />
+        <div className="flex items-center gap-2">
+          <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-semibold ${
+            currentStep === "publish" ? "bg-ht-primary text-white" : "bg-ht-fill-secondary text-ht-text-secondary"
+          }`}>
+            2
+          </div>
+          <span className={`text-[12px] ${currentStep === "publish" ? "font-medium text-ht-text" : "text-ht-text-secondary"}`}>
+            Publication
+          </span>
         </div>
       </div>
 
       {currentStep === "config" ? (
         <div className="space-y-5 rounded-xl border border-ht-border bg-white p-6">
+          {/* AI suggestion button */}
+          <button
+            onClick={handleSuggestContent}
+            disabled={suggestingContent}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-purple-200 bg-purple-50 py-2.5 text-[13px] font-medium text-purple-600 transition-colors hover:bg-purple-100 disabled:opacity-50"
+          >
+            {suggestingContent ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            Générer titre et question via IA
+          </button>
+
           {/* Title */}
           <div>
             <label className="mb-1.5 block text-[13px] font-medium text-ht-text">Titre</label>
@@ -224,7 +288,7 @@ export default function NewPulsePage() {
               Questions de suivi IA (max)
             </label>
             <div className="flex gap-2">
-              {[1, 2, 3].map((n) => (
+              {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   onClick={() => setMaxFollowUps(n)}

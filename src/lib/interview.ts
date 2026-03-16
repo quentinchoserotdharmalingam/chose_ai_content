@@ -8,7 +8,7 @@ import {
   getSuggestTitleDescriptionPrompt,
   type InterviewPromptParams,
 } from "@/lib/prompts/interview-system";
-import { getPulseSystemPrompt, getPulseAnalysisPrompt, type PulsePromptParams } from "@/lib/prompts/pulse-system";
+import { getPulseSystemPrompt, getPulseAnalysisPrompt, getSuggestPulseContentPrompt, type PulsePromptParams } from "@/lib/prompts/pulse-system";
 import type { AnalysisTemplateDimension } from "@/types";
 
 const client = new Anthropic();
@@ -159,6 +159,28 @@ export async function suggestQuestions(
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 2000,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const content = response.content[0];
+  if (content.type !== "text") throw new Error("Unexpected response type");
+
+  const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON found");
+
+  return JSON.parse(jsonMatch[0]);
+}
+
+export async function suggestPulseContent(
+  theme: string,
+  tone?: string,
+  frequency?: string
+): Promise<{ title: string; pulseQuestion: string }> {
+  const prompt = getSuggestPulseContentPrompt(theme, tone, frequency);
+
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 500,
     messages: [{ role: "user", content: prompt }],
   });
 

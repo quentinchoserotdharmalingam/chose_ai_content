@@ -20,14 +20,17 @@ export function getPulseSystemPrompt(params: PulsePromptParams): string {
     ? `Le collaborateur s'appelle ${params.participantName}. Utilise son prénom naturellement.`
     : "";
 
-  // Adapt depth based on score
+  // Adapt depth based on score and maxFollowUps
+  const max = params.maxFollowUps;
   let depthInstruction: string;
   if (params.score >= 8) {
-    depthInstruction = `Le score est élevé (${params.score}/10). Pose 1 question ouverte courte pour comprendre ce qui contribue positivement, puis clôture. Pas besoin de creuser longuement.`;
+    const highMax = Math.min(Math.max(1, Math.ceil(max * 0.4)), max);
+    depthInstruction = `Le score est élevé (${params.score}/10). Pose ${highMax === 1 ? "1 question ouverte courte" : `1 à ${highMax} questions`} pour comprendre ce qui contribue positivement, puis clôture. Pas besoin de creuser longuement.`;
   } else if (params.score >= 5) {
-    depthInstruction = `Le score est mitigé (${params.score}/10). Pose 1 à 2 questions pour comprendre les nuances — ce qui va bien et ce qui pourrait être amélioré.`;
+    const midMax = Math.min(Math.max(1, Math.ceil(max * 0.6)), max);
+    depthInstruction = `Le score est mitigé (${params.score}/10). Pose 1 à ${midMax} questions pour comprendre les nuances — ce qui va bien et ce qui pourrait être amélioré.`;
   } else {
-    depthInstruction = `Le score est bas (${params.score}/10). Pose 2 à 3 questions avec empathie pour comprendre en profondeur ce qui ne va pas, sans être intrusif. Montre que ce retour est pris au sérieux.`;
+    depthInstruction = `Le score est bas (${params.score}/10). Pose ${Math.max(2, Math.ceil(max * 0.6))} à ${max} questions avec empathie pour comprendre en profondeur ce qui ne va pas, sans être intrusif. Montre que ce retour est pris au sérieux.`;
   }
 
   return `Tu es un agent de suivi IA. Le collaborateur vient de donner un score de ${params.score}/10 à la question : "${params.pulseQuestion}".
@@ -55,6 +58,37 @@ Quand tu as obtenu suffisamment d'informations, termine par un bref remerciement
 
 PREMIER MESSAGE :
 Pose directement ta première question de suivi basée sur le score donné. Pas de présentation ni d'explication. Maximum 2 phrases.`;
+}
+
+export function getSuggestPulseContentPrompt(
+  theme: string,
+  tone?: string,
+  frequency?: string
+): string {
+  const themeLabels: Record<string, string> = {
+    onboarding: "suivi d'onboarding",
+    satisfaction: "satisfaction au travail",
+    retention: "rétention et engagement",
+    custom: "personnalisé",
+  };
+  const themeLabel = themeLabels[theme] || theme;
+
+  return `Tu es un expert en entretiens RH et en micro-sondages (pulse surveys). Propose un titre et une question de pulse pour un thème "${themeLabel}".
+
+${tone ? `Ton souhaité : ${tone}` : ""}
+${frequency ? `Fréquence : ${frequency}` : ""}
+
+Le pulse fonctionne ainsi : le collaborateur voit la question et donne un score de 1 à 10, puis l'IA pose des questions de suivi adaptées au score.
+
+Génère :
+1. "title" : un titre court et clair (max 50 caractères) pour ce pulse. Exemples : "Bien-être hebdomadaire", "Pulse onboarding S+2", "Satisfaction équipe".
+2. "pulseQuestion" : une question claire et concise à laquelle le collaborateur répondra avec un score de 1 à 10. La question doit être en français, sobre et professionnelle. Exemples : "Comment évaluez-vous votre bien-être au travail cette semaine ?", "Comment jugez-vous votre intégration dans l'équipe ?".
+
+Réponds UNIQUEMENT avec du JSON valide :
+{
+  "title": "...",
+  "pulseQuestion": "..."
+}`;
 }
 
 export function getPulseAnalysisPrompt(
