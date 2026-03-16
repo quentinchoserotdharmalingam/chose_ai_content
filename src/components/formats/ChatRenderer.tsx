@@ -185,7 +185,7 @@ export function ChatRenderer({ resourceId }: Props) {
             >
               {msg.role === "assistant" && (
                 <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-coral-light">
-                  <Bot className="h-3 w-3 text-blue-500" />
+                  <Bot className="h-3 w-3 text-ht-primary-warm0" />
                 </div>
               )}
               <div
@@ -245,7 +245,7 @@ export function ChatRenderer({ resourceId }: Props) {
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Posez votre question..."
             disabled={streaming}
-            className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ht-primary disabled:opacity-50"
           />
           <Button
             size="icon"

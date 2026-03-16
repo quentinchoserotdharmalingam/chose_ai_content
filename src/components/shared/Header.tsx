@@ -13,7 +13,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-blue-600">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-ht-primary">
           <Brain className="h-5 w-5" />
           <span className="hidden sm:inline">Ressource IA</span>
         </Link>
@@ -23,7 +23,7 @@ export function Header() {
             href="/creator"
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-              isCreator ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:text-gray-900"
+              isCreator ? "bg-ht-primary-warm text-ht-primary" : "text-gray-600 hover:text-gray-900"
             )}
           >
             Créateur
@@ -39,7 +39,7 @@ export function Header() {
           </Link>
           <Link
             href="/creator/new"
-            className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white transition-colors hover:bg-blue-700"
+            className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ht-primary text-white transition-colors hover:bg-ht-primary-dark"
           >
             <Plus className="h-4 w-4" />
           </Link>

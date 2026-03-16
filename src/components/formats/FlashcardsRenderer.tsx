@@ -122,7 +122,7 @@ export function FlashcardsRenderer({ content }: Props) {
         </div>
 
         {/* Score */}
-        <div className="rounded-xl border-2 border-blue-200 bg-coral-light p-6 text-center">
+        <div className="rounded-xl border-2 border-ht-primary/30 bg-coral-light p-6 text-center">
           <p className="text-4xl font-bold text-coral">{score}%</p>
           <p className="mt-1 text-sm text-coral">Score de maîtrise</p>
         </div>
@@ -197,7 +197,7 @@ export function FlashcardsRenderer({ content }: Props) {
 
   const difficultyConfig = {
     easy: { label: "Facile", border: "border-green-200", bg: "bg-green-50", text: "text-green-700" },
-    medium: { label: "Moyen", border: "border-blue-200", bg: "bg-coral-light", text: "text-coral" },
+    medium: { label: "Moyen", border: "border-ht-primary/30", bg: "bg-coral-light", text: "text-coral" },
     hard: { label: "Difficile", border: "border-red-200", bg: "bg-red-50", text: "text-red-700" },
   };
   const diff = difficultyConfig[card.difficulty] || difficultyConfig.medium;

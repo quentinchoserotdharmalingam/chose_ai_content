@@ -53,7 +53,7 @@ export function UploadStep({ onUploaded }: UploadStepProps) {
 
       <Card
         className={`cursor-pointer border-2 border-dashed transition-colors ${
-          dragging ? "border-blue-400 bg-coral-light" : "border-gray-200 hover:border-gray-300"
+          dragging ? "border-ht-primary/60 bg-coral-light" : "border-gray-200 hover:border-gray-300"
         }`}
         onDragOver={(e) => {
           e.preventDefault();

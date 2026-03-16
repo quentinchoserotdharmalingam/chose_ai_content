@@ -37,21 +37,21 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-gray-200 bg-white">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[200px] flex-col border-r border-ht-border bg-white">
       {/* Logo */}
-      <div className="flex h-16 items-center justify-center border-b border-gray-100 px-4">
-        <Link href="/creator" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-coral text-white">
-            <GraduationCap className="h-5 w-5" />
+      <div className="flex h-16 items-center justify-center px-4">
+        <Link href="/creator" className="flex items-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-ht-primary text-white">
+            <GraduationCap className="h-6 w-6" />
           </div>
         </Link>
       </div>
 
       {/* Back to menu */}
-      <div className="border-b border-gray-100 px-3 py-2">
+      <div className="border-b border-ht-border px-3 pb-3">
         <Link
           href="/creator"
-          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-500 transition-colors hover:text-gray-900"
+          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ht-text transition-all duration-200 ease-in-out hover:bg-ht-fill-secondary"
         >
           <ChevronLeft className="h-4 w-4" />
           Retour au menu
@@ -72,13 +72,13 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-in-out",
                   isActive
-                    ? "bg-coral/10 text-coral"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-ht-primary text-white shadow-ht-1"
+                    : "text-ht-text hover:bg-ht-fill-secondary"
                 )}
               >
-                <item.icon className={cn("h-4 w-4", isActive ? "text-coral" : "text-gray-400")} />
+                <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-ht-text-secondary")} />
                 {item.label}
               </Link>
             );
@@ -87,13 +87,13 @@ export function Sidebar() {
       </nav>
 
       {/* User */}
-      <div className="border-t border-gray-100 px-3 py-3">
-        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
+      <div className="border-t border-ht-border px-3 py-3">
+        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-ht-text transition-all duration-200 ease-in-out hover:bg-ht-fill-secondary">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-ht-fill-secondary text-xs font-medium text-ht-text">
             N
           </div>
           <span className="flex-1 text-left font-medium">Nathaniel</span>
-          <ChevronUp className="h-4 w-4 text-gray-400" />
+          <ChevronUp className="h-4 w-4 text-ht-text-secondary" />
         </button>
       </div>
     </aside>

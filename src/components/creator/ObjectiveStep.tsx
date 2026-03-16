@@ -73,7 +73,7 @@ export function ObjectiveStep({
               onClick={() => onObjectiveChange(suggestion)}
               className={`block w-full rounded-lg border p-3 text-left text-sm transition-colors ${
                 objective === suggestion
-                  ? "border-blue-500 bg-coral-light text-coral"
+                  ? "border-ht-primary-warm0 bg-coral-light text-coral"
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
@@ -108,7 +108,7 @@ export function ObjectiveStep({
                 onClick={() => onToneChange(t.value)}
                 className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                   tone === t.value
-                    ? "border-blue-500 bg-coral-light text-coral"
+                    ? "border-ht-primary-warm0 bg-coral-light text-coral"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -132,7 +132,7 @@ export function ObjectiveStep({
                 onClick={() => onLanguageChange(l.value)}
                 className={`flex w-full items-center rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors ${
                   language === l.value
-                    ? "border-blue-500 bg-coral-light text-coral"
+                    ? "border-ht-primary-warm0 bg-coral-light text-coral"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -159,7 +159,7 @@ export function ObjectiveStep({
                   onClick={() => toggleFormat(format)}
                   className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                     selected
-                      ? "border-blue-500 bg-coral-light"
+                      ? "border-ht-primary-warm0 bg-coral-light"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >

@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="fr">
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Sidebar />
-        <main className="ml-56 min-h-screen">
+        <main className="ml-[200px] min-h-screen bg-white">
           <div className="px-8 py-6">{children}</div>
         </main>
       </body>

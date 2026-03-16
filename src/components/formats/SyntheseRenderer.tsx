@@ -153,7 +153,7 @@ export function SyntheseRenderer({ content }: Props) {
 
                 {/* Highlight quote */}
                 {section.highlight && (
-                  <blockquote className="border-l-3 border-blue-400 bg-coral-light/50 py-2 pl-4 pr-3">
+                  <blockquote className="border-l-3 border-ht-primary/60 bg-coral-light/50 py-2 pl-4 pr-3">
                     <p className="text-sm font-medium italic text-coral-dark">
                       &ldquo;{section.highlight}&rdquo;
                     </p>
@@ -190,7 +190,7 @@ export function SyntheseRenderer({ content }: Props) {
           transition={{ delay: 0.2 + (data.sections?.length || 0) * 0.08 }}
           className="mt-6"
         >
-          <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50">
+          <Card className="border-ht-primary/30 bg-gradient-to-br from-ht-primary-warm to-ht-primary-warm/50">
             <CardHeader>
               <CardTitle className="text-base text-coral-dark">
                 Ce qu&apos;il faut retenir
@@ -200,7 +200,7 @@ export function SyntheseRenderer({ content }: Props) {
               <ul className="space-y-3">
                 {data.takeaways.map((takeaway, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm">
-                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-200 text-xs font-bold text-coral-dark">
+                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-ht-primary-warm text-xs font-bold text-coral-dark">
                       {i + 1}
                     </span>
                     <span className="text-coral-dark">{takeaway}</span>

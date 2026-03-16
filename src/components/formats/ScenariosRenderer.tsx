@@ -131,7 +131,7 @@ export function ScenariosRenderer({ content }: Props) {
         </div>
 
         {/* Score */}
-        <div className="rounded-xl border-2 border-blue-200 bg-coral-light p-6 text-center">
+        <div className="rounded-xl border-2 border-ht-primary/30 bg-coral-light p-6 text-center">
           <p className="text-4xl font-bold text-coral">{stats.score}%</p>
           <p className="mt-1 text-sm text-coral">Score de pertinence</p>
         </div>
@@ -176,7 +176,7 @@ export function ScenariosRenderer({ content }: Props) {
         </div>
 
         {/* Conclusion */}
-        <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 p-5">
+        <div className="rounded-xl border-2 border-ht-primary/30 bg-gradient-to-br from-ht-primary-warm to-ht-primary-warm/50 p-5">
           <p className="mb-2 text-xs font-semibold uppercase text-coral">Conclusion</p>
           <p className="text-sm leading-relaxed text-coral-dark">{data.conclusion}</p>
         </div>

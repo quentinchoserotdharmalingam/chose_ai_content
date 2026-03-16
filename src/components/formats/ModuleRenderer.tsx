@@ -112,7 +112,7 @@ export function ModuleRenderer({ content }: Props) {
         </div>
 
         {/* Score */}
-        <div className="rounded-xl border-2 border-blue-200 bg-coral-light p-6 text-center">
+        <div className="rounded-xl border-2 border-ht-primary/30 bg-coral-light p-6 text-center">
           <p className="text-4xl font-bold text-coral">{score}%</p>
           <p className="mt-1 text-sm text-coral">
             {correctCount} / {totalQuizzes} quiz réussis
@@ -303,7 +303,7 @@ export function ModuleRenderer({ content }: Props) {
 // --- Lesson Card ---
 function LessonCard({ step }: { step: ModuleContent["steps"][number] }) {
   return (
-    <div className="rounded-xl border-2 border-blue-200 bg-coral-light/50 p-5 sm:p-6">
+    <div className="rounded-xl border-2 border-ht-primary/30 bg-coral-light/50 p-5 sm:p-6">
       <div className="mb-3 flex items-center gap-2">
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-coral-light">
           <BookOpen className="h-3.5 w-3.5 text-coral" />

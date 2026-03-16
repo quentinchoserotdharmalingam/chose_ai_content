@@ -234,7 +234,7 @@ export function PreviewStep({
 
       {/* Regeneration modal */}
       {showRegenModal && (
-        <div className="mb-4 rounded-lg border border-blue-200 bg-coral-light p-4">
+        <div className="mb-4 rounded-lg border border-ht-primary/30 bg-coral-light p-4">
           <p className="mb-2 text-sm font-medium text-coral-dark">
             Regénérer {FORMAT_META[activeFormat].label}
           </p>
