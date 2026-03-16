@@ -330,6 +330,8 @@ export const EXTENSION_META: Record<
 
 // --- Interview IA ---
 
+export type InterviewResourceType = "interview" | "pulse";
+
 export type InterviewTheme = "onboarding" | "satisfaction" | "retention" | "custom";
 
 export type InterviewTone = "bienveillant" | "formel" | "direct" | "decontracte";
@@ -338,9 +340,18 @@ export type InterviewResourceStatus = "draft" | "published";
 
 export type InterviewSessionStatus = "in_progress" | "completed" | "abandoned";
 
+export type PulseFrequency = "weekly" | "biweekly" | "monthly";
+
+export const PULSE_FREQUENCY_META: Record<PulseFrequency, { label: string; days: number }> = {
+  weekly: { label: "Hebdomadaire", days: 7 },
+  biweekly: { label: "Bi-mensuel", days: 14 },
+  monthly: { label: "Mensuel", days: 30 },
+};
+
 export interface InterviewConfig {
   title: string;
   description?: string;
+  type: InterviewResourceType;
   theme: InterviewTheme;
   customTheme?: string;
   tone: InterviewTone;
@@ -351,6 +362,10 @@ export interface InterviewConfig {
   targetDurationMinutes: number;
   maxQuestions: number;
   analysisTemplate?: AnalysisTemplateDimension[];
+  // Pulse-specific
+  pulseQuestion?: string;
+  pulseFrequency?: PulseFrequency;
+  pulseMaxFollowUps?: number;
 }
 
 export interface AnalysisTemplateDimension {

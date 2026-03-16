@@ -57,6 +57,7 @@ model InterviewResource {
   id                    String   @id @default(cuid())
   title                 String
   description           String?
+  type                  String   @default("interview")  // "interview" | "pulse"
   theme                 String                          // "onboarding" | "satisfaction" | "retention" | custom
   tone                  String   @default("bienveillant")
   scopeIn               String?  @db.Text              // Zone verte — sujets à explorer
@@ -67,6 +68,10 @@ model InterviewResource {
   maxQuestions          Int      @default(25)
   analysisTemplate      String?  @db.Text              // JSON — structure d'analyse configurable
   status                String   @default("draft")     // "draft" | "published"
+  // Pulse-specific fields
+  pulseQuestion         String?  @db.Text              // Question score NPS configurable
+  pulseFrequency        String?                         // "weekly" | "biweekly" | "monthly"
+  pulseMaxFollowUps     Int      @default(3)            // Max follow-up questions (1-3)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -78,6 +83,7 @@ model InterviewSession {
   interviewResourceId String
   participantName     String?
   status              String    @default("in_progress") // "in_progress" | "completed" | "abandoned"
+  pulseScore          Int?                              // Score 1-10 for pulse sessions
   startedAt           DateTime  @default(now())
   completedAt         DateTime?
 

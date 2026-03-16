@@ -39,7 +39,7 @@ export async function PATCH(
   const body = await request.json();
 
   const data: Record<string, unknown> = {};
-  const directFields = ["title", "description", "theme", "tone", "scopeIn", "scopeOut", "targetDurationMinutes", "maxQuestions", "status"];
+  const directFields = ["title", "description", "type", "theme", "tone", "scopeIn", "scopeOut", "targetDurationMinutes", "maxQuestions", "status", "pulseQuestion", "pulseFrequency", "pulseMaxFollowUps"];
 
   for (const field of directFields) {
     if (body[field] !== undefined) data[field] = body[field];

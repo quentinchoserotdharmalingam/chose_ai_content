@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { generateInterviewAnalysis } from "@/lib/interview";
+import { generateInterviewAnalysis, generatePulseAnalysis } from "@/lib/interview";
 import type { AnalysisTemplateDimension } from "@/types";
 import { DEFAULT_ANALYSIS_TEMPLATES } from "@/types";
 
@@ -38,22 +38,35 @@ export async function POST(
   const messages = session.messages.map((m) => ({ role: m.role, content: m.content }));
 
   if (messages.length >= 2) {
-    let analysisTemplate: AnalysisTemplateDimension[];
-    if (session.interviewResource.analysisTemplate) {
-      analysisTemplate = JSON.parse(session.interviewResource.analysisTemplate);
-    } else {
-      const theme = session.interviewResource.theme as keyof typeof DEFAULT_ANALYSIS_TEMPLATES;
-      analysisTemplate = DEFAULT_ANALYSIS_TEMPLATES[theme] || DEFAULT_ANALYSIS_TEMPLATES.onboarding;
-    }
+    const isPulse = session.interviewResource.type === "pulse";
 
-    // Fire and forget — analysis runs in background
-    generateInterviewAnalysis(messages, analysisTemplate)
-      .then(({ summary, rawAnalysis }) =>
-        prisma.interviewAnalysis.create({
-          data: { sessionId, summary, rawAnalysis },
-        })
+    if (isPulse) {
+      // Pulse analysis — lighter, uses Haiku
+      generatePulseAnalysis(
+        session.interviewResource.pulseQuestion || "",
+        session.pulseScore || 5,
+        messages
       )
-      .catch((err) => console.error("Background analysis generation failed:", err));
+        .then(({ summary, rawAnalysis }) =>
+          prisma.interviewAnalysis.create({ data: { sessionId, summary, rawAnalysis } })
+        )
+        .catch((err) => console.error("Background pulse analysis failed:", err));
+    } else {
+      // Interview analysis
+      let analysisTemplate: AnalysisTemplateDimension[];
+      if (session.interviewResource.analysisTemplate) {
+        analysisTemplate = JSON.parse(session.interviewResource.analysisTemplate);
+      } else {
+        const theme = session.interviewResource.theme as keyof typeof DEFAULT_ANALYSIS_TEMPLATES;
+        analysisTemplate = DEFAULT_ANALYSIS_TEMPLATES[theme] || DEFAULT_ANALYSIS_TEMPLATES.onboarding;
+      }
+
+      generateInterviewAnalysis(messages, analysisTemplate)
+        .then(({ summary, rawAnalysis }) =>
+          prisma.interviewAnalysis.create({ data: { sessionId, summary, rawAnalysis } })
+        )
+        .catch((err) => console.error("Background analysis generation failed:", err));
+    }
   }
 
   return NextResponse.json({ status: "completed" }, { status: 200 });
