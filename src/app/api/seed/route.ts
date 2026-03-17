@@ -14,6 +14,10 @@ function minutesAfter(base: Date, min: number): Date {
   return new Date(base.getTime() + min * 60 * 1000);
 }
 
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   // ============================================================
   // 1. INTERVIEW LONG — Onboarding M+1
