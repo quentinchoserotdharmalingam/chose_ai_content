@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Users,
   ChevronRight,
+  MessageSquareQuote,
 } from "lucide-react";
 import {
   LineChart,
@@ -76,6 +77,38 @@ interface InterviewDetail {
   sessions: Session[];
 }
 
+interface InterviewStats {
+  participants: Array<{
+    name: string;
+    sessionId: string;
+    completedAt: string | null;
+    dimensions: Record<string, unknown>;
+    globalSummary: string;
+    keyVerbatims: string[];
+  }>;
+  dimensionAggregates: Record<string, {
+    type: string;
+    label: string;
+    average?: number;
+    min?: number;
+    max?: number;
+    distribution?: { faible: number; moyen: number; élevé: number };
+    topItems?: Array<{ item: string; count: number }>;
+    trueCount?: number;
+    falseCount?: number;
+    values: Array<{ participant: string; value: unknown; sessionId: string }>;
+  }>;
+  insights: {
+    alerts: Array<{ participant: string; sessionId: string; reason: string }>;
+    positiveSignals: Array<{ participant: string; sessionId: string; summary: string }>;
+    topPositiveThemes: Array<{ item: string; count: number }>;
+    topNegativeThemes: Array<{ item: string; count: number }>;
+    topSuggestions: Array<{ item: string; count: number }>;
+    allVerbatims: Array<{ quote: string; participant: string; sessionId: string }>;
+  };
+  aggregate: { completedCount: number; totalCount: number };
+}
+
 interface PulseAnalysis {
   dimensions?: Record<string, unknown>;
   globalSummary?: string;
@@ -104,6 +137,7 @@ export default function InterviewDetailPage() {
 
   const [data, setData] = useState<InterviewDetail | null>(null);
   const [pulseStats, setPulseStats] = useState<PulseStats | null>(null);
+  const [interviewStats, setInterviewStats] = useState<InterviewStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -113,11 +147,15 @@ export default function InterviewDetailPage() {
       .then((d) => {
         setData(d);
         setLoading(false);
-        // Fetch pulse stats if pulse
         if (d.type === "pulse") {
           fetch(`/api/interviews/${interviewId}/pulse-stats`)
             .then((res) => res.json())
             .then(setPulseStats)
+            .catch(() => {});
+        } else if (d.type === "interview") {
+          fetch(`/api/interviews/${interviewId}/interview-stats`)
+            .then((res) => res.json())
+            .then(setInterviewStats)
             .catch(() => {});
         }
       })
@@ -296,16 +334,27 @@ export default function InterviewDetailPage() {
         </div>
       )}
 
-      {/* Pulse score evolution chart — recharts */}
-      {isPulse && pulseStats && pulseStats.timeline.length > 0 && (
-        <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
-            <h2 className="text-[14px] font-semibold text-ht-text">Évolution des scores</h2>
+      {/* Pulse chart — evolution (recurring) or distribution (one-time) */}
+      {isPulse && pulseStats && pulseStats.timeline.length > 0 && (() => {
+        const isRecurring = pulseStats.participants.some((p) => p.sessions.length > 1);
+        return isRecurring ? (
+          <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
+              <h2 className="text-[14px] font-semibold text-ht-text">Évolution des scores</h2>
+            </div>
+            <PulseEvolutionChart pulseStats={pulseStats} />
           </div>
-          <PulseEvolutionChart pulseStats={pulseStats} />
-        </div>
-      )}
+        ) : (
+          <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
+              <h2 className="text-[14px] font-semibold text-ht-text">Distribution des scores</h2>
+            </div>
+            <PulseScoreDistribution pulseStats={pulseStats} />
+          </div>
+        );
+      })()}
 
       {/* Pulse global summary */}
       {isPulse && pulseStats && pulseStats.insights && (
@@ -330,6 +379,17 @@ export default function InterviewDetailPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Interview aggregate dashboard */}
+      {!isPulse && interviewStats && interviewStats.participants.length > 0 && (
+        <>
+          <InterviewDimensionScores stats={interviewStats} />
+          <InterviewThemesSummary stats={interviewStats} />
+          <InterviewAlerts interviewId={data.id} stats={interviewStats} />
+          <InterviewVerbatims interviewId={data.id} stats={interviewStats} />
+          <InterviewParticipantCards interviewId={data.id} stats={interviewStats} />
+        </>
       )}
 
       {/* Sessions — full width, above config */}
@@ -489,6 +549,315 @@ export default function InterviewDetailPage() {
   );
 }
 
+// ============================================================
+// Interview aggregate dashboard components
+// ============================================================
+
+function isRiskDimension(key: string): boolean {
+  return /risk|risque|departure|départ/.test(key);
+}
+
+// Dimension comparison: horizontal bars for scores, distribution for low/med/high
+function InterviewDimensionScores({ stats }: { stats: InterviewStats }) {
+  const scoreDims = Object.entries(stats.dimensionAggregates).filter(([, d]) => d.type === "score_1_10");
+  const qualDims = Object.entries(stats.dimensionAggregates).filter(([, d]) => d.type === "score_low_med_high");
+
+  if (scoreDims.length === 0 && qualDims.length === 0) return null;
+
+  return (
+    <div className="mb-6 space-y-4">
+      {scoreDims.map(([key, dim]) => (
+        <div key={key} className="rounded-xl border border-ht-border bg-white p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
+              <h2 className="text-[14px] font-semibold text-ht-text">{dim.label}</h2>
+            </div>
+            {dim.average !== undefined && (
+              <span className="text-[13px] text-ht-text-secondary">
+                Moyenne : <span className="font-semibold text-ht-text">{dim.average}/10</span>
+              </span>
+            )}
+          </div>
+          <div className="space-y-3">
+            {dim.values
+              .sort((a, b) => (b.value as number) - (a.value as number))
+              .map((v) => {
+                const score = v.value as number;
+                const color = score >= 7 ? "bg-green-500" : score >= 5 ? "bg-amber-500" : "bg-red-500";
+                const textColor = score >= 7 ? "text-green-700" : score >= 5 ? "text-amber-700" : "text-red-700";
+                return (
+                  <div key={v.participant} className="flex items-center gap-3">
+                    <span className="w-24 text-[13px] font-medium text-ht-text truncate">{v.participant}</span>
+                    <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${color} transition-all duration-500`}
+                        style={{ width: `${(score / 10) * 100}%` }}
+                      />
+                    </div>
+                    <span className={`text-[14px] font-semibold ${textColor} w-10 text-right`}>{score}/10</span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      ))}
+
+      {qualDims.map(([key, dim]) => {
+        const risk = isRiskDimension(key);
+        return (
+          <div key={key} className="rounded-xl border border-ht-border bg-white p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
+              <h2 className="text-[14px] font-semibold text-ht-text">{dim.label}</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {dim.values.map((v) => {
+                const val = (v.value as string).toLowerCase();
+                let pillColor: string;
+                if (risk) {
+                  pillColor = val === "faible" ? "bg-green-100 text-green-700" : val === "moyen" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700";
+                } else {
+                  pillColor = val === "élevé" || val === "elevé" ? "bg-green-100 text-green-700" : val === "moyen" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700";
+                }
+                return (
+                  <div key={v.participant} className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-ht-text">{v.participant}</span>
+                    <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${pillColor}`}>
+                      {v.value as string}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {dim.distribution && (
+              <div className="mt-3 flex items-center gap-4 text-[12px] text-ht-text-secondary">
+                <span>{dim.distribution.faible} faible</span>
+                <span>{dim.distribution.moyen} moyen</span>
+                <span>{dim.distribution.élevé} élevé</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Cross-session themes: positive, negative, suggestions
+function InterviewThemesSummary({ stats }: { stats: InterviewStats }) {
+  const { topPositiveThemes, topNegativeThemes, topSuggestions } = stats.insights;
+  if (topPositiveThemes.length === 0 && topNegativeThemes.length === 0 && topSuggestions.length === 0) return null;
+
+  return (
+    <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Brain className="h-4 w-4 text-purple-500" />
+        <h2 className="text-[14px] font-semibold text-ht-text">Thèmes récurrents</h2>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        {/* Positive themes */}
+        {topPositiveThemes.length > 0 && (
+          <div>
+            <p className="text-[12px] font-medium text-green-700 mb-2">Points positifs</p>
+            <div className="flex flex-wrap gap-1.5">
+              {topPositiveThemes.map((t) => (
+                <span key={t.item} className="rounded-full bg-green-50 border border-green-200 px-2.5 py-1 text-[12px] font-medium text-green-700">
+                  {t.item} {t.count > 1 && <span className="text-green-500">({t.count})</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Negative themes */}
+        {topNegativeThemes.length > 0 && (
+          <div>
+            <p className="text-[12px] font-medium text-red-700 mb-2">Points d&apos;alerte</p>
+            <div className="flex flex-wrap gap-1.5">
+              {topNegativeThemes.map((t) => (
+                <span key={t.item} className="rounded-full bg-red-50 border border-red-200 px-2.5 py-1 text-[12px] font-medium text-red-700">
+                  {t.item} {t.count > 1 && <span className="text-red-400">({t.count})</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Suggestions */}
+      {topSuggestions.length > 0 && (
+        <div>
+          <p className="text-[12px] font-medium text-amber-700 mb-2">Suggestions d&apos;amélioration</p>
+          <ul className="space-y-1">
+            {topSuggestions.map((s) => (
+              <li key={s.item} className="flex items-start gap-2 text-[13px] text-ht-text">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+                {s.item} {s.count > 1 && <span className="text-ht-text-secondary">({s.count}x)</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Alerts: positive signals vs warnings
+function InterviewAlerts({ interviewId, stats }: { interviewId: string; stats: InterviewStats }) {
+  const { alerts, positiveSignals } = stats.insights;
+  if (alerts.length === 0 && positiveSignals.length === 0) return null;
+
+  return (
+    <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Positive signals */}
+      <div className="rounded-xl border border-ht-border bg-white p-5 border-l-4 border-l-green-500">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="h-4 w-4 text-green-600" />
+          <h3 className="text-[13px] font-semibold text-ht-text">Signaux positifs</h3>
+        </div>
+        {positiveSignals.length === 0 ? (
+          <p className="text-[12px] text-ht-text-secondary">Aucun signal positif</p>
+        ) : (
+          <div className="space-y-3">
+            {positiveSignals.map((s) => (
+              <Link key={s.sessionId} href={`/creator/interview/${interviewId}/sessions/${s.sessionId}`} className="block group">
+                <span className="text-[13px] font-medium text-ht-text group-hover:text-ht-primary transition-colors">{s.participant}</span>
+                <p className="text-[12px] text-ht-text-secondary leading-relaxed line-clamp-2 mt-0.5">{s.summary}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Alerts */}
+      <div className="rounded-xl border border-ht-border bg-white p-5 border-l-4 border-l-red-500">
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <h3 className="text-[13px] font-semibold text-ht-text">Points d&apos;alerte</h3>
+        </div>
+        {alerts.length === 0 ? (
+          <p className="text-[12px] text-ht-text-secondary">Aucune alerte</p>
+        ) : (
+          <div className="space-y-3">
+            {alerts.map((a) => (
+              <Link key={a.sessionId} href={`/creator/interview/${interviewId}/sessions/${a.sessionId}`} className="block group">
+                <span className="text-[13px] font-medium text-ht-text group-hover:text-ht-primary transition-colors">{a.participant}</span>
+                <p className="mt-0.5 text-[11px] font-medium text-red-700 bg-red-50 rounded px-2 py-0.5 inline-block">{a.reason}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Key verbatims across all sessions
+function InterviewVerbatims({ interviewId, stats }: { interviewId: string; stats: InterviewStats }) {
+  const { allVerbatims } = stats.insights;
+  if (allVerbatims.length === 0) return null;
+
+  return (
+    <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <MessageSquareQuote className="h-4 w-4 text-ht-text-secondary" />
+        <h2 className="text-[14px] font-semibold text-ht-text">Verbatims clés</h2>
+      </div>
+      <div className="space-y-3">
+        {allVerbatims.map((v, i) => (
+          <Link
+            key={i}
+            href={`/creator/interview/${interviewId}/sessions/${v.sessionId}`}
+            className="block group"
+          >
+            <blockquote className="border-l-2 border-[#FF6058] pl-3 py-1">
+              <p className="text-[13px] text-ht-text leading-relaxed italic group-hover:text-ht-primary transition-colors">
+                &ldquo;{v.quote}&rdquo;
+              </p>
+              <p className="mt-1 text-[11px] text-ht-text-secondary font-medium">— {v.participant}</p>
+            </blockquote>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Per-participant summary cards
+function InterviewParticipantCards({ interviewId, stats }: { interviewId: string; stats: InterviewStats }) {
+  if (stats.participants.length === 0) return null;
+
+  // Find the primary score dimension (first score_1_10)
+  const scoreDimKey = Object.keys(stats.dimensionAggregates).find(
+    (k) => stats.dimensionAggregates[k].type === "score_1_10"
+  );
+  // Find risk dimension
+  const riskDimKey = Object.keys(stats.dimensionAggregates).find(
+    (k) => stats.dimensionAggregates[k].type === "score_low_med_high" && isRiskDimension(k)
+  );
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Users className="h-4 w-4 text-ht-text-secondary" />
+        <h2 className="text-[14px] font-semibold text-ht-text">Par participant</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {stats.participants.map((p) => {
+          const score = scoreDimKey ? (p.dimensions[scoreDimKey] as number) : null;
+          const riskVal = riskDimKey ? (p.dimensions[riskDimKey] as string) : null;
+
+          const scoreColor = score !== null
+            ? score >= 7 ? "text-green-700 bg-green-100" : score >= 5 ? "text-amber-700 bg-amber-100" : "text-red-700 bg-red-100"
+            : "";
+
+          const riskColor = riskVal
+            ? riskVal.toLowerCase() === "faible" ? "text-green-700 bg-green-50" : riskVal.toLowerCase() === "moyen" ? "text-amber-700 bg-amber-50" : "text-red-700 bg-red-50"
+            : "";
+
+          return (
+            <Link
+              key={p.sessionId}
+              href={`/creator/interview/${interviewId}/sessions/${p.sessionId}`}
+              className="rounded-xl border border-ht-border bg-white p-4 transition-all duration-200 hover:shadow-md hover:border-ht-border-secondary block group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px] font-medium text-ht-text group-hover:text-ht-primary transition-colors">
+                    {p.name}
+                  </span>
+                  {score !== null && (
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreColor}`}>
+                      {score}/10
+                    </span>
+                  )}
+                  {riskVal && (
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${riskColor}`}>
+                      Risque : {riskVal}
+                    </span>
+                  )}
+                </div>
+                <ChevronRight className="h-4 w-4 text-ht-text-secondary group-hover:text-ht-primary transition-colors" />
+              </div>
+              {p.globalSummary && (
+                <p className="text-[12px] text-ht-text-secondary leading-relaxed line-clamp-2">
+                  {p.globalSummary}
+                </p>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Pulse dashboard components
+// ============================================================
+
 // Participant colors for chart
 const PARTICIPANT_COLORS = ["#FF6058", "#3B82F6", "#22C55E", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316"];
 
@@ -547,6 +916,34 @@ function PulseEvolutionChart({ pulseStats }: { pulseStats: PulseStats }) {
         />
       </LineChart>
     </ResponsiveContainer>
+  );
+}
+
+// Score distribution for one-time pulses (horizontal bars)
+function PulseScoreDistribution({ pulseStats }: { pulseStats: PulseStats }) {
+  const sorted = [...pulseStats.participants]
+    .map((p) => ({ name: p.name, score: p.sessions[p.sessions.length - 1]?.score ?? 0 }))
+    .sort((a, b) => b.score - a.score);
+
+  return (
+    <div className="space-y-3">
+      {sorted.map((p) => {
+        const color = p.score >= 7 ? "bg-green-500" : p.score >= 5 ? "bg-amber-500" : "bg-red-500";
+        const textColor = p.score >= 7 ? "text-green-700" : p.score >= 5 ? "text-amber-700" : "text-red-700";
+        return (
+          <div key={p.name} className="flex items-center gap-3">
+            <span className="w-20 text-[13px] font-medium text-ht-text truncate">{p.name}</span>
+            <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${color} transition-all duration-500`}
+                style={{ width: `${(p.score / 10) * 100}%` }}
+              />
+            </div>
+            <span className={`text-[14px] font-semibold ${textColor} w-10 text-right`}>{p.score}/10</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
