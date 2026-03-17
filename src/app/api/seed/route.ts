@@ -19,6 +19,12 @@ export async function GET() {
 }
 
 export async function POST() {
+  // Clean up previous seed data to avoid duplicates
+  await prisma.interviewAnalysis.deleteMany({});
+  await prisma.interviewMessage.deleteMany({});
+  await prisma.interviewSession.deleteMany({});
+  await prisma.interviewResource.deleteMany({});
+
   // ============================================================
   // 1. INTERVIEW LONG — Onboarding M+1
   // ============================================================
@@ -94,12 +100,21 @@ export async function POST() {
     data: {
       sessionId: session1.id,
       summary: JSON.stringify({
-        satisfaction_score: 8,
-        integration_quality: "high",
-        positive_themes: ["Accompagnement manager", "Marrainage efficace", "Équipe accueillante", "Retours constructifs"],
-        negative_themes: ["Documentation éparpillée", "Réunions trop longues", "Formation outils data insuffisante"],
-        departure_risk: "low",
-        suggestions: ["Centraliser la documentation interne", "Planifier une formation outils data", "Optimiser le format des réunions"],
+        dimensions: {
+          satisfaction_score: 8,
+          integration_quality: "élevé",
+          positive_themes: ["Accompagnement manager", "Marrainage efficace", "Équipe accueillante", "Retours constructifs"],
+          negative_themes: ["Documentation éparpillée", "Réunions trop longues", "Formation outils data insuffisante"],
+          departure_risk: "faible",
+          suggestions: ["Centraliser la documentation interne", "Planifier une formation outils data", "Optimiser le format des réunions"],
+        },
+        globalSummary: "Marie montre une intégration très positive (8/10). Les points forts sont l'accompagnement managérial, le système de marrainage et l'accueil de l'équipe. Les axes d'amélioration concernent principalement la documentation interne (non centralisée), la formation aux outils data (apprentissage trop autonome) et l'efficacité des réunions. Le risque de départ est faible.",
+        keyVerbatims: [
+          "Mon manager a pris le temps de faire des points réguliers la première semaine.",
+          "J'ai perdu du temps à chercher des process qui n'étaient pas centralisés.",
+          "J'aurais aimé une formation plus structurée plutôt que d'apprendre sur le tas.",
+          "Quand j'ai présenté mon premier livrable en réunion d'équipe, les retours étaient constructifs.",
+        ],
       }),
       rawAnalysis: "Marie montre une intégration très positive (8/10). Les points forts sont l'accompagnement managérial, le système de marrainage et l'accueil de l'équipe. Les axes d'amélioration concernent principalement la documentation interne (non centralisée), la formation aux outils data (apprentissage trop autonome) et l'efficacité des réunions. Le risque de départ est faible — Marie semble engagée et valorise la culture d'équipe.",
     },
@@ -145,12 +160,21 @@ export async function POST() {
     data: {
       sessionId: session2.id,
       summary: JSON.stringify({
-        satisfaction_score: 5,
-        integration_quality: "low",
-        positive_themes: ["Volonté de bien faire", "Initiative personnelle"],
-        negative_themes: ["Manager absent", "Missions floues", "Feedback public négatif", "Communication informelle", "Isolement ressenti"],
-        departure_risk: "high",
-        suggestions: ["Instaurer des points hebdo obligatoires avec le manager", "Définir un plan d'onboarding structuré avec objectifs", "Formaliser les process de communication", "Sensibiliser le manager au feedback constructif"],
+        dimensions: {
+          satisfaction_score: 5,
+          integration_quality: "faible",
+          positive_themes: ["Volonté de bien faire", "Initiative personnelle"],
+          negative_themes: ["Manager absent", "Missions floues", "Feedback public négatif", "Communication informelle", "Isolement ressenti"],
+          departure_risk: "élevé",
+          suggestions: ["Instaurer des points hebdo obligatoires avec le manager", "Définir un plan d'onboarding structuré avec objectifs", "Formaliser les process de communication", "Sensibiliser le manager au feedback constructif"],
+        },
+        globalSummary: "Thomas présente un cas d'intégration préoccupant (5/10). L'absence du manager et le manque de structure dans l'onboarding créent un sentiment d'isolement et de confusion. L'épisode du feedback négatif en public a marqué négativement le début de parcours. La communication très informelle pénalise les nouveaux arrivants. Le risque de départ est élevé.",
+        keyVerbatims: [
+          "Mon manager est souvent en déplacement, je n'ai pas eu de vrai point depuis la première semaine.",
+          "J'ai l'impression de déranger quand je pose des questions.",
+          "Mon manager m'a fait la remarque en réunion devant tout le monde.",
+          "Beaucoup de choses se disent à l'oral ou en apart. Quand on est nouveau, on rate une bonne partie des informations.",
+        ],
       }),
       rawAnalysis: "Thomas présente un cas d'intégration préoccupant (5/10). L'absence du manager et le manque de structure dans l'onboarding créent un sentiment d'isolement et de confusion. L'épisode du feedback négatif en public a marqué négativement le début de parcours. La communication très informelle pénalise les nouveaux arrivants. Le risque de départ est élevé si aucune action corrective n'est mise en place rapidement.",
     },
@@ -190,12 +214,20 @@ export async function POST() {
     data: {
       sessionId: session3.id,
       summary: JSON.stringify({
-        satisfaction_score: 9,
-        integration_quality: "high",
-        positive_themes: ["Onboarding structuré", "Manager impliqué", "Déjeuners inter-équipes", "Hackathon inclusif", "Sentiment d'appartenance rapide"],
-        negative_themes: ["Délai accès outils IT (3 semaines)"],
-        departure_risk: "low",
-        suggestions: ["Accélérer le provisioning IT pour les nouveaux arrivants"],
+        dimensions: {
+          satisfaction_score: 9,
+          integration_quality: "élevé",
+          positive_themes: ["Onboarding structuré", "Manager impliqué", "Déjeuners inter-équipes", "Hackathon inclusif", "Sentiment d'appartenance rapide"],
+          negative_themes: ["Délai accès outils IT (3 semaines)"],
+          departure_risk: "faible",
+          suggestions: ["Accélérer le provisioning IT pour les nouveaux arrivants"],
+        },
+        globalSummary: "Julie présente un cas d'intégration exemplaire (9/10). L'onboarding structuré, l'implication du manager et les initiatives sociales (déjeuners, hackathon) ont créé un sentiment d'appartenance rapide. Seul point d'amélioration : le délai de provisioning IT. Risque de départ très faible.",
+        keyVerbatims: [
+          "Tout était préparé : mon bureau, mon ordinateur, un planning d'onboarding sur 2 semaines.",
+          "Mon manager avait même prévu des déjeuners avec les différentes équipes.",
+          "J'ai pu contribuer dès ma deuxième semaine et proposer une idée qui a été retenue.",
+        ],
       }),
       rawAnalysis: "Julie présente un cas d'intégration exemplaire (9/10). L'onboarding structuré, l'implication du manager et les initiatives sociales (déjeuners, hackathon) ont créé un sentiment d'appartenance rapide. Seul point d'amélioration : le délai de provisioning IT. Risque de départ très faible.",
     },
@@ -283,11 +315,19 @@ export async function POST() {
     data: {
       sessionId: session5.id,
       summary: JSON.stringify({
-        satisfaction_score: 7,
-        positive_themes: ["Autonomie sur les projets", "Intérêt pour le métier", "Bonne équipe", "Télétravail apprécié"],
-        negative_themes: ["Manque de visibilité sur l'évolution", "Pas de reconnaissance", "Absence de feedback positif en rush"],
-        engagement_level: "medium",
-        suggestions: ["Mettre en place un plan de carrière avec objectifs", "Instaurer des rituels de reconnaissance", "Discuter perspectives d'évolution lors de l'entretien annuel"],
+        dimensions: {
+          satisfaction_score: 7,
+          positive_themes: ["Autonomie sur les projets", "Intérêt pour le métier", "Bonne équipe", "Télétravail apprécié"],
+          negative_themes: ["Manque de visibilité sur l'évolution", "Pas de reconnaissance", "Absence de feedback positif en rush"],
+          engagement_level: "moyen",
+          suggestions: ["Mettre en place un plan de carrière avec objectifs", "Instaurer des rituels de reconnaissance", "Discuter perspectives d'évolution lors de l'entretien annuel"],
+        },
+        globalSummary: "Camille présente un profil de satisfaction mitigée (7/10). Elle est motivée par l'autonomie et les projets clients mais frustrée par le manque de perspectives d'évolution et de reconnaissance. L'engagement est moyen — elle pourrait se désengager si ses attentes en termes d'évolution ne sont pas adressées. Le télétravail est un levier de rétention important.",
+        keyVerbatims: [
+          "Ça fait 2 ans que je suis au même niveau, et mon manager ne m'a jamais parlé de perspectives claires.",
+          "Quand je suis en autonomie sur un dossier de A à Z, je suis dans mon élément.",
+          "Il y a des périodes de rush où c'est compliqué, et personne ne dit merci.",
+        ],
       }),
       rawAnalysis: "Camille présente un profil de satisfaction mitigée (7/10). Elle est motivée par l'autonomie et les projets clients mais frustrée par le manque de perspectives d'évolution et de reconnaissance. L'engagement est moyen — elle pourrait se désengager si ses attentes en termes d'évolution ne sont pas adressées. Le télétravail est un levier de rétention important.",
     },
@@ -331,11 +371,21 @@ export async function POST() {
     data: {
       sessionId: session6.id,
       summary: JSON.stringify({
-        satisfaction_score: 3,
-        positive_themes: ["Bonne relation avec les collègues"],
-        negative_themes: ["Changements stratégiques répétés", "Sentiment d'inutilité", "Sous-emploi des compétences", "Stress impactant la vie perso", "Recherche active d'emploi"],
-        engagement_level: "low",
-        suggestions: ["Alerte RH : risque de départ imminent", "Entretien manager urgent pour stabiliser le rôle", "Clarifier la stratégie et la feuille de route", "Confier des projets valorisants"],
+        dimensions: {
+          satisfaction_score: 3,
+          positive_themes: ["Bonne relation avec les collègues"],
+          negative_themes: ["Changements stratégiques répétés", "Sentiment d'inutilité", "Sous-emploi des compétences", "Stress impactant la vie perso", "Recherche active d'emploi"],
+          engagement_level: "faible",
+          suggestions: ["Alerte RH : risque de départ imminent", "Entretien manager urgent pour stabiliser le rôle", "Clarifier la stratégie et la feuille de route", "Confier des projets valorisants"],
+        },
+        globalSummary: "ALERTE — Antoine est en situation critique (3/10) et déclare être en recherche active d'emploi. Les changements stratégiques répétés et le sentiment d'inutilité ont détruit son engagement. Le stress professionnel impacte sa vie personnelle. Sans intervention immédiate, le départ est quasi-certain à court terme.",
+        keyVerbatims: [
+          "3 sur 10. Je suis en train de chercher ailleurs.",
+          "On refait les mêmes projets 3 fois parce que la stratégie change. C'est usant.",
+          "J'ai l'impression que mon travail ne sert à rien.",
+          "Le stress du travail déborde sur ma vie perso. Je rumine le soir et le week-end.",
+          "Franchement, plus grand chose. Mes collègues sont bien, mais ça ne suffit pas.",
+        ],
       }),
       rawAnalysis: "ALERTE — Antoine est en situation critique (3/10) et déclare être en recherche active d'emploi. Les changements stratégiques répétés et le sentiment d'inutilité ont détruit son engagement. Le stress professionnel impacte sa vie personnelle. Sans intervention immédiate (clarification du rôle, projets valorisants, écoute managériale), le départ est quasi-certain à court terme.",
     },
@@ -413,7 +463,7 @@ export async function POST() {
           { role: "user", content: "Mon projet avance bien et j'ai eu de bons retours de mon manager." },
           { role: "assistant", content: "Merci pour ce retour. Vous pouvez maintenant fermer cette page." },
         ],
-        analysis: { sentiment: "positif", keyInsight: "Progression projet et reconnaissance managériale", themes: ["Avancement projet", "Feedback positif"], verbatim: "Mon projet avance bien et j'ai eu de bons retours de mon manager.", actionSuggestion: null },
+        analysis: { dimensions: { sentiment: "positif", themes: ["Avancement projet", "Feedback positif"], action_suggérée: "Aucune action nécessaire" }, globalSummary: "Progression projet et reconnaissance managériale contribuent à un bon bien-être.", keyVerbatims: ["Mon projet avance bien et j'ai eu de bons retours de mon manager."] },
       },
     ],
     Thomas: [
@@ -425,7 +475,7 @@ export async function POST() {
           { role: "user", content: "Je fais les choses à l'aveugle. Et quand c'est pas ce qui était attendu, on me le reproche." },
           { role: "assistant", content: "Merci pour cette transparence. Vous pouvez maintenant fermer cette page." },
         ],
-        analysis: { sentiment: "négatif", keyInsight: "Manque de direction et communication managériale défaillante", themes: ["Absence manager", "Priorités floues", "Communication"], verbatim: "Je fais les choses à l'aveugle. Et quand c'est pas ce qui était attendu, on me le reproche.", actionSuggestion: "Organiser un point de priorisation hebdomadaire avec le manager" },
+        analysis: { dimensions: { sentiment: "négatif", themes: ["Absence manager", "Priorités floues", "Communication"], action_suggérée: "Organiser un point de priorisation hebdomadaire avec le manager" }, globalSummary: "Manque de direction et communication managériale défaillante. Thomas se sent livré à lui-même.", keyVerbatims: ["Je fais les choses à l'aveugle. Et quand c'est pas ce qui était attendu, on me le reproche.", "Toujours le même problème : je n'ai pas de visibilité sur mes priorités."] },
       },
     ],
     Julie: [
@@ -435,7 +485,7 @@ export async function POST() {
           { role: "user", content: "On a lancé un nouveau projet passionnant et toute l'équipe est motivée." },
           { role: "assistant", content: "Merci pour ce retour. Vous pouvez maintenant fermer cette page." },
         ],
-        analysis: { sentiment: "positif", keyInsight: "Énergie collective autour d'un nouveau projet", themes: ["Nouveau projet", "Cohésion équipe"], verbatim: "On a lancé un nouveau projet passionnant et toute l'équipe est motivée.", actionSuggestion: null },
+        analysis: { dimensions: { sentiment: "positif", themes: ["Nouveau projet", "Cohésion équipe"], action_suggérée: "Aucune action nécessaire" }, globalSummary: "Énergie collective autour d'un nouveau projet. Julie est très positive.", keyVerbatims: ["On a lancé un nouveau projet passionnant et toute l'équipe est motivée."] },
       },
     ],
     Camille: [
@@ -447,7 +497,7 @@ export async function POST() {
           { role: "user", content: "Deux collègues en congés, donc je récupère leurs dossiers en plus des miens." },
           { role: "assistant", content: "Merci pour ce retour. Vous pouvez maintenant fermer cette page." },
         ],
-        analysis: { sentiment: "mitigé", keyInsight: "Surcharge temporaire due aux absences", themes: ["Charge de travail", "Absences collègues"], verbatim: "Deux collègues en congés, donc je récupère leurs dossiers en plus des miens.", actionSuggestion: "Vérifier la répartition de charge pendant les périodes d'absences" },
+        analysis: { dimensions: { sentiment: "mitigé", themes: ["Charge de travail", "Absences collègues"], action_suggérée: "Vérifier la répartition de charge pendant les périodes d'absences" }, globalSummary: "Surcharge temporaire due aux absences de collègues. Camille gère une double charge.", keyVerbatims: ["Deux collègues en congés, donc je récupère leurs dossiers en plus des miens."] },
       },
     ],
     Antoine: [
@@ -461,7 +511,7 @@ export async function POST() {
           { role: "user", content: "Non, franchement non." },
           { role: "assistant", content: "Merci pour votre honnêteté. Vous pouvez maintenant fermer cette page." },
         ],
-        analysis: { sentiment: "négatif", keyInsight: "Démotivation profonde après annulation de projet", themes: ["Annulation projet", "Perte de sens", "Désengagement"], verbatim: "J'ai l'impression de perdre mon temps. Je me demande ce que je fais encore là.", actionSuggestion: "ALERTE : entretien manager urgent, risque de départ élevé" },
+        analysis: { dimensions: { sentiment: "négatif", themes: ["Annulation projet", "Perte de sens", "Désengagement"], action_suggérée: "ALERTE : entretien manager urgent, risque de départ élevé" }, globalSummary: "Démotivation profonde après annulation de projet. Antoine remet en question sa présence dans l'entreprise.", keyVerbatims: ["J'ai l'impression de perdre mon temps. Je me demande ce que je fais encore là.", "Encore un revirement stratégique cette semaine. Mon projet de 3 mois est annulé."] },
       },
     ],
   };
@@ -549,7 +599,7 @@ export async function POST() {
   await prisma.interviewAnalysis.create({
     data: {
       sessionId: p2s1.id,
-      summary: JSON.stringify({ sentiment: "positif", keyInsight: "Intégration facilitée par le buddy et l'accueil de l'équipe", themes: ["Buddy system", "Accueil équipe"], verbatim: "L'équipe est accueillante et mon buddy m'aide beaucoup sur les process.", actionSuggestion: null }),
+      summary: JSON.stringify({ dimensions: { sentiment: "positif", themes: ["Buddy system", "Accueil équipe"], action_suggérée: "Aucune action nécessaire" }, globalSummary: "Intégration facilitée par le buddy et l'accueil de l'équipe.", keyVerbatims: ["L'équipe est accueillante et mon buddy m'aide beaucoup sur les process."] }),
       rawAnalysis: "Léa — Score 8/10. Intégration positive grâce au buddy system et à l'accueil de l'équipe.",
     },
   });
@@ -581,7 +631,7 @@ export async function POST() {
   await prisma.interviewAnalysis.create({
     data: {
       sessionId: p2s2.id,
-      summary: JSON.stringify({ sentiment: "mitigé", keyInsight: "Onboarding technique manquant malgré les promesses du manager", themes: ["Onboarding technique absent", "Promesse non tenue"], verbatim: "Il m'a dit qu'il allait organiser quelque chose mais rien n'est venu.", actionSuggestion: "Planifier une session de formation technique cette semaine" }),
+      summary: JSON.stringify({ dimensions: { sentiment: "mitigé", themes: ["Onboarding technique absent", "Promesse non tenue"], action_suggérée: "Planifier une session de formation technique cette semaine" }, globalSummary: "Onboarding technique manquant malgré les promesses du manager. Romain se sent livré à lui-même.", keyVerbatims: ["Je n'ai pas encore eu de vrai onboarding technique. Je suis livré à moi-même sur les outils.", "Il m'a dit qu'il allait organiser quelque chose mais rien n'est venu pour l'instant."] }),
       rawAnalysis: "Romain — Score 5/10. L'onboarding technique n'a pas été mis en place malgré la demande. Risque de frustration croissante.",
     },
   });
