@@ -110,6 +110,69 @@ Exemples de dimensions configurables :
 
 ---
 
+## Dashboard agrégé — Analyse cross-session (Interview long)
+
+### Vue d'ensemble
+
+Quand une interview a des sessions complétées avec analyses, la page de détail (`/creator/interview/[id]`) affiche un dashboard agrégé entre les stats et la liste de sessions. Ce dashboard synthétise les résultats de toutes les sessions sans que le créateur ait à cliquer dans chaque session.
+
+### API — `GET /api/interviews/[id]/interview-stats`
+
+Endpoint qui agrège toutes les analyses de sessions complétées. L'agrégation est calculée à la volée (pas de données pré-calculées en base).
+
+**Agrégation par type de dimension** :
+
+| Type | Agrégation | Exemple |
+|------|-----------|---------|
+| `score_1_10` | Moyenne, min, max, valeurs par participant | Satisfaction : 7.3/10 (min 3, max 9) |
+| `score_low_med_high` | Distribution faible/moyen/élevé, valeurs par participant | Risque départ : 1 faible, 1 élevé |
+| `list` | Merge + comptage fréquences, top N items | "Manager absent" (2x), "Documentation" (2x) |
+| `boolean` | Count true vs false | — |
+| `text` | Collecte des valeurs | — |
+
+**Détection d'alertes** :
+- Score ≤ 4 sur une dimension `score_1_10`
+- Risque de départ "élevé" (dimensions contenant "risk/risque/departure/départ")
+- Qualité/engagement "faible" (autres dimensions `score_low_med_high`)
+
+**Réponse** : `participants[]`, `dimensionAggregates{}`, `insights { alerts, positiveSignals, topPositiveThemes, topNegativeThemes, topSuggestions, allVerbatims }`, `aggregate { completedCount, totalCount }`
+
+### Composants UI (5 blocs)
+
+Insérés entre les stats summary et la liste de sessions, uniquement quand il y a des sessions analysées.
+
+#### 1. Comparaison des scores par dimension (`InterviewDimensionScores`)
+
+- Pour chaque dimension `score_1_10` : barres horizontales par participant triées par score décroissant. Couleurs : vert ≥ 7, ambre ≥ 5, rouge < 5. Sous-titre avec la moyenne.
+- Pour chaque dimension `score_low_med_high` : pastilles colorées par participant. Inversion pour les dimensions de risque (élevé = rouge) vs qualité (élevé = vert). Distribution comptée en bas.
+
+#### 2. Thèmes récurrents (`InterviewThemesSummary`)
+
+Card avec icône Brain :
+- Colonne gauche : tags verts "Points positifs" (triés par fréquence, compteur si > 1)
+- Colonne droite : tags rouges "Points d'alerte" (triés par fréquence)
+- En dessous : liste ambre "Suggestions d'amélioration" avec compteur
+
+#### 3. Alertes (`InterviewAlerts`)
+
+Grille 2 colonnes (même pattern que `PulseAlerts`) :
+- Carte verte (bordure gauche) : participants sans alerte, avec résumé cliquable vers session
+- Carte rouge (bordure gauche) : participants avec alertes, raison affichée en badge rouge, lien vers session
+
+#### 4. Verbatims clés (`InterviewVerbatims`)
+
+Card avec icône MessageSquareQuote. Les verbatims les plus impactants de toutes les sessions (max 8), en blockquote avec bordure coral, attribués à leur participant, cliquables vers la session.
+
+#### 5. Cartes participants (`InterviewParticipantCards`)
+
+Grille `sm:grid-cols-2`. Chaque carte affiche :
+- Nom + score principal en badge coloré
+- Niveau de risque si dimension disponible (pastille colorée)
+- Première ligne du `globalSummary` (tronquée 2 lignes)
+- Lien cliquable vers la session détail
+
+---
+
 ## Données d'entrée IA
 
 ### V1
@@ -189,6 +252,9 @@ POST   /api/interviews/[id]/suggest-title            → Suggérer titre + descr
 POST   /api/interviews/[id]/suggest-scope            → Suggérer périmètre (zones verte/rouge)
 POST   /api/interviews/[id]/suggest-questions         → Suggérer questions d'ancrage + passage
 POST   /api/interviews/[id]/suggest-analysis         → Suggérer une structure d'analyse
+
+# Stats agrégées (interview long)
+GET    /api/interviews/[id]/interview-stats           → Agrégation cross-session des analyses
 
 # Entretien (collaborateur)
 POST   /api/interviews/[id]/chat                     → SSE streaming — message entretien
@@ -325,7 +391,7 @@ Ce message n'est pas visible dans l'UI mais permet à l'agent IA de se présente
 
 ### Exclu (post-MVP)
 
-- [ ] Vue manager dédiée / dashboard agrégé
+- [x] ~~Vue manager dédiée / dashboard agrégé~~ → Implémenté : dashboard agrégé cross-session sur la page interview
 - [ ] Injection automatique des données collaborateur HeyTeam
 - [ ] Déclenchement depuis extensions / campagnes
 - [ ] Choix du rôle destinataire de l'analyse
@@ -360,7 +426,8 @@ Page de détail dédiée par interview/pulse avec :
 - Statistiques rapides (sessions, complétées, en cours)
 - Sessions récentes (priorité d'affichage au-dessus de la config)
 - Bouton copier le lien de partage
-- Pour les pulses : stats spécifiques (score moyen, tendance, scores bas), graphique SVG d'évolution des scores
+- Pour les pulses : stats spécifiques (score moyen, tendance, scores bas), graphique recharts d'évolution des scores (récurrent) ou distribution horizontale (one-time)
+- Pour les interviews longs : dashboard agrégé cross-session (scores par dimension, thèmes récurrents, alertes, verbatims, cartes participants)
 
 ### Terminologie UI
 
@@ -489,6 +556,17 @@ Analyse légère générée après complétion :
 
 Le champ `pulseScore` est stocké sur la session (`InterviewSession.pulseScore`).
 
+#### Affichage adaptatif : pulse récurrent vs one-time
+
+Le graphique de la page détail pulse s'adapte automatiquement selon les données :
+
+| Type | Détection | Affichage |
+|------|-----------|-----------|
+| **Récurrent** | Au moins un participant a > 1 session | Graphique recharts `LineChart` d'évolution avec lignes par participant + moyenne pointillée |
+| **One-time** | Tous les participants ont 1 seule session | Distribution horizontale en barres CSS par participant (score + couleur) |
+
+La détection est automatique côté client : `participants.some(p => p.sessions.length > 1)`.
+
 #### Routes API spécifiques
 
 ```
@@ -562,6 +640,8 @@ Les routes existantes (`/chat`, `/sessions`, `/complete`) sont partagées entre 
 | 16/03/2026 | Ajout section Pulse complète : configuration, wizard 2 étapes, profondeur adaptative, analyse légère, architecture technique. |
 | 16/03/2026 | Pulse : suggestion IA du titre et question score (`suggest-pulse-content`), max follow-ups passé de 3 à 5, stepper UI centré avec labels. |
 | 17/03/2026 | Pulse chat UX aligné avec interview long : auto-resize textarea, visualViewport, label "Assistant IA", notice confidentialité, bouton Terminer avec LogOut. |
+| 17/03/2026 | Pulse one-time : détection automatique récurrent vs one-time, affichage distribution horizontale (barres CSS) au lieu du graphique d'évolution pour les pulses sans récurrence. |
+| 17/03/2026 | Dashboard agrégé Interview long : nouveau endpoint `/interview-stats`, 5 composants (scores par dimension, thèmes récurrents, alertes, verbatims clés, cartes participants). Agrégation par type de dimension (score_1_10, score_low_med_high, list, boolean). Détection d'alertes automatique. |
 
 ---
 
