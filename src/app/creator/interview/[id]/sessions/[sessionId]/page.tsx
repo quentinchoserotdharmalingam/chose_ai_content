@@ -161,7 +161,7 @@ export default function SessionDetailPage() {
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
-          <MessageCircle className="h-4 w-4" /> Verbatim
+          <MessageCircle className="h-4 w-4" /> Réponses
         </button>
         <button
           onClick={() => setActiveView("analysis")}
