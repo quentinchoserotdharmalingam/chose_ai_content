@@ -296,16 +296,27 @@ export default function InterviewDetailPage() {
         </div>
       )}
 
-      {/* Pulse score evolution chart — recharts */}
-      {isPulse && pulseStats && pulseStats.timeline.length > 0 && (
-        <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
-            <h2 className="text-[14px] font-semibold text-ht-text">Évolution des scores</h2>
+      {/* Pulse chart — evolution (recurring) or distribution (one-time) */}
+      {isPulse && pulseStats && pulseStats.timeline.length > 0 && (() => {
+        const isRecurring = pulseStats.participants.some((p) => p.sessions.length > 1);
+        return isRecurring ? (
+          <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
+              <h2 className="text-[14px] font-semibold text-ht-text">Évolution des scores</h2>
+            </div>
+            <PulseEvolutionChart pulseStats={pulseStats} />
           </div>
-          <PulseEvolutionChart pulseStats={pulseStats} />
-        </div>
-      )}
+        ) : (
+          <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
+              <h2 className="text-[14px] font-semibold text-ht-text">Distribution des scores</h2>
+            </div>
+            <PulseScoreDistribution pulseStats={pulseStats} />
+          </div>
+        );
+      })()}
 
       {/* Pulse global summary */}
       {isPulse && pulseStats && pulseStats.insights && (
@@ -547,6 +558,34 @@ function PulseEvolutionChart({ pulseStats }: { pulseStats: PulseStats }) {
         />
       </LineChart>
     </ResponsiveContainer>
+  );
+}
+
+// Score distribution for one-time pulses (horizontal bars)
+function PulseScoreDistribution({ pulseStats }: { pulseStats: PulseStats }) {
+  const sorted = [...pulseStats.participants]
+    .map((p) => ({ name: p.name, score: p.sessions[p.sessions.length - 1]?.score ?? 0 }))
+    .sort((a, b) => b.score - a.score);
+
+  return (
+    <div className="space-y-3">
+      {sorted.map((p) => {
+        const color = p.score >= 7 ? "bg-green-500" : p.score >= 5 ? "bg-amber-500" : "bg-red-500";
+        const textColor = p.score >= 7 ? "text-green-700" : p.score >= 5 ? "text-amber-700" : "text-red-700";
+        return (
+          <div key={p.name} className="flex items-center gap-3">
+            <span className="w-20 text-[13px] font-medium text-ht-text truncate">{p.name}</span>
+            <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${color} transition-all duration-500`}
+                style={{ width: `${(p.score / 10) * 100}%` }}
+              />
+            </div>
+            <span className={`text-[14px] font-semibold ${textColor} w-10 text-right`}>{p.score}/10</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
