@@ -19,6 +19,12 @@ export async function GET() {
 }
 
 export async function POST() {
+  // Clean up previous seed data to avoid duplicates
+  await prisma.interviewAnalysis.deleteMany({});
+  await prisma.interviewMessage.deleteMany({});
+  await prisma.interviewSession.deleteMany({});
+  await prisma.interviewResource.deleteMany({});
+
   // ============================================================
   // 1. INTERVIEW LONG — Onboarding M+1
   // ============================================================
