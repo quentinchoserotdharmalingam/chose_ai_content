@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Users,
   ChevronRight,
+  ChevronDown,
   MessageSquareQuote,
 } from "lucide-react";
 import {
@@ -140,6 +141,7 @@ export default function InterviewDetailPage() {
   const [interviewStats, setInterviewStats] = useState<InterviewStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/interviews/${interviewId}`)
@@ -320,6 +322,106 @@ export default function InterviewDetailPage() {
         </div>
       )}
 
+      {/* Configuration — collapsible, for interview type */}
+      {!isPulse && (
+        <div className="mb-6 rounded-xl border border-ht-border bg-white">
+          <button
+            onClick={() => setConfigOpen(!configOpen)}
+            className="flex w-full items-center justify-between px-5 py-3.5 transition-colors hover:bg-ht-fill-container"
+          >
+            <div className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4 text-ht-text-secondary" />
+              <h2 className="text-[14px] font-semibold text-ht-text">Configuration</h2>
+              <span className="text-[12px] text-ht-text-secondary">
+                {[
+                  data.scopeIn || data.scopeOut ? "Périmètre" : null,
+                  data.anchorQuestions.length > 0 ? `${data.anchorQuestions.length} ancrage` : null,
+                  data.checkpointQuestions.length > 0 ? `${data.checkpointQuestions.length} passage` : null,
+                  data.analysisTemplate?.length ? `${data.analysisTemplate.length} dimensions` : null,
+                ].filter(Boolean).join(" · ")}
+              </span>
+            </div>
+            <ChevronDown className={`h-4 w-4 text-ht-text-secondary transition-transform duration-200 ${configOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {configOpen && (
+            <div className="space-y-4 border-t border-ht-border p-5">
+              {/* Scope */}
+              {(data.scopeIn || data.scopeOut) && (
+                <div>
+                  <p className="mb-2 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">Périmètre</p>
+                  {data.scopeIn && (
+                    <div className="mb-2 rounded-lg bg-green-50 px-3 py-2">
+                      <p className="text-[12px] font-medium text-green-700">Zone verte</p>
+                      <p className="text-[13px] text-green-800">{data.scopeIn}</p>
+                    </div>
+                  )}
+                  {data.scopeOut && (
+                    <div className="rounded-lg bg-red-50 px-3 py-2">
+                      <p className="text-[12px] font-medium text-red-700">Zone rouge</p>
+                      <p className="text-[13px] text-red-800">{data.scopeOut}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Anchor questions */}
+              {data.anchorQuestions.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">
+                    Questions d&apos;ancrage ({data.anchorQuestions.length})
+                  </p>
+                  <ul className="space-y-1.5">
+                    {data.anchorQuestions.map((q, i) => (
+                      <li key={i} className="flex items-start gap-2 text-[13px] text-ht-text">
+                        <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ht-text-secondary" />
+                        {q}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Checkpoint questions */}
+              {data.checkpointQuestions.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">
+                    Questions de passage ({data.checkpointQuestions.length})
+                  </p>
+                  <ul className="space-y-1.5">
+                    {data.checkpointQuestions.map((q, i) => (
+                      <li key={i} className="flex items-start gap-2 text-[13px] text-ht-text">
+                        <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ht-text-secondary" />
+                        {q}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Analysis dimensions */}
+              {data.analysisTemplate && data.analysisTemplate.length > 0 && (
+                <div>
+                  <p className="mb-2 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">
+                    Dimensions d&apos;analyse ({data.analysisTemplate.length})
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {data.analysisTemplate.map((dim) => (
+                      <span
+                        key={dim.key}
+                        className="rounded-full bg-ht-fill-secondary px-2.5 py-1 text-[12px] font-medium text-ht-text"
+                      >
+                        {dim.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Pulse question card */}
       {isPulse && data.pulseQuestion && (
         <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
@@ -465,86 +567,6 @@ export default function InterviewDetailPage() {
         )}
       </div>
 
-      {/* Configuration — only for interview type */}
-      {!isPulse && <div className="rounded-xl border border-ht-border bg-white">
-        <div className="flex items-center gap-2 border-b border-ht-border px-5 py-3.5">
-          <Settings2 className="h-4 w-4 text-ht-text-secondary" />
-          <h2 className="text-[14px] font-semibold text-ht-text">Configuration</h2>
-        </div>
-        <div className="space-y-4 p-5">
-          {/* Scope */}
-          {(data.scopeIn || data.scopeOut) && (
-            <div>
-              <p className="mb-2 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">Périmètre</p>
-              {data.scopeIn && (
-                <div className="mb-2 rounded-lg bg-green-50 px-3 py-2">
-                  <p className="text-[12px] font-medium text-green-700">Zone verte</p>
-                  <p className="text-[13px] text-green-800">{data.scopeIn}</p>
-                </div>
-              )}
-              {data.scopeOut && (
-                <div className="rounded-lg bg-red-50 px-3 py-2">
-                  <p className="text-[12px] font-medium text-red-700">Zone rouge</p>
-                  <p className="text-[13px] text-red-800">{data.scopeOut}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Anchor questions */}
-          {data.anchorQuestions.length > 0 && (
-            <div>
-              <p className="mb-2 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">
-                Questions d&apos;ancrage ({data.anchorQuestions.length})
-              </p>
-              <ul className="space-y-1.5">
-                {data.anchorQuestions.map((q, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[13px] text-ht-text">
-                    <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ht-text-secondary" />
-                    {q}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Checkpoint questions */}
-          {data.checkpointQuestions.length > 0 && (
-            <div>
-              <p className="mb-2 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">
-                Questions de passage ({data.checkpointQuestions.length})
-              </p>
-              <ul className="space-y-1.5">
-                {data.checkpointQuestions.map((q, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[13px] text-ht-text">
-                    <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ht-text-secondary" />
-                    {q}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Analysis dimensions */}
-          {data.analysisTemplate && data.analysisTemplate.length > 0 && (
-            <div>
-              <p className="mb-2 text-[12px] font-medium text-ht-text-secondary uppercase tracking-wide">
-                Dimensions d&apos;analyse ({data.analysisTemplate.length})
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {data.analysisTemplate.map((dim) => (
-                  <span
-                    key={dim.key}
-                    className="rounded-full bg-ht-fill-secondary px-2.5 py-1 text-[12px] font-medium text-ht-text"
-                  >
-                    {dim.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>}
     </div>
   );
 }
