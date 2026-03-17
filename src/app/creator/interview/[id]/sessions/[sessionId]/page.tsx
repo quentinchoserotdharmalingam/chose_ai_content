@@ -43,7 +43,7 @@ export default function SessionDetailPage() {
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<"verbatim" | "analysis">("verbatim");
+  const [activeView, setActiveView] = useState<"verbatim" | "analysis">("analysis");
   const [generatingAnalysis, setGeneratingAnalysis] = useState(false);
   const [parsedAnalysis, setParsedAnalysis] = useState<Record<string, unknown> | null>(null);
 
@@ -59,6 +59,8 @@ export default function SessionDetailPage() {
             // Summary might already be an object
           }
         }
+        // Default to analysis tab if available, otherwise verbatim
+        setActiveView(data.analysis ? "analysis" : "verbatim");
         setLoading(false);
       })
       .catch(() => setLoading(false));

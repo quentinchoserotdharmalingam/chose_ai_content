@@ -19,7 +19,21 @@ import {
   Minus,
   Copy,
   Check,
+  Brain,
+  AlertTriangle,
+  Users,
+  ChevronRight,
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+  Legend,
+} from "recharts";
 import {
   INTERVIEW_THEME_META,
   INTERVIEW_TONE_META,
@@ -62,10 +76,25 @@ interface InterviewDetail {
   sessions: Session[];
 }
 
+interface PulseAnalysis {
+  dimensions?: Record<string, unknown>;
+  globalSummary?: string;
+  keyVerbatims?: string[];
+}
+
 interface PulseStats {
   aggregate: { average: number | null; trend: "up" | "down" | "stable"; count: number; lowScoreCount: number };
-  timeline: Array<{ date: string; score: number; participant: string }>;
-  participants: Array<{ name: string; sessions: Array<{ date: string; score: number }> }>;
+  timeline: Array<{ date: string; score: number; participant: string; sessionId: string }>;
+  participants: Array<{
+    name: string;
+    sessions: Array<{ date: string; score: number; sessionId: string; analysis: PulseAnalysis | null }>;
+  }>;
+  insights: {
+    alertsNegative: Array<{ participant: string; score: number; globalSummary: string; actionSuggestion: string | null; sessionId: string }>;
+    alertsPositive: Array<{ participant: string; score: number; globalSummary: string; sessionId: string }>;
+    topThemes: Array<{ theme: string; count: number }>;
+    latestByParticipant: Record<string, { globalSummary: string; dimensions: Record<string, unknown>; score: number; sessionId: string }>;
+  };
 }
 
 export default function InterviewDetailPage() {
@@ -267,14 +296,39 @@ export default function InterviewDetailPage() {
         </div>
       )}
 
-      {/* Pulse score chart placeholder — will be replaced by Recharts */}
+      {/* Pulse score evolution chart — recharts */}
       {isPulse && pulseStats && pulseStats.timeline.length > 0 && (
-        <div className="mb-6 rounded-xl border border-ht-border bg-white p-5" id="pulse-chart-container">
+        <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="h-4 w-4 text-ht-text-secondary" />
             <h2 className="text-[14px] font-semibold text-ht-text">Évolution des scores</h2>
           </div>
-          <PulseChart timeline={pulseStats.timeline} />
+          <PulseEvolutionChart pulseStats={pulseStats} />
+        </div>
+      )}
+
+      {/* Pulse global summary */}
+      {isPulse && pulseStats && pulseStats.insights && (
+        <PulseGlobalSummary pulseStats={pulseStats} />
+      )}
+
+      {/* Pulse alerts */}
+      {isPulse && pulseStats && pulseStats.insights && (
+        <PulseAlerts interviewId={data.id} insights={pulseStats.insights} />
+      )}
+
+      {/* Pulse per-participant view */}
+      {isPulse && pulseStats && pulseStats.participants.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-4 w-4 text-ht-text-secondary" />
+            <h2 className="text-[14px] font-semibold text-ht-text">Suivi par participant</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {pulseStats.participants.map((p) => (
+              <ParticipantCard key={p.name} participant={p} interviewId={data.id} insights={pulseStats.insights} />
+            ))}
+          </div>
         </div>
       )}
 
@@ -435,63 +489,285 @@ export default function InterviewDetailPage() {
   );
 }
 
-// Pulse score evolution chart component
-function PulseChart({ timeline }: { timeline: Array<{ date: string; score: number; participant: string }> }) {
-  if (timeline.length === 0) return null;
+// Participant colors for chart
+const PARTICIPANT_COLORS = ["#FF6058", "#3B82F6", "#22C55E", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316"];
 
-  // Simple SVG chart — no external deps needed for basic rendering
-  const width = 600;
-  const height = 200;
-  const padding = { top: 20, right: 20, bottom: 30, left: 35 };
-  const chartW = width - padding.left - padding.right;
-  const chartH = height - padding.top - padding.bottom;
+// Recharts-based pulse evolution chart
+function PulseEvolutionChart({ pulseStats }: { pulseStats: PulseStats }) {
+  const participantNames = pulseStats.participants.map((p) => p.name);
 
-  const points = timeline.map((t, i) => ({
-    x: padding.left + (timeline.length > 1 ? (i / (timeline.length - 1)) * chartW : chartW / 2),
-    y: padding.top + chartH - ((t.score - 1) / 9) * chartH,
-    score: t.score,
-    participant: t.participant,
-    date: new Date(t.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
-  }));
+  // Pivot timeline data: group by date, one column per participant
+  const dateMap: Record<string, Record<string, number>> = {};
+  for (const point of pulseStats.timeline) {
+    const dateKey = new Date(point.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+    if (!dateMap[dateKey]) dateMap[dateKey] = {};
+    dateMap[dateKey][point.participant] = point.score;
+  }
 
-  const pathD = points.length > 1
-    ? `M ${points.map((p) => `${p.x},${p.y}`).join(" L ")}`
-    : "";
-
-  // Color based on average
-  const avg = timeline.reduce((a, t) => a + t.score, 0) / timeline.length;
-  const lineColor = avg >= 7 ? "#22c55e" : avg >= 5 ? "#f59e0b" : "#ef4444";
+  const chartData = Object.entries(dateMap).map(([date, scores]) => {
+    const values = Object.values(scores);
+    const avg = values.length > 0 ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10 : null;
+    return { date, ...scores, moyenne: avg };
+  });
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
-      {/* Y axis labels */}
-      {[1, 5, 10].map((v) => {
-        const y = padding.top + chartH - ((v - 1) / 9) * chartH;
-        return (
-          <g key={v}>
-            <text x={padding.left - 8} y={y + 4} textAnchor="end" className="text-[11px]" fill="#9ca3af">{v}</text>
-            <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="#f3f4f6" strokeWidth={1} />
-          </g>
-        );
-      })}
+    <ResponsiveContainer width="100%" height={280}>
+      <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+        <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={{ stroke: "#f3f4f6" }} />
+        <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={false} ticks={[0, 2, 4, 6, 8, 10]} />
+        <ReferenceLine y={4} stroke="#fecaca" strokeDasharray="4 4" />
+        <ReferenceLine y={7} stroke="#bbf7d0" strokeDasharray="4 4" />
+        <Tooltip
+          contentStyle={{ borderRadius: 12, border: "1px solid #f3f4f6", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
+          formatter={(value: unknown, name: unknown) => [
+            `${value}/10`,
+            name === "moyenne" ? "Moyenne" : String(name),
+          ]}
+        />
+        <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+        {participantNames.map((name, i) => (
+          <Line
+            key={name}
+            type="monotone"
+            dataKey={name}
+            stroke={PARTICIPANT_COLORS[i % PARTICIPANT_COLORS.length]}
+            strokeWidth={2}
+            dot={{ r: 3, strokeWidth: 2, fill: "white" }}
+            connectNulls
+          />
+        ))}
+        <Line
+          type="monotone"
+          dataKey="moyenne"
+          stroke="#6b7280"
+          strokeWidth={2.5}
+          strokeDasharray="6 3"
+          dot={false}
+          name="Moyenne"
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
 
-      {/* Line */}
-      {pathD && (
-        <path d={pathD} fill="none" stroke={lineColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+// Global AI summary card
+function PulseGlobalSummary({ pulseStats }: { pulseStats: PulseStats }) {
+  const { insights } = pulseStats;
+  if (!insights) return null;
+
+  const latestEntries = Object.entries(insights.latestByParticipant);
+  if (latestEntries.length === 0) return null;
+
+  // Count sentiments
+  let positif = 0, mitigé = 0, négatif = 0;
+  for (const [, data] of latestEntries) {
+    const sentiment = data.dimensions?.sentiment as string | undefined;
+    if (sentiment === "positif") positif++;
+    else if (sentiment === "négatif") négatif++;
+    else mitigé++;
+  }
+
+  // Find lowest-scoring participant's insight
+  const lowestEntry = latestEntries.reduce((min, curr) => (curr[1].score < min[1].score ? curr : min), latestEntries[0]);
+
+  return (
+    <div className="mb-6 rounded-xl border border-ht-border bg-white p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Brain className="h-4 w-4 text-purple-500" />
+        <h2 className="text-[14px] font-semibold text-ht-text">Synthèse globale</h2>
+      </div>
+
+      {/* Sentiment distribution */}
+      <div className="flex items-center gap-4 mb-4 text-[13px]">
+        {positif > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+            <span className="text-ht-text">{positif} positif{positif > 1 ? "s" : ""}</span>
+          </span>
+        )}
+        {mitigé > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+            <span className="text-ht-text">{mitigé} mitigé{mitigé > 1 ? "s" : ""}</span>
+          </span>
+        )}
+        {négatif > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+            <span className="text-ht-text">{négatif} négatif{négatif > 1 ? "s" : ""}</span>
+          </span>
+        )}
+      </div>
+
+      {/* Top themes */}
+      {insights.topThemes.length > 0 && (
+        <div className="mb-4">
+          <p className="text-[12px] font-medium text-ht-text-secondary mb-2">Thèmes récurrents</p>
+          <div className="flex flex-wrap gap-1.5">
+            {insights.topThemes.map((t) => (
+              <span key={t.theme} className="rounded-full bg-ht-fill-secondary px-2.5 py-1 text-[12px] font-medium text-ht-text">
+                {t.theme} <span className="text-ht-text-secondary">({t.count})</span>
+              </span>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* Dots */}
-      {points.map((p, i) => (
-        <g key={i}>
-          <circle cx={p.x} cy={p.y} r={4} fill={lineColor} stroke="white" strokeWidth={2} />
-          {/* X label — show for first, last, every 5th */}
-          {(i === 0 || i === points.length - 1 || i % 5 === 0) && (
-            <text x={p.x} y={height - 5} textAnchor="middle" className="text-[10px]" fill="#9ca3af">
-              {p.date}
-            </text>
-          )}
-        </g>
-      ))}
-    </svg>
+      {/* Key insight from lowest scorer */}
+      {lowestEntry[1].globalSummary && (
+        <div className="rounded-lg bg-red-50 px-4 py-3">
+          <p className="text-[12px] font-medium text-red-700 mb-1">Point d&apos;attention — {lowestEntry[0]}</p>
+          <p className="text-[13px] text-red-800 leading-relaxed">{lowestEntry[1].globalSummary}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Positive and negative alerts cards
+function PulseAlerts({ interviewId, insights }: { interviewId: string; insights: PulseStats["insights"] }) {
+  if (insights.alertsNegative.length === 0 && insights.alertsPositive.length === 0) return null;
+
+  return (
+    <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Positive signals */}
+      <div className="rounded-xl border border-ht-border bg-white p-5 border-l-4 border-l-green-500">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="h-4 w-4 text-green-600" />
+          <h3 className="text-[13px] font-semibold text-ht-text">Signaux positifs</h3>
+        </div>
+        {insights.alertsPositive.length === 0 ? (
+          <p className="text-[12px] text-ht-text-secondary">Aucun signal positif récent</p>
+        ) : (
+          <div className="space-y-3">
+            {insights.alertsPositive.map((a, i) => (
+              <Link key={i} href={`/creator/interview/${interviewId}/sessions/${a.sessionId}`} className="block group">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[13px] font-medium text-ht-text group-hover:text-ht-primary transition-colors">{a.participant}</span>
+                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700">{a.score}/10</span>
+                </div>
+                <p className="text-[12px] text-ht-text-secondary leading-relaxed line-clamp-2">{a.globalSummary}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Negative alerts */}
+      <div className="rounded-xl border border-ht-border bg-white p-5 border-l-4 border-l-red-500">
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <h3 className="text-[13px] font-semibold text-ht-text">Points d&apos;alerte</h3>
+        </div>
+        {insights.alertsNegative.length === 0 ? (
+          <p className="text-[12px] text-ht-text-secondary">Aucune alerte</p>
+        ) : (
+          <div className="space-y-3">
+            {insights.alertsNegative.map((a, i) => (
+              <Link key={i} href={`/creator/interview/${interviewId}/sessions/${a.sessionId}`} className="block group">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[13px] font-medium text-ht-text group-hover:text-ht-primary transition-colors">{a.participant}</span>
+                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">{a.score}/10</span>
+                </div>
+                <p className="text-[12px] text-ht-text-secondary leading-relaxed line-clamp-2">{a.globalSummary}</p>
+                {a.actionSuggestion && (
+                  <p className="mt-1 text-[11px] font-medium text-amber-700 bg-amber-50 rounded px-2 py-0.5 inline-block">
+                    {a.actionSuggestion}
+                  </p>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Per-participant card with sparkline
+function ParticipantCard({
+  participant,
+  interviewId,
+  insights,
+}: {
+  participant: PulseStats["participants"][0];
+  interviewId: string;
+  insights: PulseStats["insights"];
+}) {
+  const sessions = participant.sessions;
+  if (sessions.length === 0) return null;
+
+  const latestSession = sessions[sessions.length - 1];
+  const latestScore = latestSession.score;
+  const latestInsight = insights.latestByParticipant[participant.name];
+
+  // Per-participant trend
+  let trend: "up" | "down" | "stable" = "stable";
+  if (sessions.length >= 2) {
+    const mid = Math.floor(sessions.length / 2);
+    const recentAvg = sessions.slice(mid).reduce((a, s) => a + s.score, 0) / (sessions.length - mid);
+    const olderAvg = sessions.slice(0, mid).reduce((a, s) => a + s.score, 0) / mid;
+    if (recentAvg > olderAvg + 0.3) trend = "up";
+    else if (recentAvg < olderAvg - 0.3) trend = "down";
+  }
+
+  const scoreColor = latestScore >= 7 ? "text-green-700 bg-green-100" : latestScore >= 5 ? "text-amber-700 bg-amber-100" : "text-red-700 bg-red-100";
+  const sparkData = sessions.map((s) => ({ score: s.score }));
+  const sparkColor = latestScore >= 7 ? "#22c55e" : latestScore >= 5 ? "#f59e0b" : "#ef4444";
+
+  const actionSuggestion = latestInsight?.dimensions?.action_suggérée as string | undefined;
+
+  return (
+    <Link
+      href={`/creator/interview/${interviewId}/sessions/${latestSession.sessionId}`}
+      className="rounded-xl border border-ht-border bg-white p-4 transition-all duration-200 hover:shadow-md hover:border-ht-border-secondary block group"
+    >
+      {/* Header: name + score + trend */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[14px] font-medium text-ht-text group-hover:text-ht-primary transition-colors">
+            {participant.name}
+          </span>
+          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreColor}`}>
+            {latestScore}/10
+          </span>
+          {trend === "up" && <TrendingUp className="h-3.5 w-3.5 text-green-500" />}
+          {trend === "down" && <TrendingDown className="h-3.5 w-3.5 text-red-500" />}
+          {trend === "stable" && <Minus className="h-3.5 w-3.5 text-ht-text-secondary" />}
+        </div>
+        <ChevronRight className="h-4 w-4 text-ht-text-secondary group-hover:text-ht-primary transition-colors" />
+      </div>
+
+      {/* Sparkline */}
+      {sparkData.length >= 2 && (
+        <div className="mb-3 h-[40px]">
+          <ResponsiveContainer width="100%" height={40}>
+            <LineChart data={sparkData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+              <Line type="monotone" dataKey="score" stroke={sparkColor} strokeWidth={2} dot={false} />
+              <YAxis domain={[0, 10]} hide />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Latest insight */}
+      {latestInsight?.globalSummary ? (
+        <p className="text-[12px] text-ht-text-secondary leading-relaxed line-clamp-2 mb-2">
+          {latestInsight.globalSummary}
+        </p>
+      ) : (
+        <p className="text-[12px] text-ht-text-secondary italic mb-2">Analyse non disponible</p>
+      )}
+
+      {/* Action suggestion */}
+      {actionSuggestion && actionSuggestion !== "Aucune action nécessaire" && (
+        <p className="text-[11px] font-medium text-amber-700 bg-amber-50 rounded px-2 py-1 inline-block">
+          {actionSuggestion}
+        </p>
+      )}
+
+      {/* Session count */}
+      <p className="text-[11px] text-ht-text-secondary mt-2">{sessions.length} session{sessions.length > 1 ? "s" : ""}</p>
+    </Link>
   );
 }
