@@ -287,6 +287,41 @@ Ce message n'est pas visible dans l'UI mais permet à l'agent IA de se présente
 
 - **Initialisation du chat** : l'envoi d'un tableau de messages vide à l'API Claude causait une erreur silencieuse. Corrigé par injection d'un message d'introduction côté backend.
 - **Responsive mobile** : sidebar fixe qui cassait le layout sur mobile. Corrigé avec un hamburger toggle + overlay + layouts carte pour les tableaux.
+- **Premier message lent** : le premier message utilisait Sonnet (lent). Corrigé en utilisant Haiku pour le greeting initial, Sonnet pour le reste.
+- **Clavier mobile masquant les messages** : scroll auto vers le bas sur focus textarea et resize `visualViewport`.
+- **Textarea avec scroll interne** : remplacé par un mirror div invisible + textarea positionnée en absolute, scroll naturel jusqu'à `40dvh` max.
+- **Bouton "Terminer" lent** : la génération d'analyse bloquait la réponse (10+ sec avec Sonnet). Corrigée en lançant l'analyse en background — retour instantané pour l'utilisateur.
+
+### Améliorations UX post-MVP
+
+#### Transparence IA et réassurance
+
+- **Écran d'accueil** : 3 cartes d'information (confidentialité, transparence IA, durée/reprise)
+- **Chat** : avatar Bot sur les messages assistant, label "Assistant IA" sur le premier message, "Interview menée par IA" dans le header
+- **Loading** : "L'IA rédige sa réponse..." avec spinner
+- **Footer** : disclaimer permanent "échange mené par une IA"
+- **Complétion** : mention analyse générée par IA + garantie de confidentialité
+- **Wizard** : bannière explicative sur le fonctionnement de l'interview IA (étape config) et ce que verra le collaborateur (étape publish)
+
+#### Qualité conversationnelle
+
+- **Ton sobre** : règle explicite contre les superlatifs et la flatterie ("formidable", "excellent", "incroyable"). L'agent utilise des accusés neutres ("D'accord", "Je comprends", "Je vois").
+- **Enchaînements naturels** : l'agent ne commente pas systématiquement chaque réponse. Variété de transitions : parfois enchaîne directement, parfois reformulation brève, parfois question directe.
+- **Clôture claire** : le message de clôture IA se termine par une instruction explicite de cliquer "Terminer". Un bouton CTA proéminent remplace l'input quand l'interview est terminée.
+
+#### Performance
+
+- **Premier message** : Haiku (rapide) pour le greeting, Sonnet pour les relances adaptatives
+- **Analyse en background** : le endpoint `/complete` répond instantanément, l'analyse Sonnet tourne en arrière-plan
+- **Max tokens optimisés** : 250 tokens pour le premier message, 400 pour les réponses suivantes
+
+#### Mobile
+
+- **Textarea auto-resize** : mirror div invisible, max `40dvh`, pas de scroll interne
+- **Safe-area** : padding bottom avec `env(safe-area-inset-bottom)` pour iOS/Android
+- **Viewport** : `h-dvh` (dynamic viewport height) au lieu de `vh` pour gérer la barre de navigateur mobile
+- **Bouton d'envoi** : 48px pour faciliter le tap mobile
+- **Scroll automatique** : sur focus textarea et resize `visualViewport` (ouverture clavier)
 
 ### Exclu (post-MVP)
 
@@ -309,6 +344,23 @@ Ce message n'est pas visible dans l'UI mais permet à l'agent IA de se présente
 - **Mobile** (< `lg`) : sidebar masquée, hamburger en haut à gauche, overlay au tap
 - La page d'interview collaborateur (`/interview/[id]`) utilise un layout dédié `fixed inset-0 z-[60]` qui recouvre entièrement la sidebar
 - Les tableaux de données (dashboard, sessions) basculent en **cards** sur mobile (`md:hidden` / `hidden md:block`)
+
+### Navigation & Architecture
+
+#### Séparation Formation IA / Interview IA
+
+La sidebar contient deux entrées distinctes :
+- **Formation IA** (`/creator`) — Ressources de contenu IA (synthèse, flashcards, module, etc.)
+- **Interview IA** (`/creator/interview`) — Dashboard interviews et pulses
+
+#### Page hub Interview (`/creator/interview/[id]`)
+
+Page de détail dédiée par interview/pulse avec :
+- Résumé de la configuration (thème, ton, périmètre, questions)
+- Statistiques rapides (sessions, complétées, en cours)
+- Sessions récentes (priorité d'affichage au-dessus de la config)
+- Bouton copier le lien de partage
+- Pour les pulses : stats spécifiques (score moyen, tendance, scores bas), graphique SVG d'évolution des scores
 
 ### Terminologie UI
 
@@ -482,6 +534,7 @@ Les routes existantes (`/chat`, `/sessions`, `/complete`) sont partagées entre 
 - [x] Dashboard créateur avec onglet Pulse
 - [x] Stats agrégées (score moyen, tendance, sentiments)
 - [x] Stepper UI centré avec labels
+- [x] Chat UX aligné avec l'interview long (auto-resize, visualViewport, notice confidentialité, avatar Bot)
 - [x] Accès collaborateur par lien direct
 
 #### Exclu (post-MVP)
@@ -499,8 +552,16 @@ Les routes existantes (`/chat`, `/sessions`, `/complete`) sont partagées entre 
 
 | Date | Entrée |
 |---|---|
+| 16/03/2026 | Transparence IA : écran d'accueil avec 3 cartes info (confidentialité, IA, durée), avatar Bot, label "Assistant IA", disclaimer permanent dans le chat. |
+| 16/03/2026 | Performance : premier message via Haiku (rapide), Sonnet pour les relances. Analyse en background (retour instantané sur "Terminer"). |
+| 16/03/2026 | Mobile : textarea auto-resize (mirror div), safe-area padding, `h-dvh`, scroll auto sur ouverture clavier (`visualViewport`), bouton envoi 48px. |
+| 16/03/2026 | Qualité conversationnelle : interdiction superlatifs/flatterie, enchaînements variés et naturels, clôture claire avec CTA. |
+| 16/03/2026 | UX complétion : bouton "Fermer" sur l'écran de fin, CTA "Terminer l'interview" remplace l'input quand l'IA a fini. |
+| 16/03/2026 | Navigation : séparation Formation IA / Interview IA dans la sidebar, page hub `/creator/interview/[id]` avec config + stats + sessions. |
+| 16/03/2026 | Layout : sessions affichées au-dessus de la config sur la page de détail (priorité mobile). |
 | 16/03/2026 | Ajout section Pulse complète : configuration, wizard 2 étapes, profondeur adaptative, analyse légère, architecture technique. |
 | 16/03/2026 | Pulse : suggestion IA du titre et question score (`suggest-pulse-content`), max follow-ups passé de 3 à 5, stepper UI centré avec labels. |
+| 17/03/2026 | Pulse chat UX aligné avec interview long : auto-resize textarea, visualViewport, label "Assistant IA", notice confidentialité, bouton Terminer avec LogOut. |
 
 ---
 
