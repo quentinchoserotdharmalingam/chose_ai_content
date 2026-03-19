@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap, ChevronRight } from "lucide-react";
 import { AGENT_CATEGORY_META, type AgentCategory, type AgentAction } from "@/types";
 import { useToast } from "./Toast";
+import { AgentActionEditModal } from "./AgentActionEditModal";
 
 function safeParseJSON<T>(json: string, fallback: T): T {
   try { return JSON.parse(json) as T; } catch { return fallback; }
@@ -49,6 +50,8 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
     info: true,
     actions: true,
   });
+  const [selectedAction, setSelectedAction] = useState<AgentAction | null>(null);
+  const [savingAction, setSavingAction] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -127,6 +130,31 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
     }
   };
 
+  const handleActionSave = async (updated: AgentAction) => {
+    if (!agent) return;
+    setSavingAction(true);
+    try {
+      const currentActions: AgentAction[] = safeParseJSON(agent.actions || "[]", []);
+      const newActions = currentActions.map(a => a.id === updated.id ? updated : a);
+      const res = await fetch(`/api/agents/${agentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actions: newActions }),
+      });
+      if (!res.ok) throw new Error();
+      const agentRes = await fetch(`/api/agents/${agentId}`);
+      if (!agentRes.ok) throw new Error();
+      setAgent(await agentRes.json());
+      setSelectedAction(null);
+      toast("Action mise à jour", "success");
+      onUpdated();
+    } catch {
+      toast("Erreur lors de la sauvegarde", "error");
+    } finally {
+      setSavingAction(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -151,6 +179,7 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
   const resolvedSuggestions = agent.suggestions.filter((s) => s.status !== "pending");
 
   return (
+    <>
     <div>
       {/* Back button */}
       <button
@@ -259,9 +288,10 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.actions ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
             <div className="px-5 pb-4 border-t border-ht-border pt-3 space-y-2">
               {actions.map((action) => (
-                <div
+                <button
                   key={action.id}
-                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
+                  onClick={() => setSelectedAction(action)}
+                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 w-full text-left group hover:shadow-sm transition-all cursor-pointer ${
                     action.enabled ? "border-green-200 bg-green-50/50" : "border-ht-border bg-ht-fill-secondary opacity-60"
                   }`}
                 >
@@ -272,7 +302,8 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
                   <span className={`text-[11px] font-medium ${action.enabled ? "text-green-600" : "text-gray-400"}`}>
                     {action.enabled ? "Activé" : "Désactivé"}
                   </span>
-                </div>
+                  <ChevronRight className="h-4 w-4 text-ht-text-secondary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                </button>
               ))}
             </div>
           </div>
@@ -328,5 +359,16 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
         </div>
       )}
     </div>
+
+      {/* Action edit modal */}
+      {selectedAction && (
+        <AgentActionEditModal
+          action={selectedAction}
+          onClose={() => setSelectedAction(null)}
+          onSave={handleActionSave}
+          saving={savingAction}
+        />
+      )}
+    </>
   );
 }
