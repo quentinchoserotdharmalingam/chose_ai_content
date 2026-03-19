@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Power, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap } from "lucide-react";
 import { AGENT_CATEGORY_META, type AgentCategory, type AgentAction } from "@/types";
 import { useToast } from "./Toast";
 
@@ -66,23 +66,6 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
 
   const toggleSection = (key: string) => {
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const toggleStatus = async () => {
-    if (!agent) return;
-    const newStatus = agent.status === "active" ? "paused" : "active";
-    try {
-      await fetch(`/api/agents/${agentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      setAgent((prev) => prev ? { ...prev, status: newStatus } : prev);
-      toast(newStatus === "active" ? "Agent activé" : "Agent mis en pause", "success");
-      onUpdated();
-    } catch {
-      toast("Erreur lors de la mise à jour", "error");
-    }
   };
 
   const generateSuggestions = async () => {
@@ -190,17 +173,9 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
             </div>
             <div>
               <h2 className="text-[18px] font-semibold text-ht-text">{agent.name}</h2>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className="text-[12px] text-ht-text-secondary">
-                  {AGENT_CATEGORY_META[agent.category as AgentCategory]?.label}
-                </span>
-                <span className="text-ht-text-secondary">·</span>
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                  agent.status === "active" ? "bg-green-50 text-green-600" : agent.status === "paused" ? "bg-yellow-50 text-yellow-600" : "bg-gray-50 text-gray-500"
-                }`}>
-                  {agent.status === "active" ? "Actif" : agent.status === "paused" ? "En pause" : "Brouillon"}
-                </span>
-              </div>
+              <span className="text-[12px] text-ht-text-secondary mt-1">
+                {AGENT_CATEGORY_META[agent.category as AgentCategory]?.label}
+              </span>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -211,25 +186,12 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
               <Copy className="h-3.5 w-3.5" />
               Dupliquer
             </button>
-            {!agent.isTemplate && (
-              <button
-                onClick={deleteAgent}
-                className="flex h-9 items-center gap-2 rounded-lg border border-red-200 px-3 text-[12px] font-medium text-red-500 hover:bg-red-50 transition-all"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Supprimer
-              </button>
-            )}
             <button
-              onClick={toggleStatus}
-              className={`flex h-9 items-center gap-2 rounded-lg px-4 text-[12px] font-medium transition-all ${
-                agent.status === "active"
-                  ? "border border-ht-border text-ht-text hover:bg-ht-fill-secondary"
-                  : "bg-green-500 text-white hover:bg-green-600"
-              }`}
+              onClick={deleteAgent}
+              className="flex h-9 items-center gap-2 rounded-lg border border-red-200 px-3 text-[12px] font-medium text-red-500 hover:bg-red-50 transition-all"
             >
-              <Power className="h-3.5 w-3.5" />
-              {agent.status === "active" ? "Mettre en pause" : "Activer"}
+              <Trash2 className="h-3.5 w-3.5" />
+              Supprimer
             </button>
           </div>
         </div>
