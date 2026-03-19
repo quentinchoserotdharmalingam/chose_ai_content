@@ -127,3 +127,31 @@ h1, h2, h3, h4 {
 .chat-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
+
+/* Suggestion card animations */
+@keyframes suggestion-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes suggestion-exit {
+  to { opacity: 0; transform: translateX(-16px); }
+}
+
+@keyframes suggestion-success-flash {
+  0% { background-color: transparent; }
+  50% { background-color: rgba(83, 180, 131, 0.08); }
+  100% { background-color: transparent; }
+}
+
+.suggestion-card-in {
+  animation: suggestion-fade-in 0.35s ease-out both;
+}
+
+.suggestion-card-exit {
+  animation: suggestion-exit 0.35s ease-in forwards;
+}
+
+.suggestion-success-flash {
+  animation: suggestion-success-flash 0.6s ease-out;
+}

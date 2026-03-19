@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Loader2, RefreshCw, Clock, CheckCircle2, TrendingUp, AlertTriangle, Calendar } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { RefreshCw, Clock, CheckCircle2, TrendingUp, AlertTriangle, Calendar, History } from "lucide-react";
 import { SUGGESTION_SEVERITY_META, type SuggestionSeverity } from "@/types";
 import { SuggestionCard } from "./SuggestionCard";
+import { SuggestionCardSkeleton, StatsSidebarSkeleton } from "./SuggestionSkeleton";
 import { useToast } from "./Toast";
 
 interface SuggestionData {
@@ -36,6 +37,38 @@ interface Stats {
   actionsExecuted: number;
 }
 
+// Animated number component
+function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string }) {
+  const [display, setDisplay] = useState(0);
+  const prevRef = useRef(0);
+  const frameRef = useRef<number>(0);
+
+  useEffect(() => {
+    const from = prevRef.current;
+    const to = value;
+    const duration = 600;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(from + (to - from) * eased));
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(tick);
+      } else {
+        prevRef.current = to;
+      }
+    };
+
+    frameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [value]);
+
+  return <>{display}{suffix}</>;
+}
+
 export function SuggestionsCockpit() {
   const [suggestions, setSuggestions] = useState<SuggestionData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -62,6 +95,16 @@ export function SuggestionsCockpit() {
     }
   }, []);
 
+  // Background stats refresh (no loading state)
+  const refreshStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agents/suggestions/stats");
+      if (res.ok) setStats(await res.json());
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleAction = async (id: string, action: "accepted" | "customized" | "ignored", customData?: Record<string, unknown>) => {
@@ -78,7 +121,11 @@ export function SuggestionsCockpit() {
 
       const labels = { accepted: "Suggestion validée", customized: "Suggestion personnalisée", ignored: "Suggestion ignorée" };
       toast(labels[action], action === "ignored" ? "info" : "success");
-      fetchData();
+
+      // Optimistic removal: remove from local state immediately
+      setSuggestions((prev) => prev.filter((s) => s.id !== id));
+      // Refresh stats in background
+      refreshStats();
     } catch {
       toast("Erreur lors du traitement", "error");
     }
@@ -98,7 +145,6 @@ export function SuggestionsCockpit() {
     })),
   ];
 
-  // Upcoming items (urgent + attention)
   const urgentCount = suggestions.filter(s => s.severity === "urgent").length;
   const attentionCount = suggestions.filter(s => s.severity === "attention").length;
 
@@ -175,127 +221,154 @@ export function SuggestionsCockpit() {
           </div>
         )}
 
-        {/* Loading */}
+        {/* Skeleton loading */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-ht-text-secondary" />
-            <p className="text-[13px] text-ht-text-secondary">Chargement des suggestions...</p>
+          <div className="space-y-4">
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{ animationDelay: `${i * 100}ms` }}>
+                <SuggestionCardSkeleton />
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Feed */}
-        {!loading && !error && (
+        {/* Feed with staggered fade-in */}
+        {!loading && !error && filtered.length > 0 && (
           <div className="space-y-4">
-            {filtered.map((suggestion) => (
-              <SuggestionCard
+            {filtered.map((suggestion, index) => (
+              <div
                 key={suggestion.id}
-                suggestion={suggestion}
-                onAccept={() => handleAction(suggestion.id, "accepted")}
-                onIgnore={() => handleAction(suggestion.id, "ignored")}
-                onCustomize={(customData) => handleAction(suggestion.id, "customized", customData)}
-              />
+                className="suggestion-card-in"
+                style={{ animationDelay: `${index * 60}ms` }}
+              >
+                <SuggestionCard
+                  suggestion={suggestion}
+                  onAccept={() => handleAction(suggestion.id, "accepted")}
+                  onIgnore={() => handleAction(suggestion.id, "ignored")}
+                  onCustomize={(customData) => handleAction(suggestion.id, "customized", customData)}
+                />
+              </div>
             ))}
           </div>
         )}
 
         {!loading && !error && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center rounded-xl border border-dashed border-ht-border">
-            <CheckCircle2 className="h-10 w-10 text-green-400 mb-3" />
-            <p className="text-[14px] font-medium text-ht-text">Tout est en ordre !</p>
-            <p className="text-[13px] text-ht-text-secondary mt-1">
-              Aucune suggestion en attente. Vos agents continuent de surveiller.
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-50 mb-4">
+              <CheckCircle2 className="h-10 w-10 text-green-400" />
+            </div>
+            <p className="text-[15px] font-semibold text-ht-text mb-1">Tout est en ordre !</p>
+            <p className="text-[13px] text-ht-text-secondary mt-1 mb-4 max-w-sm">
+              Aucune suggestion en attente. Vos agents continuent de surveiller votre activité RH.
             </p>
+            <button className="flex items-center gap-2 rounded-lg border border-ht-border px-4 py-2 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary transition-all">
+              <History className="h-3.5 w-3.5" />
+              Voir l&apos;historique
+            </button>
           </div>
         )}
       </div>
 
       {/* Stats sidebar — desktop only */}
-      <div className="hidden lg:block w-[280px] shrink-0">
-        <div className="sticky top-4 space-y-4">
-          {/* Impact card */}
-          <div className="rounded-xl border border-ht-border bg-white p-5">
-            <h3 className="text-[14px] font-semibold text-ht-text mb-4">Votre impact</h3>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50">
-                  <Clock className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-[18px] font-semibold text-ht-text">
-                    {stats ? `${Math.floor(stats.timeSavedMinutes / 60)}h${String(stats.timeSavedMinutes % 60).padStart(2, "0")}` : "—"}
-                  </p>
-                  <p className="text-[11px] text-ht-text-secondary">Temps économisé</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
-                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-[18px] font-semibold text-ht-text">
-                    {stats ? `${stats.accepted + stats.customized}/${stats.resolved}` : "—"}
-                  </p>
-                  <p className="text-[11px] text-ht-text-secondary">Actions validées</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50">
-                  <TrendingUp className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-[18px] font-semibold text-ht-text">
-                    {stats ? `${stats.acceptanceRate}%` : "—"}
-                  </p>
-                  <p className="text-[11px] text-ht-text-secondary">Taux d&apos;acceptation</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Pending summary */}
-          <div className="rounded-xl border border-ht-border bg-white p-5">
-            <h3 className="text-[14px] font-semibold text-ht-text mb-3">En attente</h3>
-            <div className="space-y-2">
-              {Object.entries(SUGGESTION_SEVERITY_META).map(([key, meta]) => {
-                const count = suggestions.filter((s) => s.severity === key).length;
-                return (
-                  <div key={key} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
-                      <span className="text-[12px] text-ht-text-secondary">{meta.label}</span>
-                    </div>
-                    <span className="text-[13px] font-semibold text-ht-text">{count}</span>
+      <div className="hidden lg:block w-[280px] shrink-0 border-l border-ht-border pl-6">
+        {loading && !stats ? (
+          <StatsSidebarSkeleton />
+        ) : (
+          <div className="sticky top-4 space-y-4">
+            {/* Impact card */}
+            <div className="rounded-xl border border-ht-border bg-white p-5">
+              <h3 className="text-[14px] font-semibold text-ht-text mb-4">Votre impact</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50">
+                    <Clock className="h-4 w-4 text-green-600" />
                   </div>
-                );
-              })}
+                  <div>
+                    <p className="text-[18px] font-semibold text-ht-text">
+                      {stats ? (
+                        <>
+                          <AnimatedNumber value={Math.floor(stats.timeSavedMinutes / 60)} />h
+                          {String(stats.timeSavedMinutes % 60).padStart(2, "0")}
+                        </>
+                      ) : "—"}
+                    </p>
+                    <p className="text-[11px] text-ht-text-secondary">Temps économisé</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-[18px] font-semibold text-ht-text">
+                      {stats ? (
+                        <>
+                          <AnimatedNumber value={stats.accepted + stats.customized} />/{stats.resolved}
+                        </>
+                      ) : "—"}
+                    </p>
+                    <p className="text-[11px] text-ht-text-secondary">Actions validées</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50">
+                    <TrendingUp className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-[18px] font-semibold text-ht-text">
+                      {stats ? <AnimatedNumber value={stats.acceptanceRate} suffix="%" /> : "—"}
+                    </p>
+                    <p className="text-[11px] text-ht-text-secondary">Taux d&apos;acceptation</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Upcoming this week */}
-          <div className="rounded-xl border border-ht-border bg-white p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Calendar className="h-4 w-4 text-ht-text-secondary" />
-              <h3 className="text-[14px] font-semibold text-ht-text">Cette semaine</h3>
+            {/* Pending summary */}
+            <div className="rounded-xl border border-ht-border bg-white p-5">
+              <h3 className="text-[14px] font-semibold text-ht-text mb-3">En attente</h3>
+              <div className="space-y-2">
+                {Object.entries(SUGGESTION_SEVERITY_META).map(([key, meta]) => {
+                  const count = suggestions.filter((s) => s.severity === key).length;
+                  return (
+                    <div key={key} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
+                        <span className="text-[12px] text-ht-text-secondary">{meta.label}</span>
+                      </div>
+                      <span className="text-[13px] font-semibold text-ht-text">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="space-y-2">
-              {urgentCount > 0 && (
-                <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
-                  <span className="h-2 w-2 rounded-full bg-red-500" />
-                  <span className="text-[12px] text-red-700 font-medium">{urgentCount} urgent{urgentCount > 1 ? "s" : ""} à traiter</span>
-                </div>
-              )}
-              {attentionCount > 0 && (
-                <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-3 py-2">
-                  <span className="h-2 w-2 rounded-full bg-yellow-500" />
-                  <span className="text-[12px] text-yellow-700 font-medium">{attentionCount} point{attentionCount > 1 ? "s" : ""} d&apos;attention</span>
-                </div>
-              )}
-              {urgentCount === 0 && attentionCount === 0 && (
-                <p className="text-[12px] text-ht-text-secondary">Rien de critique cette semaine</p>
-              )}
+
+            {/* Upcoming this week */}
+            <div className="rounded-xl border border-ht-border bg-white p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="h-4 w-4 text-ht-text-secondary" />
+                <h3 className="text-[14px] font-semibold text-ht-text">Cette semaine</h3>
+              </div>
+              <div className="space-y-2">
+                {urgentCount > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    <span className="text-[12px] text-red-700 font-medium">{urgentCount} urgent{urgentCount > 1 ? "s" : ""} à traiter</span>
+                  </div>
+                )}
+                {attentionCount > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-3 py-2">
+                    <span className="h-2 w-2 rounded-full bg-yellow-500" />
+                    <span className="text-[12px] text-yellow-700 font-medium">{attentionCount} point{attentionCount > 1 ? "s" : ""} d&apos;attention</span>
+                  </div>
+                )}
+                {urgentCount === 0 && attentionCount === 0 && (
+                  <p className="text-[12px] text-ht-text-secondary">Rien de critique cette semaine</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
