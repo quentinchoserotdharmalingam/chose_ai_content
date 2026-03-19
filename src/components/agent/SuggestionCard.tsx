@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Check, X, Edit3, Loader2, CheckCircle2, Mail, CalendarDays, ClipboardList, Bell, ChevronRight, ArrowLeft, Send } from "lucide-react";
-import { SUGGESTION_SEVERITY_META, SUGGESTION_CATEGORY_META, type SuggestionSeverity, type SuggestionActionStep, type SuggestionAlternative } from "@/types";
+import { useState, useEffect } from "react";
+import { Check, X, CheckCircle2, Mail, CalendarDays, ClipboardList, Bell, ChevronRight, ArrowLeft, Send, XCircle } from "lucide-react";
+import { SUGGESTION_SEVERITY_META, SUGGESTION_CATEGORY_META, type SuggestionSeverity, type SuggestionActionStep } from "@/types";
 
 function safeParseJSON<T>(json: string, fallback: T): T {
   try { return JSON.parse(json) as T; } catch { return fallback; }
@@ -43,21 +43,21 @@ function inferActionType(label: string): string {
   return "notification";
 }
 
+type ActionStatus = "pending" | "done" | "ignored";
+
 // ── Action Preview Modal ──
 function ActionPreviewModal({
   action,
   employee,
   onClose,
   onValidate,
-  onCustomize,
-  loading,
+  onIgnore,
 }: {
   action: SuggestionActionStep;
   employee: SuggestionData["employee"];
   onClose: () => void;
   onValidate: () => void;
-  onCustomize: () => void;
-  loading: boolean;
+  onIgnore: () => void;
 }) {
   const type = action.type || inferActionType(action.label);
   const meta = ACTION_TYPE_META[type] || ACTION_TYPE_META.notification;
@@ -66,119 +66,137 @@ function ActionPreviewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="fixed inset-0 bg-black/30 transition-opacity" />
+      <div className="fixed inset-0 bg-black/40 transition-opacity" />
       <div
-        className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto"
+        className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-ht-border px-5 py-4 rounded-t-2xl z-10">
-          <div className="flex items-center justify-between">
-            <button onClick={onClose} className="flex items-center gap-1.5 text-[13px] text-ht-text-secondary hover:text-ht-text transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </button>
-            <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${meta.bg} ${meta.color}`}>
-              <Icon className="h-3 w-3" />
-              {meta.label}
-            </div>
+        {/* Header bar */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-ht-border shrink-0">
+          <button onClick={onClose} className="flex items-center gap-1.5 text-[13px] text-ht-text-secondary hover:text-ht-text transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </button>
+          <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${meta.bg} ${meta.color}`}>
+            <Icon className="h-3 w-3" />
+            {meta.label}
           </div>
-          <h3 className="text-[15px] font-semibold text-ht-text mt-3">{action.label}</h3>
-          {action.detail && (
-            <p className="text-[12px] text-ht-text-secondary mt-1">{action.detail}</p>
-          )}
         </div>
 
-        {/* Preview content */}
-        <div className="px-5 py-4 space-y-4">
-          {/* Email preview */}
+        {/* Scrollable content */}
+        <div className="overflow-y-auto flex-1">
+
+          {/* ── EMAIL ── */}
           {type === "email" && preview && (
-            <div className="rounded-xl border border-ht-border overflow-hidden">
-              <div className="bg-ht-fill-secondary px-4 py-3 space-y-2">
-                {preview.to && (
+            <div>
+              {/* Email header fields */}
+              <div className="px-5 py-4 space-y-2.5 bg-gray-50/80 border-b border-ht-border">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide w-10 shrink-0 pt-0.5">De</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-ht-text-secondary w-8 shrink-0">À</span>
-                    <span className="text-[12px] text-ht-text">{preview.to}</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ht-primary text-white text-[10px] font-semibold shrink-0">RH</span>
+                    <span className="text-[12px] text-ht-text">Équipe RH <span className="text-ht-text-secondary">&lt;rh@company.com&gt;</span></span>
                   </div>
-                )}
-                {preview.subject && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-ht-text-secondary w-8 shrink-0">Obj.</span>
-                    <span className="text-[12px] font-medium text-ht-text">{preview.subject}</span>
-                  </div>
-                )}
-              </div>
-              {preview.body && (
-                <div className="px-4 py-3">
-                  <p className="text-[12px] text-ht-text leading-relaxed whitespace-pre-line">{preview.body}</p>
                 </div>
-              )}
+                <div className="flex items-baseline gap-3">
+                  <span className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide w-10 shrink-0">À</span>
+                  <span className="text-[12px] text-ht-text">{preview.to}</span>
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide w-10 shrink-0">Objet</span>
+                  <span className="text-[13px] font-semibold text-ht-text">{preview.subject}</span>
+                </div>
+              </div>
+              {/* Email body */}
+              <div className="px-5 py-5">
+                <div className="text-[13px] text-ht-text leading-[1.7] whitespace-pre-line">
+                  {preview.body}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Meeting preview */}
+          {/* ── MEETING ── */}
           {type === "meeting" && preview && (
-            <div className="rounded-xl border border-ht-border p-4 space-y-3">
-              {preview.subject && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Sujet</p>
-                  <p className="text-[13px] font-medium text-ht-text">{preview.subject}</p>
+            <div className="px-5 py-5 space-y-5">
+              {/* Calendar-style header */}
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center justify-center rounded-xl border border-purple-200 bg-purple-50 w-14 h-14 shrink-0">
+                  <CalendarDays className="h-5 w-5 text-purple-600" />
                 </div>
-              )}
-              <div className="flex gap-4">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-ht-text leading-snug">{preview.subject}</h3>
+                  {action.detail && <p className="text-[12px] text-ht-text-secondary mt-0.5">{action.detail}</p>}
+                </div>
+              </div>
+
+              {/* Date & Duration */}
+              <div className="grid grid-cols-2 gap-3">
                 {preview.date && (
-                  <div>
-                    <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Date</p>
-                    <p className="text-[12px] text-ht-text">{preview.date}</p>
+                  <div className="rounded-xl bg-gray-50 px-4 py-3">
+                    <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-1">Date</p>
+                    <p className="text-[13px] font-medium text-ht-text">{preview.date}</p>
                   </div>
                 )}
                 {preview.duration && (
-                  <div>
-                    <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Durée</p>
-                    <p className="text-[12px] text-ht-text">{preview.duration}</p>
+                  <div className="rounded-xl bg-gray-50 px-4 py-3">
+                    <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-1">Durée</p>
+                    <p className="text-[13px] font-medium text-ht-text">{preview.duration}</p>
                   </div>
                 )}
               </div>
+
+              {/* Participants */}
               {preview.participants && preview.participants.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-1">Participants</p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-2">Participants ({preview.participants.length})</p>
+                  <div className="space-y-1.5">
                     {preview.participants.map((p, i) => (
-                      <span key={i} className="inline-flex items-center rounded-full bg-ht-fill-secondary px-2.5 py-1 text-[11px] text-ht-text">
-                        {p}
-                      </span>
+                      <div key={i} className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-[10px] font-semibold text-purple-700 shrink-0">
+                          {p.split(" ").map(w => w[0]).join("").slice(0, 2)}
+                        </span>
+                        <span className="text-[12px] text-ht-text">{p}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
+
+              {/* Note */}
               {preview.note && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Note</p>
-                  <p className="text-[12px] text-ht-text">{preview.note}</p>
+                <div className="rounded-xl border border-ht-border px-4 py-3">
+                  <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-1">Note</p>
+                  <p className="text-[12px] text-ht-text leading-relaxed">{preview.note}</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Task / notification preview */}
+          {/* ── TASK / NOTIFICATION ── */}
           {(type === "task" || type === "notification") && preview && (
-            <div className="rounded-xl border border-ht-border p-4 space-y-3">
-              {preview.subject && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Action</p>
-                  <p className="text-[13px] font-medium text-ht-text">{preview.subject}</p>
+            <div className="px-5 py-5 space-y-4">
+              {/* Task header */}
+              <div className="flex items-start gap-4">
+                <div className={`flex flex-col items-center justify-center rounded-xl w-14 h-14 shrink-0 ${
+                  type === "task" ? "border border-green-200 bg-green-50" : "border border-orange-200 bg-orange-50"
+                }`}>
+                  {type === "task"
+                    ? <ClipboardList className="h-5 w-5 text-green-600" />
+                    : <Bell className="h-5 w-5 text-orange-600" />
+                  }
                 </div>
-              )}
+                <div>
+                  <h3 className="text-[15px] font-semibold text-ht-text leading-snug">{preview.subject || action.label}</h3>
+                  {preview.to && <p className="text-[12px] text-ht-text-secondary mt-0.5">Destinataire : {preview.to}</p>}
+                </div>
+              </div>
+
+              {/* Body */}
               {preview.body && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Détail</p>
-                  <p className="text-[12px] text-ht-text leading-relaxed">{preview.body}</p>
-                </div>
-              )}
-              {preview.to && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Assigné à</p>
-                  <p className="text-[12px] text-ht-text">{preview.to}</p>
+                <div className="rounded-xl bg-gray-50 px-4 py-4">
+                  <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-2">Détail</p>
+                  <p className="text-[13px] text-ht-text leading-[1.7] whitespace-pre-line">{preview.body}</p>
                 </div>
               )}
             </div>
@@ -186,35 +204,37 @@ function ActionPreviewModal({
 
           {/* Fallback if no preview */}
           {!preview && (
-            <div className="rounded-xl bg-ht-fill-secondary p-4">
-              <p className="text-[12px] text-ht-text-secondary">
-                {action.detail || `Cette action sera exécutée automatiquement${employee ? ` pour ${employee.firstName} ${employee.lastName}` : ""}.`}
-              </p>
+            <div className="px-5 py-5">
+              <div className="flex items-start gap-4">
+                <div className={`flex flex-col items-center justify-center rounded-xl w-14 h-14 shrink-0 ${meta.bg}`}>
+                  <Icon className={`h-5 w-5 ${meta.color}`} />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-semibold text-ht-text leading-snug">{action.label}</h3>
+                  <p className="text-[12px] text-ht-text-secondary mt-1">
+                    {action.detail || `Cette action sera exécutée${employee ? ` pour ${employee.firstName} ${employee.lastName}` : ""}.`}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
-
-          {/* Simulated badge */}
-          <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-            <span className="text-[11px] text-amber-700">Cette action sera simulée (mode démo)</span>
-          </div>
         </div>
 
         {/* Footer actions */}
-        <div className="sticky bottom-0 bg-white border-t border-ht-border px-5 py-4 flex gap-2">
+        <div className="border-t border-ht-border px-5 py-4 flex gap-2 shrink-0 bg-white rounded-b-2xl">
           <button
             onClick={onValidate}
-            disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-ht-primary px-4 py-3 text-[13px] font-medium text-white hover:bg-ht-primary-dark disabled:opacity-50 transition-all active:scale-[0.98]"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-ht-primary px-4 py-3 text-[13px] font-medium text-white hover:bg-ht-primary-dark transition-all active:scale-[0.98]"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Exécuter cette action
+            <Send className="h-4 w-4" />
+            {type === "email" ? "Envoyer l\u2019email" : type === "meeting" ? "Planifier la réunion" : type === "task" ? "Créer la tâche" : "Envoyer la notification"}
           </button>
           <button
-            onClick={onCustomize}
+            onClick={onIgnore}
             className="flex items-center justify-center gap-2 rounded-xl border border-ht-border px-4 py-3 text-[13px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary transition-all"
           >
-            <Edit3 className="h-4 w-4" />
-            Ajuster
+            <X className="h-4 w-4" />
+            Ignorer
           </button>
         </div>
       </div>
@@ -223,42 +243,66 @@ function ActionPreviewModal({
 }
 
 // ── Main Card ──
-export function SuggestionCard({ suggestion, onAccept, onIgnore, onCustomize }: SuggestionCardProps) {
-  const [customizing, setCustomizing] = useState(false);
-  const [customNote, setCustomNote] = useState("");
-  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+export function SuggestionCard({ suggestion, onAccept, onIgnore }: SuggestionCardProps) {
+  const [actionStatuses, setActionStatuses] = useState<Record<number, ActionStatus>>({});
+  const [selectedAction, setSelectedAction] = useState<SuggestionActionStep | null>(null);
   const [exiting, setExiting] = useState(false);
   const [exitAction, setExitAction] = useState<string | null>(null);
-  const [selectedAction, setSelectedAction] = useState<SuggestionActionStep | null>(null);
-  const customizeRef = useRef<HTMLTextAreaElement>(null);
 
   const severity = SUGGESTION_SEVERITY_META[suggestion.severity as SuggestionSeverity];
   const categoryMeta = SUGGESTION_CATEGORY_META[suggestion.category];
   const actionPlan = safeParseJSON<SuggestionActionStep[]>(suggestion.actionPlan || "[]", []);
-  const alternatives = safeParseJSON<SuggestionAlternative[]>(suggestion.alternatives || "[]", []);
 
+  const doneCount = Object.values(actionStatuses).filter(s => s === "done").length;
+  const ignoredCount = Object.values(actionStatuses).filter(s => s === "ignored").length;
+  const resolvedCount = doneCount + ignoredCount;
+  const allResolved = actionPlan.length > 0 && resolvedCount === actionPlan.length;
+
+  // When all actions are resolved, trigger parent callback after a brief delay
   useEffect(() => {
-    if (customizing) {
-      setTimeout(() => customizeRef.current?.focus(), 100);
-    }
-  }, [customizing]);
-
-  const handleAction = async (type: string, fn: () => Promise<void> | void) => {
-    setActionInProgress(type);
-    try {
-      await fn();
-      setExitAction(type);
+    if (!allResolved || exiting) return;
+    const timer = setTimeout(() => {
+      setExitAction(doneCount > 0 ? "accept" : "ignore");
       setExiting(true);
-    } catch {
-      setActionInProgress(null);
-    }
+      // Call parent after exit animation
+      setTimeout(() => {
+        if (doneCount > 0) {
+          onAccept();
+        } else {
+          onIgnore();
+        }
+      }, 400);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [allResolved, exiting, doneCount, onAccept, onIgnore]);
+
+  const markAction = (actionId: number, status: ActionStatus) => {
+    setActionStatuses(prev => ({ ...prev, [actionId]: status }));
   };
 
-  const handleCustomize = () => handleAction("customize", async () => {
-    await onCustomize({ note: customNote, modifiedAt: new Date().toISOString() });
-    setCustomizing(false);
-    setCustomNote("");
-  });
+  const markAllDone = () => {
+    const next: Record<number, ActionStatus> = {};
+    actionPlan.forEach(a => {
+      if (!actionStatuses[a.id] || actionStatuses[a.id] === "pending") {
+        next[a.id] = "done";
+      } else {
+        next[a.id] = actionStatuses[a.id];
+      }
+    });
+    setActionStatuses(next);
+  };
+
+  const markAllIgnored = () => {
+    const next: Record<number, ActionStatus> = {};
+    actionPlan.forEach(a => {
+      if (!actionStatuses[a.id] || actionStatuses[a.id] === "pending") {
+        next[a.id] = "ignored";
+      } else {
+        next[a.id] = actionStatuses[a.id];
+      }
+    });
+    setActionStatuses(next);
+  };
 
   return (
     <>
@@ -271,13 +315,15 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore, onCustomize }: 
         {exiting && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 rounded-xl">
             <div className="flex items-center gap-2">
-              {exitAction === "accept" || exitAction === "customize" ? (
+              {exitAction === "accept" ? (
                 <CheckCircle2 className="h-6 w-6 text-green-500" />
               ) : (
-                <X className="h-6 w-6 text-ht-text-secondary" />
+                <XCircle className="h-6 w-6 text-ht-text-secondary" />
               )}
               <span className="text-[13px] font-medium text-ht-text">
-                {exitAction === "accept" ? "Validée" : exitAction === "customize" ? "Personnalisée" : "Ignorée"}
+                {exitAction === "accept"
+                  ? `${doneCount} action${doneCount > 1 ? "s" : ""} validée${doneCount > 1 ? "s" : ""}`
+                  : "Ignorée"}
               </span>
             </div>
           </div>
@@ -316,118 +362,113 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore, onCustomize }: 
               {suggestion.summary}
             </p>
 
-            {/* Actions as clickable cards */}
+            {/* Actions with per-action tracking */}
             <div className="space-y-2 mb-4">
-              <p className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide">Actions proposées</p>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide">Actions proposées</p>
+                {resolvedCount > 0 && (
+                  <span className="text-[11px] text-ht-text-secondary">
+                    {resolvedCount}/{actionPlan.length} traitée{resolvedCount > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
               {actionPlan.map((action) => {
                 const type = action.type || inferActionType(action.label);
                 const meta = ACTION_TYPE_META[type] || ACTION_TYPE_META.notification;
                 const Icon = meta.icon;
+                const status = actionStatuses[action.id] || "pending";
+
+                if (status === "done") {
+                  return (
+                    <div
+                      key={action.id}
+                      className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50/50 px-3 py-2.5"
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-100">
+                        <Check className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-green-700">{action.label}</p>
+                        <p className="text-[11px] text-green-600">Exécutée</p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (status === "ignored") {
+                  return (
+                    <div
+                      key={action.id}
+                      className="flex items-center gap-3 rounded-lg border border-ht-border bg-ht-fill-secondary/50 px-3 py-2.5 opacity-60"
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                        <X className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-ht-text-secondary line-through">{action.label}</p>
+                        <p className="text-[11px] text-ht-text-secondary">Ignorée</p>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
-                  <button
+                  <div
                     key={action.id}
-                    onClick={() => setSelectedAction(action)}
-                    className="w-full flex items-center gap-3 rounded-lg border border-ht-border bg-white px-3 py-2.5 text-left hover:border-ht-text-secondary hover:shadow-sm transition-all group"
+                    className="flex items-center gap-3 rounded-lg border border-ht-border bg-white px-3 py-2.5 transition-all group"
                   >
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}>
-                      <Icon className={`h-4 w-4 ${meta.color}`} />
+                    <button
+                      onClick={() => setSelectedAction(action)}
+                      className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                    >
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}>
+                        <Icon className={`h-4 w-4 ${meta.color}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-ht-text">{action.label}</p>
+                        {action.detail && (
+                          <p className="text-[11px] text-ht-text-secondary truncate">{action.detail}</p>
+                        )}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-ht-text-secondary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => markAction(action.id, "done")}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-ht-text-secondary hover:bg-green-50 hover:text-green-600 transition-all"
+                        title="Valider"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => markAction(action.id, "ignored")}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-ht-text-secondary hover:bg-red-50 hover:text-red-400 transition-all"
+                        title="Ignorer"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-ht-text">{action.label}</p>
-                      {action.detail && (
-                        <p className="text-[11px] text-ht-text-secondary truncate">{action.detail}</p>
-                      )}
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-ht-text-secondary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                  </button>
+                  </div>
                 );
               })}
             </div>
 
-            {/* Alternatives (collapsed, subtle) */}
-            {alternatives.length > 0 && (
-              <div className="mb-4">
-                <p className="text-[11px] text-ht-text-secondary mb-1.5">
-                  {alternatives.length} alternative{alternatives.length > 1 ? "s" : ""} disponible{alternatives.length > 1 ? "s" : ""}
-                </p>
-                <div className="space-y-1">
-                  {alternatives.map((alt, i) => (
-                    <div key={i} className="rounded-lg border border-dashed border-ht-border px-3 py-2">
-                      <span className="text-[12px] text-ht-text">{alt.label}</span>
-                      {alt.description && (
-                        <span className="text-[11px] text-ht-text-secondary"> — {alt.description}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Customize panel */}
-            <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                customizing ? "max-h-[300px] opacity-100 mb-4" : "max-h-0 opacity-0"
-              }`}
-            >
-              <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-                <p className="text-[12px] font-medium text-ht-text mb-2">Personnaliser les actions</p>
-                <textarea
-                  ref={customizeRef}
-                  value={customNote}
-                  onChange={(e) => setCustomNote(e.target.value)}
-                  placeholder="Ex: Reporter l'envoi à lundi, changer le destinataire, modifier le message..."
-                  rows={3}
-                  maxLength={500}
-                  className="w-full rounded-lg border border-ht-border bg-white px-3 py-2 text-[12px] text-ht-text placeholder:text-ht-text-secondary focus:border-ht-primary focus:outline-none resize-none"
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-[10px] text-ht-text-secondary">{customNote.length}/500</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => { setCustomizing(false); setCustomNote(""); }}
-                      className="rounded-lg border border-ht-border px-3 py-1.5 text-[12px] text-ht-text-secondary hover:text-ht-text transition-all"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={handleCustomize}
-                      disabled={actionInProgress === "customize" || !customNote.trim()}
-                      className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-all"
-                    >
-                      {actionInProgress === "customize" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                      Valider
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom actions */}
-            {!exiting && (
-              <div className="flex flex-wrap items-center gap-2">
+            {/* Quick actions: only show if some actions are still pending */}
+            {!exiting && !allResolved && (
+              <div className="flex items-center gap-2 pt-2 border-t border-ht-border">
                 <button
-                  onClick={() => handleAction("accept", onAccept)}
-                  disabled={!!actionInProgress}
-                  className="flex items-center gap-1.5 rounded-lg bg-ht-primary px-5 py-2.5 text-[12px] font-medium text-white hover:bg-ht-primary-dark disabled:opacity-50 transition-all active:scale-95"
+                  onClick={markAllDone}
+                  className="flex items-center gap-1.5 rounded-lg bg-ht-primary/10 px-3 py-2 text-[12px] font-medium text-ht-primary hover:bg-ht-primary hover:text-white transition-all active:scale-95"
                 >
-                  {actionInProgress === "accept" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  <Check className="h-3.5 w-3.5" />
                   Tout valider
                 </button>
                 <button
-                  onClick={() => setCustomizing(!customizing)}
-                  disabled={!!actionInProgress}
-                  className="flex items-center gap-1.5 rounded-lg border border-blue-200 px-4 py-2.5 text-[12px] font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-all active:scale-95"
+                  onClick={markAllIgnored}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary transition-all active:scale-95 ml-auto"
                 >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  Ajuster
-                </button>
-                <button
-                  onClick={() => handleAction("ignore", onIgnore)}
-                  disabled={!!actionInProgress}
-                  className="flex items-center gap-1.5 rounded-lg border border-ht-border px-4 py-2.5 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary disabled:opacity-50 transition-all active:scale-95 ml-auto"
-                >
-                  {actionInProgress === "ignore" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
-                  Ignorer
+                  <X className="h-3.5 w-3.5" />
+                  Tout ignorer
                 </button>
               </div>
             )}
@@ -442,14 +483,13 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore, onCustomize }: 
           employee={suggestion.employee}
           onClose={() => setSelectedAction(null)}
           onValidate={() => {
+            markAction(selectedAction.id, "done");
             setSelectedAction(null);
-            handleAction("accept", onAccept);
           }}
-          onCustomize={() => {
+          onIgnore={() => {
+            markAction(selectedAction.id, "ignored");
             setSelectedAction(null);
-            setCustomizing(true);
           }}
-          loading={actionInProgress === "accept"}
         />
       )}
     </>
