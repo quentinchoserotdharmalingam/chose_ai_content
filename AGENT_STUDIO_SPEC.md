@@ -23,7 +23,7 @@ model Agent {
   name        String
   description String?  @db.Text
   icon        String   @default("🤖")
-  color       String   @default("#3B82F6")
+  color       String   @default("#FF6058")
 
   // Classification
   category    String   @default("skill_rh")  // "skill_rh" | "skill_manager" | "custom"
@@ -279,7 +279,7 @@ Layout master-detail inspiré des maquettes :
 - **Zone principale** :
   - Si aucun agent sélectionné : écran d'accueil "Bienvenue dans Agent Studio" avec conseils et CTA
   - Si agent sélectionné : vue détail avec Déclencheur + Actions + Paramètres + panneau Aperçu à droite
-- **Couleur dominante** : bleu (#3B82F6) au lieu du rouge HeyTeam
+- **Couleur dominante** : charte HeyTeam (#FF6058 primaire, fills, shadows existants)
 
 ### 8.2 Détail agent (`/creator/agent/[id]`)
 
@@ -347,6 +347,6 @@ Avec `isActive` couvrant `/creator/agent` et ses sous-routes (y compris `/creato
 - **Pas de test d'agent** — Fonctionnalité hors scope V1
 - **Pas d'auth** — Comme le reste du POC
 - **Pas d'exécution réelle** — Les actions sont simulées (changement de statut uniquement)
-- **Design** — Thème bleu (#3B82F6) pour Agent Studio, réutilisation des composants UI existants
+- **Design** — Charte graphique HeyTeam (#FF6058 primaire), réutilisation des composants UI existants
 - **Mobile** — Responsive comme le reste de l'app (sidebar collapse sur mobile)
 - **Performance** — Les suggestions sont chargées côté client, pagination si > 50 items
