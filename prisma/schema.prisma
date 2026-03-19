@@ -113,3 +113,89 @@ model InterviewAnalysis {
 
   session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
+
+// --- Agent IA ---
+
+model Employee {
+  id                  String    @id @default(cuid())
+  firstName           String
+  lastName            String
+  email               String
+  position            String
+  department          String
+  hireDate            DateTime
+  managerId           String?
+  status              String    @default("active")     // "active" | "onleave" | "departing"
+  onboardingCompleted Boolean   @default(false)
+  lastPulseScore      Float?
+  avatarUrl           String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  manager      Employee?    @relation("EmployeeManager", fields: [managerId], references: [id])
+  subordinates Employee[]   @relation("EmployeeManager")
+  suggestions  Suggestion[]
+}
+
+model Agent {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?  @db.Text
+  icon          String   @default("🤖")
+  color         String   @default("#FF6058")
+
+  category      String   @default("skill_rh")           // "skill_rh" | "skill_manager" | "custom"
+
+  triggerType   String                                   // "event" | "scheduled"
+  triggerLabel  String                                   // Label humain du déclencheur
+  triggerConfig String   @default("{}") @db.Text         // JSON — paramètres du trigger
+
+  infoDescription String? @db.Text                      // Ce que l'agent remonte
+
+  actions       String   @default("[]") @db.Text         // JSON array d'actions
+
+  isTemplate    Boolean  @default(false)
+  templateId    String?                                  // ID du template source si créé depuis un template
+  status        String   @default("draft")               // "draft" | "active" | "paused"
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  suggestions   Suggestion[]
+}
+
+model Suggestion {
+  id          String   @id @default(cuid())
+  agentId     String
+  employeeId  String?
+
+  severity    String                                     // "urgent" | "attention" | "opportunity" | "optimization"
+  category    String                                     // "onboarding" | "documents" | "engagement" | "management" | "formation" | "administratif"
+  title       String
+  summary     String   @db.Text
+
+  context       String   @db.Text                        // JSON — infos contextuelles
+  actionPlan    String   @db.Text                        // JSON — [{ id, label, detail? }]
+  alternatives  String   @default("[]") @db.Text         // JSON — actions alternatives
+  preview       String?  @db.Text                        // Markdown — prévisualisation
+
+  status      String   @default("pending")               // "pending" | "accepted" | "customized" | "ignored"
+  customizedAction String? @db.Text                      // JSON — action modifiée
+  resolvedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  actionLogs  ActionLog[]
+}
+
+model ActionLog {
+  id            String   @id @default(cuid())
+  suggestionId  String
+  actionType    String                                   // "email" | "task" | "meeting"
+  actionDetails String   @db.Text                        // JSON — détails de l'action simulée
+  createdAt     DateTime @default(now())
+
+  suggestion    Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+}

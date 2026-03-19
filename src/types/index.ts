@@ -476,3 +476,267 @@ export const FORMAT_META: Record<FormatSlug, { label: string; icon: string; dura
     description: "Scénarios interactifs à choix",
   },
 };
+
+// --- Agent IA ---
+
+export type AgentCategory = "skill_rh" | "skill_manager" | "custom";
+export type AgentTriggerType = "event" | "scheduled";
+export type AgentStatus = "draft" | "active" | "paused";
+
+export type SuggestionSeverity = "urgent" | "attention" | "opportunity" | "optimization";
+export type SuggestionStatus = "pending" | "accepted" | "customized" | "ignored";
+export type ActionType = "email" | "task" | "meeting";
+
+export type EmployeeStatus = "active" | "onleave" | "departing";
+
+export interface AgentAction {
+  id: number;
+  label: string;
+  enabled: boolean;
+}
+
+export interface SuggestionContext {
+  employeeName: string;
+  employeeRole?: string;
+  department?: string;
+  contractType?: string;
+  startDate?: string;
+  team?: string;
+  additionalInfo?: Record<string, string>;
+}
+
+export interface SuggestionActionStep {
+  id: number;
+  label: string;
+  detail?: string;
+}
+
+export interface SuggestionAlternative {
+  label: string;
+  description?: string;
+}
+
+export interface AgentTemplate {
+  templateId: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  category: AgentCategory;
+  triggerType: AgentTriggerType;
+  triggerLabel: string;
+  triggerConfig: Record<string, unknown>;
+  infoDescription: string;
+  actions: AgentAction[];
+}
+
+export const AGENT_CATEGORY_META: Record<AgentCategory, { label: string; description: string }> = {
+  skill_rh: { label: "Skills RH", description: "Agents pour les équipes RH" },
+  skill_manager: { label: "Skills Managers", description: "Agents pour les managers" },
+  custom: { label: "Custom", description: "Agents personnalisés" },
+};
+
+export const SUGGESTION_SEVERITY_META: Record<SuggestionSeverity, { label: string; color: string; bgColor: string }> = {
+  urgent: { label: "Urgent", color: "#DC2626", bgColor: "#FEF2F2" },
+  attention: { label: "Attention", color: "#D97706", bgColor: "#FFFBEB" },
+  opportunity: { label: "Opportunité", color: "#2563EB", bgColor: "#EFF6FF" },
+  optimization: { label: "Optimisation", color: "#7C3AED", bgColor: "#F5F3FF" },
+};
+
+export const SUGGESTION_STATUS_META: Record<SuggestionStatus, { label: string; color: string; bgColor: string }> = {
+  pending: { label: "En attente", color: "#6B7280", bgColor: "#F3F4F6" },
+  accepted: { label: "Validée", color: "#059669", bgColor: "#ECFDF5" },
+  customized: { label: "Personnalisée", color: "#2563EB", bgColor: "#EFF6FF" },
+  ignored: { label: "Ignorée", color: "#9CA3AF", bgColor: "#F9FAFB" },
+};
+
+export const SUGGESTION_CATEGORY_META: Record<string, { label: string; icon: string }> = {
+  onboarding: { label: "Onboarding", icon: "🚀" },
+  documents: { label: "Documents", icon: "📄" },
+  engagement: { label: "Engagement", icon: "💪" },
+  management: { label: "Management", icon: "👔" },
+  formation: { label: "Formation", icon: "📚" },
+  administratif: { label: "Administratif", icon: "📋" },
+};
+
+export const AGENT_TEMPLATES: AgentTemplate[] = [
+  // --- Skills RH (6) ---
+  {
+    templateId: "welcome_message",
+    name: "Rappel message de bienvenue",
+    description: "Détecte les nouveaux collaborateurs sans message de bienvenue et suggère d'en envoyer un",
+    icon: "👋",
+    color: "#FF6058",
+    category: "skill_rh",
+    triggerType: "event",
+    triggerLabel: "Nouveau collaborateur détecté sans message de bienvenue",
+    triggerConfig: { event: "new_employee", delayDays: 1 },
+    infoDescription: "Collaborateur sans message de bienvenue envoyé",
+    actions: [
+      { id: 1, label: "Envoyer message de bienvenue", enabled: true },
+      { id: 2, label: "Notifier le manager", enabled: true },
+    ],
+  },
+  {
+    templateId: "doc_incomplete",
+    name: "Rappel documents incomplets",
+    description: "Relance automatiquement les collaborateurs dont le dossier administratif est incomplet",
+    icon: "📄",
+    color: "#E9A23B",
+    category: "skill_rh",
+    triggerType: "event",
+    triggerLabel: "Document(s) non complété(s) après N jours",
+    triggerConfig: { event: "document_missing", delayDays: 7 },
+    infoDescription: "Liste des pièces manquantes par collaborateur",
+    actions: [
+      { id: 1, label: "Relancer le collaborateur", enabled: true },
+      { id: 2, label: "Notifier le RH référent", enabled: true },
+    ],
+  },
+  {
+    templateId: "onboarding_satisfaction",
+    name: "Alerte satisfaction onboarding",
+    description: "Détecte les scores de satisfaction bas pendant l'onboarding et alerte les RH",
+    icon: "📊",
+    color: "#DC2626",
+    category: "skill_rh",
+    triggerType: "event",
+    triggerLabel: "Score de satisfaction bas détecté",
+    triggerConfig: { event: "low_satisfaction", threshold: 5 },
+    infoDescription: "Score NPS < seuil et verbatims négatifs",
+    actions: [
+      { id: 1, label: "Alerter le RH", enabled: true },
+      { id: 2, label: "Suggérer un entretien", enabled: true },
+    ],
+  },
+  {
+    templateId: "manager_inactive",
+    name: "Détection inactivité manager",
+    description: "Identifie les managers n'ayant réalisé aucune action depuis N jours",
+    icon: "👤",
+    color: "#7C3AED",
+    category: "skill_rh",
+    triggerType: "event",
+    triggerLabel: "Manager inactif depuis N jours",
+    triggerConfig: { event: "manager_inactive", delayDays: 14 },
+    infoDescription: "Manager n'ayant réalisé aucune action depuis X jours",
+    actions: [
+      { id: 1, label: "Notifier le manager", enabled: true },
+      { id: 2, label: "Planifier un meeting", enabled: true },
+    ],
+  },
+  {
+    templateId: "weekly_report",
+    name: "Rapport hebdomadaire RH",
+    description: "Génère et envoie une synthèse hebdomadaire de l'activité RH chaque lundi",
+    icon: "📈",
+    color: "#2563EB",
+    category: "skill_rh",
+    triggerType: "scheduled",
+    triggerLabel: "Chaque lundi à 9h",
+    triggerConfig: { schedule: "weekly", day: "monday", time: "09:00" },
+    infoDescription: "Synthèse hebdomadaire de l'activité RH",
+    actions: [
+      { id: 1, label: "Générer le rapport", enabled: true },
+      { id: 2, label: "Envoyer au RH", enabled: true },
+    ],
+  },
+  {
+    templateId: "pre_onboarding",
+    name: "Vérification pré-onboarding",
+    description: "Vérifie que tout est prêt avant l'arrivée d'un nouveau collaborateur (J-7)",
+    icon: "✅",
+    color: "#059669",
+    category: "skill_rh",
+    triggerType: "event",
+    triggerLabel: "Onboarding dans < 7 jours",
+    triggerConfig: { event: "upcoming_onboarding", delayDays: -7 },
+    infoDescription: "Checklist des éléments manquants avant arrivée",
+    actions: [
+      { id: 1, label: "Vérifier les documents", enabled: true },
+      { id: 2, label: "Alerter si incomplet", enabled: true },
+    ],
+  },
+  // --- Skills Managers (5) ---
+  {
+    templateId: "team_dashboard",
+    name: "Dashboard équipe",
+    description: "Synthèse quotidienne de l'état de l'équipe : onboarding, tâches, engagement",
+    icon: "📊",
+    color: "#2563EB",
+    category: "skill_manager",
+    triggerType: "scheduled",
+    triggerLabel: "Quotidien à 8h",
+    triggerConfig: { schedule: "daily", time: "08:00" },
+    infoDescription: "État global de l'équipe (onboarding, tâches, engagement)",
+    actions: [
+      { id: 1, label: "Afficher métriques", enabled: true },
+      { id: 2, label: "Alerter si anomalie", enabled: true },
+    ],
+  },
+  {
+    templateId: "checkin_reminder",
+    name: "Rappel check-in",
+    description: "Rappelle au manager qu'un check-in approche (J-2) avec le contexte du collaborateur",
+    icon: "🔔",
+    color: "#E9A23B",
+    category: "skill_manager",
+    triggerType: "event",
+    triggerLabel: "Check-in approche (J-2)",
+    triggerConfig: { event: "upcoming_checkin", delayDays: -2 },
+    infoDescription: "Prochain check-in planifié avec contexte",
+    actions: [
+      { id: 1, label: "Notifier le manager", enabled: true },
+      { id: 2, label: "Proposer un créneau", enabled: true },
+    ],
+  },
+  {
+    templateId: "engagement_tracking",
+    name: "Suivi engagement",
+    description: "Analyse hebdomadaire de l'engagement par collaborateur avec alertes si baisse détectée",
+    icon: "💚",
+    color: "#059669",
+    category: "skill_manager",
+    triggerType: "scheduled",
+    triggerLabel: "Hebdomadaire",
+    triggerConfig: { schedule: "weekly", day: "friday", time: "17:00" },
+    infoDescription: "Score d'engagement et tendance par collaborateur",
+    actions: [
+      { id: 1, label: "Analyser activité", enabled: true },
+      { id: 2, label: "Envoyer rapport", enabled: true },
+      { id: 3, label: "Alerter si engagement < seuil", enabled: true },
+    ],
+  },
+  {
+    templateId: "task_overdue",
+    name: "Nudge tâches en retard",
+    description: "Détecte les tâches non complétées après leur deadline et rappelle les concernés",
+    icon: "⚠️",
+    color: "#DC2626",
+    category: "skill_manager",
+    triggerType: "event",
+    triggerLabel: "Tâche en retard détectée",
+    triggerConfig: { event: "task_overdue", delayDays: 1 },
+    infoDescription: "Tâches non complétées après deadline",
+    actions: [
+      { id: 1, label: "Rappeler le collaborateur", enabled: true },
+      { id: 2, label: "Notifier le manager", enabled: true },
+    ],
+  },
+  {
+    templateId: "buddy_inactive",
+    name: "Alerte buddy inactif",
+    description: "Détecte les buddies n'ayant pas interagi avec le nouveau collaborateur depuis N jours",
+    icon: "🤝",
+    color: "#7C3AED",
+    category: "skill_manager",
+    triggerType: "event",
+    triggerLabel: "Buddy inactif depuis N jours",
+    triggerConfig: { event: "buddy_inactive", delayDays: 5 },
+    infoDescription: "Buddy n'ayant pas interagi avec le nouveau",
+    actions: [
+      { id: 1, label: "Alerter le buddy", enabled: true },
+      { id: 2, label: "Notifier le RH", enabled: true },
+    ],
+  },
+];
