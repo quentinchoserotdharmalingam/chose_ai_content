@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Bot, Plus, Power, ChevronRight, Loader2, AlertTriangle, Inbox, History, Search } from "lucide-react";
+import { Bot, Plus, ChevronRight, Loader2, AlertTriangle, Inbox, History, Search } from "lucide-react";
 import { AGENT_CATEGORY_META, type AgentCategory } from "@/types";
 import { AgentDetail } from "@/components/agent/AgentDetail";
 import { SuggestionsCockpit } from "@/components/agent/SuggestionsCockpit";
@@ -69,22 +69,6 @@ function AgentPageContent() {
 
   useEffect(() => { fetchAgents(true); }, [fetchAgents]);
 
-  const toggleStatus = async (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === "active" ? "paused" : "active";
-    try {
-      const res = await fetch(`/api/agents/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error();
-      toast(newStatus === "active" ? "Agent activé" : "Agent mis en pause", "success");
-      fetchAgents();
-    } catch {
-      toast("Erreur lors de la mise à jour", "error");
-    }
-  };
-
   // Sub-views
   if (showTemplateGallery) {
     return (
@@ -113,7 +97,6 @@ function AgentPageContent() {
     return true;
   });
 
-  const activeCount = agents.filter(a => a.status === "active").length;
   const totalPending = agents.reduce((sum, a) => sum + a.suggestions.filter(s => s.status === "pending").length, 0);
 
   // Group agents by category
@@ -185,20 +168,7 @@ function AgentPageContent() {
       {activeView === "agents" && (
         <>
           {/* Toolbar */}
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-5">
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-1.5">
-                <span className="h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-[12px] font-medium text-green-700">{activeCount} actif{activeCount > 1 ? "s" : ""}</span>
-              </div>
-              {totalPending > 0 && (
-                <div className="flex items-center gap-2 rounded-lg bg-orange-50 px-3 py-1.5">
-                  <span className="h-2 w-2 rounded-full bg-orange-500" />
-                  <span className="text-[12px] font-medium text-orange-700">{totalPending} suggestion{totalPending > 1 ? "s" : ""}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2 mb-5">
               <div className="relative flex-1 md:w-60">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ht-text-secondary" />
                 <input
@@ -217,7 +187,6 @@ function AgentPageContent() {
                 <span className="hidden sm:inline">Ajouter un agent</span>
                 <span className="sm:hidden">Ajouter</span>
               </button>
-            </div>
           </div>
 
           {/* Error */}
@@ -269,33 +238,17 @@ function AgentPageContent() {
                             className="group relative rounded-xl border border-ht-border bg-white p-4 transition-all duration-200 hover:border-ht-text-secondary hover:shadow-sm cursor-pointer"
                             onClick={() => setSelectedAgent(agent.id)}
                           >
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div
-                                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
-                                  style={{ backgroundColor: agent.color + "15" }}
-                                >
-                                  {agent.icon}
-                                </div>
-                                <div className="min-w-0">
-                                  <h3 className="text-[13px] font-semibold text-ht-text truncate">{agent.name}</h3>
-                                  <p className="text-[11px] text-ht-text-secondary truncate">{agent.description}</p>
-                                </div>
-                              </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleStatus(agent.id, agent.status);
-                                }}
-                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all ${
-                                  agent.status === "active"
-                                    ? "bg-green-50 text-green-600 hover:bg-green-100"
-                                    : "bg-gray-50 text-gray-400 hover:bg-gray-100"
-                                }`}
-                                title={agent.status === "active" ? "Actif" : "Inactif"}
+                            <div className="flex items-center gap-3 min-w-0 mb-2">
+                              <div
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
+                                style={{ backgroundColor: agent.color + "15" }}
                               >
-                                <Power className="h-3.5 w-3.5" />
-                              </button>
+                                {agent.icon}
+                              </div>
+                              <div className="min-w-0">
+                                <h3 className="text-[13px] font-semibold text-ht-text truncate">{agent.name}</h3>
+                                <p className="text-[11px] text-ht-text-secondary truncate">{agent.description}</p>
+                              </div>
                             </div>
 
                             <div className="flex items-center justify-between mt-3">
