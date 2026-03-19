@@ -29,15 +29,34 @@ export function AgentLibrary() {
   const [filterCategory, setFilterCategory] = useState<AgentCategory | "all">("all");
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [showCreationChat, setShowCreationChat] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const { toast } = useToast();
 
-  const fetchAgents = useCallback(async () => {
+  const fetchAgents = useCallback(async (autoSeed = false) => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/agents");
       if (!res.ok) throw new Error();
-      setAgents(await res.json());
+      const data = await res.json();
+
+      // Auto-seed if DB is empty on first load
+      if (data.length === 0 && autoSeed) {
+        setSeeding(true);
+        const seedRes = await fetch("/api/seed/agents", { method: "POST" });
+        if (seedRes.ok) {
+          const refetch = await fetch("/api/agents");
+          if (refetch.ok) {
+            setAgents(await refetch.json());
+            setLoading(false);
+            setSeeding(false);
+            return;
+          }
+        }
+        setSeeding(false);
+      }
+
+      setAgents(data);
     } catch {
       setError("Impossible de charger les agents.");
     } finally {
@@ -45,7 +64,7 @@ export function AgentLibrary() {
     }
   }, []);
 
-  useEffect(() => { fetchAgents(); }, [fetchAgents]);
+  useEffect(() => { fetchAgents(true); }, [fetchAgents]);
 
   const filtered = agents.filter((a) => {
     if (filterCategory !== "all" && a.category !== filterCategory) return false;
@@ -222,20 +241,28 @@ export function AgentLibrary() {
       {!loading && !error && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           {agents.length === 0 ? (
-            <>
-              <Bot className="h-12 w-12 text-ht-primary/30 mb-4" />
-              <p className="text-[16px] font-semibold text-ht-text mb-1">Bienvenue dans Agent Studio</p>
-              <p className="text-[13px] text-ht-text-secondary mb-4 max-w-md">
-                Configurez des agents IA qui surveillent votre activité RH et vous suggèrent des actions en temps réel.
-              </p>
-              <button
-                onClick={() => setShowCreationChat(true)}
-                className="flex items-center gap-2 rounded-lg bg-ht-primary px-5 py-2.5 text-[13px] font-medium text-white shadow-sm hover:bg-ht-primary-dark transition-all"
-              >
-                <Plus className="h-4 w-4" />
-                Créer votre premier agent
-              </button>
-            </>
+            seeding ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-ht-primary" />
+                <p className="text-[14px] font-medium text-ht-text">Préparation de vos agents...</p>
+                <p className="text-[13px] text-ht-text-secondary">Chargement des templates et données de démo</p>
+              </div>
+            ) : (
+              <>
+                <Bot className="h-12 w-12 text-ht-primary/30 mb-4" />
+                <p className="text-[16px] font-semibold text-ht-text mb-1">Bienvenue dans Agent Studio</p>
+                <p className="text-[13px] text-ht-text-secondary mb-4 max-w-md">
+                  Configurez des agents IA qui surveillent votre activité RH et vous suggèrent des actions en temps réel.
+                </p>
+                <button
+                  onClick={() => setShowCreationChat(true)}
+                  className="flex items-center gap-2 rounded-lg bg-ht-primary px-5 py-2.5 text-[13px] font-medium text-white shadow-sm hover:bg-ht-primary-dark transition-all"
+                >
+                  <Plus className="h-4 w-4" />
+                  Créer un agent
+                </button>
+              </>
+            )
           ) : (
             <>
               <Filter className="h-10 w-10 text-ht-text-secondary mb-3" />
