@@ -38,8 +38,19 @@ Pour chaque suggestion, fournis :
 - **summary** : description détaillée de la situation (2-3 phrases)
 - **employeeName** : nom complet du collaborateur concerné (doit correspondre exactement à un collaborateur de la liste)
 - **context** : objet JSON avec les infos contextuelles (employeeName, employeeRole, department, startDate, additionalInfo)
-- **actionPlan** : tableau d'actions [{ id, label, detail }] — utilise les actions disponibles
+- **actionPlan** : tableau d'actions concrètes. Chaque action doit avoir :
+  - id (number)
+  - label (string) : description courte de l'action
+  - detail (string) : explication en une phrase
+  - type : "email" | "meeting" | "task" | "notification"
+  - preview (object) : aperçu concret de ce qui sera fait
+    - Pour un email : { to, subject, body } avec un body rédigé complet et professionnel
+    - Pour une réunion : { subject, date, duration, participants[], note }
+    - Pour une tâche : { subject, body, to }
+    - Pour une notification : { to, subject, body }
 - **alternatives** : tableau d'alternatives [{ label, description }] (optionnel)
+
+IMPORTANT : Les actions doivent être concrètes et explicites. L'utilisateur doit pouvoir voir exactement quel email sera envoyé, à qui, avec quel contenu. Évite les actions vagues comme "Notifier le manager" — préfère "Envoyer un email à [nom] avec le sujet [x]".
 
 Réponds UNIQUEMENT en JSON valide, sans markdown :
 {

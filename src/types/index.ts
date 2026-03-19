@@ -509,6 +509,16 @@ export interface SuggestionActionStep {
   id: number;
   label: string;
   detail?: string;
+  type?: "email" | "meeting" | "task" | "notification";
+  preview?: {
+    to?: string;
+    subject?: string;
+    body?: string;
+    date?: string;
+    duration?: string;
+    participants?: string[];
+    note?: string;
+  };
 }
 
 export interface SuggestionAlternative {
