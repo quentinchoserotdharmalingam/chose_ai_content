@@ -168,16 +168,7 @@ function AgentPageContent() {
       {activeView === "agents" && (
         <>
           {/* Toolbar */}
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-5">
-            <div className="flex items-center gap-3 flex-wrap">
-              {totalPending > 0 && (
-                <div className="flex items-center gap-2 rounded-lg bg-orange-50 px-3 py-1.5">
-                  <span className="h-2 w-2 rounded-full bg-orange-500" />
-                  <span className="text-[12px] font-medium text-orange-700">{totalPending} suggestion{totalPending > 1 ? "s" : ""}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2 mb-5">
               <div className="relative flex-1 md:w-60">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ht-text-secondary" />
                 <input
@@ -196,7 +187,6 @@ function AgentPageContent() {
                 <span className="hidden sm:inline">Ajouter un agent</span>
                 <span className="sm:hidden">Ajouter</span>
               </button>
-            </div>
           </div>
 
           {/* Error */}
