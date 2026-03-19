@@ -1,237 +1,132 @@
-# POC Ressource IA — Suivi & Cadrage
+# Plan d'implémentation — Agent IA (V1 Demo)
 
-## Contexte
+> Basé sur `AGENT_STUDIO_SPEC.md` + décisions de cadrage session Q&A.
 
-POC basé sur le PRD "CONTENT V2 — La Ressource IA" (voir `prd_ai_content.md`).
-Objectif : valider le concept end-to-end avec les 5 formats de consommation.
+## Décisions de cadrage
 
----
-
-## Stack technique
-
-| Composant | Choix |
+| Aspect | Décision |
 |---|---|
-| Framework | Next.js 15 (App Router) |
-| Frontend | React 19 + Tailwind CSS 4 |
-| LLM | Claude API (Anthropic SDK) |
-| Base de données | SQLite via Prisma |
-| Extraction PDF | pdf-parse |
-| Validation | Zod |
-| Animations | Framer Motion |
-| UI Kit | shadcn/ui |
+| Navigation | 1 entrée "Agent IA" tout en haut de la sidebar (sous Retour au menu) |
+| Structure | Page unique avec 3 onglets : Bibliothèque \| Cockpit \| Historique |
+| Agents templates | 11 (6 Skills RH + 5 Skills Managers) |
+| Création custom | Chat guidé avec Claude (conversationnel) |
+| Personnaliser suggestion | Panel inline (pas de modale) — Qui / Quoi / Quand |
+| Données | Mockées : table Employee seedée + suggestions pré-générées |
+| Suggestions IA | Générées dynamiquement via Claude API |
+| Actions validation | Toutes simulées (email, tâche, meeting) avec log |
+| Notifications | Pas de notif push, consultation libre |
+| Historique | Onglet dédié complet (validées, personnalisées, ignorées) |
 
 ---
 
-## Périmètre POC
+## Phase 1 — Fondations (Schema + Types + Navigation)
 
-### Inclus
+### 1.1 Schema Prisma
+- Ajouter modèle `Employee` (données mock RH)
+- Ajouter modèle `Agent` (config agent, basé sur spec existante)
+- Ajouter modèle `Suggestion` (basé sur spec existante)
+- Ajouter modèle `ActionLog` (trace des actions simulées)
+- `prisma db push`
 
-- Flow créateur : Upload PDF → Analyse IA → Objectif → Génération → Preview
-- Flow enrollee : Sélecteur de format → Consommation → Navigation entre formats → Complétion
-- 5 formats : Synthèse, Flashcards, Chat questionneur, Module structuré, Mises en situation
-- Contenu JSON structuré pour chaque format
-- Chat streaming en temps réel avec Claude
-- Mobile-first responsive
+### 1.2 Types TypeScript
+- Reprendre les types de la spec `AGENT_STUDIO_SPEC.md`
+- Ajouter types Employee, ActionLog
+- Ajouter metadata constants + 11 AGENT_TEMPLATES
 
-### Exclus (hors POC)
-
-- Authentification / SSO
-- Extensions (rappels, questionnaire, email, défi, attestation, connexion)
-- Analytics / dashboard
-- Multi-documents (1 PDF par ressource)
-- Intégration HeyTeam (API, webhooks)
-- Déploiement production
+### 1.3 Navigation Sidebar
+- Ajouter "Agent IA" (icône Bot) en PREMIÈRE position dans NAV_ITEMS
+- Route : `/creator/agent`
 
 ---
 
-## Modèle de données
+## Phase 2 — API Routes
 
-```
-Resource
-├── id, title, description
-├── pdfPath, extractedText
-├── analysis (JSON)
-├── objective
-├── tone, language
-├── enabledFormats (JSON array)
-├── status (draft | generated | published)
-└── createdAt, updatedAt
+### 2.1 CRUD Agents
+- `GET/POST /api/agents`
+- `GET/PUT/DELETE /api/agents/[id]`
+- `POST /api/agents/[id]/activate`
+- `POST /api/agents/[id]/pause`
 
-FormatContent
-├── id, resourceId, format
-├── content (JSON structuré)
-└── version
+### 2.2 Suggestions
+- `GET /api/agents/suggestions` (filtres: status, agentId, severity)
+- `PUT /api/agents/suggestions/[id]` (valider/ignorer/personnaliser)
+- `GET /api/agents/suggestions/stats` (KPI cockpit)
 
-ConsumptionSession
-├── id, resourceId
-├── currentFormat, completed
-├── progress (JSON)
-└── startedAt, completedAt
-```
+### 2.3 Génération IA
+- `POST /api/agents/[id]/generate` — Claude génère suggestions depuis config agent + données Employee
+- `POST /api/agents/chat` — Chat streaming pour création agent custom
+
+### 2.4 Seed
+- `POST /api/seed/agents` — 11 templates + ~15 employés + ~20 suggestions
 
 ---
 
-## Routes API
+## Phase 3 — Pages & Composants
 
-| Route | Méthode | Description |
-|---|---|---|
-| `/api/resources` | GET | Liste des ressources |
-| `/api/resources` | POST | Créer une ressource (upload PDF) |
-| `/api/resources/[id]` | GET | Détail d'une ressource |
-| `/api/resources/[id]` | PATCH | Mise à jour métadonnées |
-| `/api/resources/[id]` | DELETE | Suppression |
-| `/api/resources/[id]/analyze` | POST | Extraction PDF + analyse IA |
-| `/api/resources/[id]/generate` | POST | Génération contenu par format |
-| `/api/resources/[id]/complete` | POST | Marquer comme complété |
-| `/api/chat` | POST | Chat streaming (Claude) |
+### 3.1 Page principale (`/creator/agent/page.tsx`)
+- 3 onglets : Bibliothèque | Cockpit | Historique
+- Onglet par défaut : Cockpit
 
----
+### 3.2 Onglet Bibliothèque
+- `AgentLibrary.tsx` — Grille cartes + filtres catégorie
+- `AgentCard.tsx` — Icône, nom, trigger, toggle actif
+- `AgentDetail.tsx` — Config détaillée (slide-in ou section)
+- `AgentCreationChat.tsx` — Chat guidé Claude pour création custom
+- Bouton "+ Créer un agent"
 
-## Pages / Routes frontend
+### 3.3 Onglet Cockpit
+- `SuggestionsCockpit.tsx` — Feed + filtres + KPI sidebar
+- `SuggestionCard.tsx` — Sévérité, titre, employé, actions rapides
+- `SuggestionCustomize.tsx` — Panel inline (qui/quoi/quand)
+- Bouton "Générer suggestions" (appel Claude)
 
-| Route | Rôle |
-|---|---|
-| `/` | Landing / redirection |
-| `/creator` | Dashboard créateur (liste des ressources) |
-| `/creator/new` | Wizard création (5 étapes) |
-| `/creator/[resourceId]` | Édition / preview |
-| `/consume/[resourceId]` | Sélecteur de format |
-| `/consume/[resourceId]/[format]` | Renderer du format choisi |
+### 3.4 Onglet Historique
+- `SuggestionsHistory.tsx` — Tableau complet des suggestions traitées
+- Filtres : statut, agent, période
+- Détail au clic
 
 ---
 
-## Phases d'implémentation
+## Phase 4 — Prompts Claude
 
-### Phase A — Bootstrap projet
-- [ ] Init Next.js 15 + TypeScript + Tailwind
-- [ ] Setup Prisma + SQLite + schema
-- [ ] Installer dépendances (Anthropic SDK, pdf-parse, zod, framer-motion)
-- [ ] Configurer shadcn/ui
-- [ ] Layout de base (Header, container mobile-first)
-- [ ] `.env.local` avec `ANTHROPIC_API_KEY`
+### 4.1 Génération de suggestions
+- System prompt : config agent + données employés → JSON suggestions structurées
 
-### Phase B — Creator flow : Upload & Analyse
-- [ ] API upload PDF (POST `/api/resources`)
-- [ ] Extraction texte PDF (pdf-parse)
-- [ ] API analyse IA (POST `/api/resources/[id]/analyze`)
-- [ ] UI wizard : UploadStep → AnalysisStep → ObjectiveStep
-
-### Phase C — Génération de contenu
-- [ ] Prompts de génération par format (synthèse, flashcards, module, scénarios)
-- [ ] Schemas JSON Zod pour chaque format
-- [ ] API génération (POST `/api/resources/[id]/generate`)
-- [ ] UI wizard : GenerateStep → PreviewStep
-
-### Phase D — Renderers de formats
-- [ ] SyntheseRenderer (sections + points clés)
-- [ ] FlashcardsRenderer (flip animation, progression)
-- [ ] ModuleRenderer (steps leçons/quiz, progression)
-- [ ] ScenariosRenderer (narration + choix branchés)
-- [ ] FormatSelector (grille de sélection)
-- [ ] FormatNav (barre navigation entre formats)
-
-### Phase E — Chat questionneur
-- [ ] API streaming chat (POST `/api/chat`)
-- [ ] ChatRenderer (messages + input + streaming)
-- [ ] System prompt Socratique basé sur le document + objectif
-
-### Phase F — Flow enrollee complet
-- [ ] Page sélecteur de format (`/consume/[id]`)
-- [ ] Page renderer (`/consume/[id]/[format]`)
-- [ ] Navigation entre formats (état conservé)
-- [ ] Bouton "J'ai terminé" + écran complétion
-- [ ] Tracking session de consommation
-
-### Phase G — Polish
-- [ ] Responsive mobile-first pass
-- [ ] Loading states et gestion d'erreurs
-- [ ] Empty states
-- [ ] Dashboard créateur (liste, statuts, actions)
+### 4.2 Chat création agent
+- System prompt conversationnel guidant en 3-4 échanges
 
 ---
 
-## Formats JSON — Structures cibles
+## Phase 5 — Seed & Polish
 
-### Synthèse
-```json
-{
-  "title": "string",
-  "duration": "1-2 min",
-  "sections": [
-    { "heading": "string", "content": "string", "keyPoints": ["string"] }
-  ],
-  "takeaways": ["string"]
-}
-```
+### 5.1 Seed complet
+- 15 employés fictifs variés
+- 11 agents templates configurés
+- 20+ suggestions réalistes (mix statuts)
+- Logs d'actions pour les validées
 
-### Flashcards
-```json
-{
-  "title": "string",
-  "cards": [
-    { "id": 1, "question": "string", "answer": "string", "hint": "string", "difficulty": "easy|medium|hard" }
-  ]
-}
-```
-
-### Module structuré
-```json
-{
-  "title": "string",
-  "estimatedDuration": "string",
-  "steps": [
-    { "id": 1, "type": "lesson", "title": "string", "content": "string" },
-    { "id": 2, "type": "quiz", "question": "string", "options": [
-      { "label": "string", "correct": true, "explanation": "string" }
-    ]}
-  ]
-}
-```
-
-### Mises en situation
-```json
-{
-  "title": "string",
-  "context": "string",
-  "steps": [
-    { "id": "step-1", "narrative": "string", "choices": [
-      { "label": "string", "nextStepId": "step-2", "feedback": "string", "quality": "optimal|acceptable|poor" }
-    ]}
-  ],
-  "conclusion": "string"
-}
-```
-
-### Chat (dynamique)
-Pas de JSON pré-généré. Streaming Claude en temps réel avec system prompt construit à partir du texte extrait + objectif pédagogique.
+### 5.2 Polish
+- Animations Framer Motion
+- Responsive mobile
+- Edge cases
 
 ---
 
-## Risques & Mitigations
+## Ordre d'exécution
 
-| Risque | Mitigation |
-|---|---|
-| JSON mal formé par Claude | Validation Zod + retry avec erreur dans le prompt |
-| Extraction PDF de mauvaise qualité | Afficher le texte extrait au créateur, permettre l'édition |
-| PDF trop gros (dépassement contexte) | Troncature à ~80k tokens + avertissement |
-| Génération lente (5 formats) | Progression par format, possibilité d'en générer moins |
-| Coût chat (appels par message) | Acceptable pour POC |
-
----
-
-## Décisions techniques
-
-1. **Pas d'auth** — Routes ouvertes, utilisateur unique assumé
-2. **PDF stocké localement** — `public/uploads/` (S3 en prod)
-3. **Génération séquentielle** — Un appel Claude par format (pas de parallélisme pour éviter rate limits)
-4. **Chat éphémère** — Pas de FormatContent stocké, conversation côté client
-5. **Tout en français** — UI et contenu généré en FR par défaut
-6. **Validation stricte** — Zod sur tous les outputs Claude avant stockage
-
----
-
-## Changelog
-
-| Date | Entrée |
-|---|---|
-| 15/03/2026 | Création du plan POC. Stack : Next.js + Claude API + SQLite. 5 formats, 7 phases. |
+| # | Tâche | Fichiers |
+|---|-------|----------|
+| 1 | Schema Prisma + db push | `prisma/schema.prisma` |
+| 2 | Types TypeScript | `src/types/index.ts` |
+| 3 | Sidebar navigation | `src/components/shared/Sidebar.tsx` |
+| 4 | API CRUD agents | `src/app/api/agents/**` |
+| 5 | API suggestions | `src/app/api/agents/suggestions/**` |
+| 6 | Seed données | `src/app/api/seed/agents/route.ts` |
+| 7 | Page principale + onglets | `src/app/creator/agent/page.tsx` |
+| 8 | Bibliothèque (cartes + détail) | `src/components/agent/AgentLibrary.tsx` etc. |
+| 9 | Cockpit (feed + actions) | `src/components/agent/SuggestionsCockpit.tsx` etc. |
+| 10 | Personnalisation inline | `src/components/agent/SuggestionCustomize.tsx` |
+| 11 | Historique | `src/components/agent/SuggestionsHistory.tsx` |
+| 12 | Prompts + génération IA | `src/lib/prompts/agent-*.ts` |
+| 13 | Chat création agent | `src/components/agent/AgentCreationChat.tsx` |
+| 14 | Polish UX | Tous |
