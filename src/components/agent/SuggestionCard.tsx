@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, X, Loader2, CheckCircle2, Mail, CalendarDays, ClipboardList, Bell, ChevronRight, ArrowLeft, Send, XCircle } from "lucide-react";
+import { Check, X, CheckCircle2, Mail, CalendarDays, ClipboardList, Bell, ChevronRight, ArrowLeft, Send, XCircle } from "lucide-react";
 import { SUGGESTION_SEVERITY_META, SUGGESTION_CATEGORY_META, type SuggestionSeverity, type SuggestionActionStep } from "@/types";
 
 function safeParseJSON<T>(json: string, fallback: T): T {
@@ -52,14 +52,12 @@ function ActionPreviewModal({
   onClose,
   onValidate,
   onIgnore,
-  loading,
 }: {
   action: SuggestionActionStep;
   employee: SuggestionData["employee"];
   onClose: () => void;
   onValidate: () => void;
   onIgnore: () => void;
-  loading: boolean;
 }) {
   const type = action.type || inferActionType(action.label);
   const meta = ACTION_TYPE_META[type] || ACTION_TYPE_META.notification;
@@ -68,119 +66,137 @@ function ActionPreviewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="fixed inset-0 bg-black/30 transition-opacity" />
+      <div className="fixed inset-0 bg-black/40 transition-opacity" />
       <div
-        className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto"
+        className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-ht-border px-5 py-4 rounded-t-2xl z-10">
-          <div className="flex items-center justify-between">
-            <button onClick={onClose} className="flex items-center gap-1.5 text-[13px] text-ht-text-secondary hover:text-ht-text transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </button>
-            <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${meta.bg} ${meta.color}`}>
-              <Icon className="h-3 w-3" />
-              {meta.label}
-            </div>
+        {/* Header bar */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-ht-border shrink-0">
+          <button onClick={onClose} className="flex items-center gap-1.5 text-[13px] text-ht-text-secondary hover:text-ht-text transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </button>
+          <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${meta.bg} ${meta.color}`}>
+            <Icon className="h-3 w-3" />
+            {meta.label}
           </div>
-          <h3 className="text-[15px] font-semibold text-ht-text mt-3">{action.label}</h3>
-          {action.detail && (
-            <p className="text-[12px] text-ht-text-secondary mt-1">{action.detail}</p>
-          )}
         </div>
 
-        {/* Preview content */}
-        <div className="px-5 py-4 space-y-4">
-          {/* Email preview */}
+        {/* Scrollable content */}
+        <div className="overflow-y-auto flex-1">
+
+          {/* ── EMAIL ── */}
           {type === "email" && preview && (
-            <div className="rounded-xl border border-ht-border overflow-hidden">
-              <div className="bg-ht-fill-secondary px-4 py-3 space-y-2">
-                {preview.to && (
+            <div>
+              {/* Email header fields */}
+              <div className="px-5 py-4 space-y-2.5 bg-gray-50/80 border-b border-ht-border">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide w-10 shrink-0 pt-0.5">De</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-ht-text-secondary w-8 shrink-0">À</span>
-                    <span className="text-[12px] text-ht-text">{preview.to}</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ht-primary text-white text-[10px] font-semibold shrink-0">RH</span>
+                    <span className="text-[12px] text-ht-text">Équipe RH <span className="text-ht-text-secondary">&lt;rh@company.com&gt;</span></span>
                   </div>
-                )}
-                {preview.subject && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-ht-text-secondary w-8 shrink-0">Obj.</span>
-                    <span className="text-[12px] font-medium text-ht-text">{preview.subject}</span>
-                  </div>
-                )}
-              </div>
-              {preview.body && (
-                <div className="px-4 py-3">
-                  <p className="text-[12px] text-ht-text leading-relaxed whitespace-pre-line">{preview.body}</p>
                 </div>
-              )}
+                <div className="flex items-baseline gap-3">
+                  <span className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide w-10 shrink-0">À</span>
+                  <span className="text-[12px] text-ht-text">{preview.to}</span>
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide w-10 shrink-0">Objet</span>
+                  <span className="text-[13px] font-semibold text-ht-text">{preview.subject}</span>
+                </div>
+              </div>
+              {/* Email body */}
+              <div className="px-5 py-5">
+                <div className="text-[13px] text-ht-text leading-[1.7] whitespace-pre-line">
+                  {preview.body}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Meeting preview */}
+          {/* ── MEETING ── */}
           {type === "meeting" && preview && (
-            <div className="rounded-xl border border-ht-border p-4 space-y-3">
-              {preview.subject && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Sujet</p>
-                  <p className="text-[13px] font-medium text-ht-text">{preview.subject}</p>
+            <div className="px-5 py-5 space-y-5">
+              {/* Calendar-style header */}
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center justify-center rounded-xl border border-purple-200 bg-purple-50 w-14 h-14 shrink-0">
+                  <CalendarDays className="h-5 w-5 text-purple-600" />
                 </div>
-              )}
-              <div className="flex gap-4">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-ht-text leading-snug">{preview.subject}</h3>
+                  {action.detail && <p className="text-[12px] text-ht-text-secondary mt-0.5">{action.detail}</p>}
+                </div>
+              </div>
+
+              {/* Date & Duration */}
+              <div className="grid grid-cols-2 gap-3">
                 {preview.date && (
-                  <div>
-                    <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Date</p>
-                    <p className="text-[12px] text-ht-text">{preview.date}</p>
+                  <div className="rounded-xl bg-gray-50 px-4 py-3">
+                    <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-1">Date</p>
+                    <p className="text-[13px] font-medium text-ht-text">{preview.date}</p>
                   </div>
                 )}
                 {preview.duration && (
-                  <div>
-                    <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Durée</p>
-                    <p className="text-[12px] text-ht-text">{preview.duration}</p>
+                  <div className="rounded-xl bg-gray-50 px-4 py-3">
+                    <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-1">Durée</p>
+                    <p className="text-[13px] font-medium text-ht-text">{preview.duration}</p>
                   </div>
                 )}
               </div>
+
+              {/* Participants */}
               {preview.participants && preview.participants.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-1">Participants</p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-2">Participants ({preview.participants.length})</p>
+                  <div className="space-y-1.5">
                     {preview.participants.map((p, i) => (
-                      <span key={i} className="inline-flex items-center rounded-full bg-ht-fill-secondary px-2.5 py-1 text-[11px] text-ht-text">
-                        {p}
-                      </span>
+                      <div key={i} className="flex items-center gap-2.5 rounded-lg bg-gray-50 px-3 py-2">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-[10px] font-semibold text-purple-700 shrink-0">
+                          {p.split(" ").map(w => w[0]).join("").slice(0, 2)}
+                        </span>
+                        <span className="text-[12px] text-ht-text">{p}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
+
+              {/* Note */}
               {preview.note && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Note</p>
-                  <p className="text-[12px] text-ht-text">{preview.note}</p>
+                <div className="rounded-xl border border-ht-border px-4 py-3">
+                  <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-1">Note</p>
+                  <p className="text-[12px] text-ht-text leading-relaxed">{preview.note}</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Task / notification preview */}
+          {/* ── TASK / NOTIFICATION ── */}
           {(type === "task" || type === "notification") && preview && (
-            <div className="rounded-xl border border-ht-border p-4 space-y-3">
-              {preview.subject && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Action</p>
-                  <p className="text-[13px] font-medium text-ht-text">{preview.subject}</p>
+            <div className="px-5 py-5 space-y-4">
+              {/* Task header */}
+              <div className="flex items-start gap-4">
+                <div className={`flex flex-col items-center justify-center rounded-xl w-14 h-14 shrink-0 ${
+                  type === "task" ? "border border-green-200 bg-green-50" : "border border-orange-200 bg-orange-50"
+                }`}>
+                  {type === "task"
+                    ? <ClipboardList className="h-5 w-5 text-green-600" />
+                    : <Bell className="h-5 w-5 text-orange-600" />
+                  }
                 </div>
-              )}
+                <div>
+                  <h3 className="text-[15px] font-semibold text-ht-text leading-snug">{preview.subject || action.label}</h3>
+                  {preview.to && <p className="text-[12px] text-ht-text-secondary mt-0.5">Destinataire : {preview.to}</p>}
+                </div>
+              </div>
+
+              {/* Body */}
               {preview.body && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Détail</p>
-                  <p className="text-[12px] text-ht-text leading-relaxed">{preview.body}</p>
-                </div>
-              )}
-              {preview.to && (
-                <div>
-                  <p className="text-[11px] font-medium text-ht-text-secondary mb-0.5">Assigné à</p>
-                  <p className="text-[12px] text-ht-text">{preview.to}</p>
+                <div className="rounded-xl bg-gray-50 px-4 py-4">
+                  <p className="text-[10px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-2">Détail</p>
+                  <p className="text-[13px] text-ht-text leading-[1.7] whitespace-pre-line">{preview.body}</p>
                 </div>
               )}
             </div>
@@ -188,28 +204,30 @@ function ActionPreviewModal({
 
           {/* Fallback if no preview */}
           {!preview && (
-            <div className="rounded-xl bg-ht-fill-secondary p-4">
-              <p className="text-[12px] text-ht-text-secondary">
-                {action.detail || `Cette action sera exécutée automatiquement${employee ? ` pour ${employee.firstName} ${employee.lastName}` : ""}.`}
-              </p>
+            <div className="px-5 py-5">
+              <div className="flex items-start gap-4">
+                <div className={`flex flex-col items-center justify-center rounded-xl w-14 h-14 shrink-0 ${meta.bg}`}>
+                  <Icon className={`h-5 w-5 ${meta.color}`} />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-semibold text-ht-text leading-snug">{action.label}</h3>
+                  <p className="text-[12px] text-ht-text-secondary mt-1">
+                    {action.detail || `Cette action sera exécutée${employee ? ` pour ${employee.firstName} ${employee.lastName}` : ""}.`}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
-
-          {/* Simulated badge */}
-          <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-            <span className="text-[11px] text-amber-700">Cette action sera simulée (mode démo)</span>
-          </div>
         </div>
 
         {/* Footer actions */}
-        <div className="sticky bottom-0 bg-white border-t border-ht-border px-5 py-4 flex gap-2">
+        <div className="border-t border-ht-border px-5 py-4 flex gap-2 shrink-0 bg-white rounded-b-2xl">
           <button
             onClick={onValidate}
-            disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-ht-primary px-4 py-3 text-[13px] font-medium text-white hover:bg-ht-primary-dark disabled:opacity-50 transition-all active:scale-[0.98]"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-ht-primary px-4 py-3 text-[13px] font-medium text-white hover:bg-ht-primary-dark transition-all active:scale-[0.98]"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Exécuter
+            <Send className="h-4 w-4" />
+            {type === "email" ? "Envoyer l\u2019email" : type === "meeting" ? "Planifier la réunion" : type === "task" ? "Créer la tâche" : "Envoyer la notification"}
           </button>
           <button
             onClick={onIgnore}
@@ -472,7 +490,6 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore }: SuggestionCar
             markAction(selectedAction.id, "ignored");
             setSelectedAction(null);
           }}
-          loading={false}
         />
       )}
     </>
