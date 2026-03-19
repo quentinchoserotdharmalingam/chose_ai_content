@@ -531,9 +531,9 @@ export interface AgentTemplate {
 }
 
 export const AGENT_CATEGORY_META: Record<AgentCategory, { label: string; description: string }> = {
-  skill_rh: { label: "Skills RH", description: "Agents pour les équipes RH" },
-  skill_manager: { label: "Skills Managers", description: "Agents pour les managers" },
-  custom: { label: "Custom", description: "Agents personnalisés" },
+  skill_rh: { label: "RH", description: "Agents pour les équipes RH" },
+  skill_manager: { label: "Managers", description: "Agents pour les managers" },
+  custom: { label: "Personnalisé", description: "Agents personnalisés" },
 };
 
 export const SUGGESTION_SEVERITY_META: Record<SuggestionSeverity, { label: string; color: string; bgColor: string }> = {
