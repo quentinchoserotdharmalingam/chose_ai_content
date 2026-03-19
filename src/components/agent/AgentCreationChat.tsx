@@ -7,11 +7,25 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp?: number;
+  suggestions?: string[];
 }
 
 interface AgentCreationChatProps {
   onBack: () => void;
-  onCreated: () => void;
+  onCreated: (agentId?: string) => void;
+}
+
+// Parse suggestion chips from AI response
+function parseSuggestions(content: string): { cleanContent: string; suggestions: string[] } {
+  const match = content.match(/<!--\s*suggestions:\s*(\[[\s\S]*?\])\s*-->/);
+  if (!match) return { cleanContent: content, suggestions: [] };
+  try {
+    const suggestions = JSON.parse(match[1]) as string[];
+    const cleanContent = content.replace(/<!--\s*suggestions:\s*\[[\s\S]*?\]\s*-->/, "").trim();
+    return { cleanContent, suggestions };
+  } catch {
+    return { cleanContent: content, suggestions: [] };
+  }
 }
 
 const STEPS = [
@@ -128,6 +142,16 @@ export function AgentCreationChat({ onBack, onCreated }: AgentCreationChatProps)
         }
       }
 
+      // Parse suggestions from response
+      const { cleanContent, suggestions } = parseSuggestions(assistantMessage);
+      if (suggestions.length > 0 || cleanContent !== assistantMessage) {
+        setMessages((prev) => [
+          ...prev.slice(0, -1),
+          { role: "assistant", content: cleanContent, timestamp: assistantMsg.timestamp, suggestions },
+        ]);
+        assistantMessage = cleanContent;
+      }
+
       // Detect config in response
       const jsonMatch = assistantMessage.match(/```json\s*([\s\S]*?)```/);
       if (jsonMatch) {
@@ -156,12 +180,13 @@ export function AgentCreationChat({ onBack, onCreated }: AgentCreationChatProps)
     if (!detectedConfig) return;
     setCreating(true);
     try {
-      await fetch("/api/agents", {
+      const res = await fetch("/api/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(detectedConfig),
       });
-      onCreated();
+      const created = await res.json();
+      onCreated(created.id);
     } catch (error) {
       console.error("Create error:", error);
     } finally {
@@ -187,8 +212,8 @@ export function AgentCreationChat({ onBack, onCreated }: AgentCreationChatProps)
   const formatContent = (content: string, role: "user" | "assistant") => {
     if (role === "user") return content;
 
-    // Replace JSON blocks with nothing (shown separately in config banner)
-    let formatted = content.replace(/```json[\s\S]*?```/g, "").trim();
+    // Replace JSON blocks and suggestion comments with nothing
+    let formatted = content.replace(/```json[\s\S]*?```/g, "").replace(/<!--\s*suggestions:\s*\[[\s\S]*?\]\s*-->/, "").trim();
 
     // Bold
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -305,6 +330,22 @@ export function AgentCreationChat({ onBack, onCreated }: AgentCreationChatProps)
                     />
                   )}
                 </div>
+
+                {/* Suggestion chips - only on last assistant message */}
+                {!isUser && msg.suggestions && msg.suggestions.length > 0 && i === messages.length - 1 && !streaming && (
+                  <div className="flex flex-wrap gap-2 mt-2 ml-11">
+                    {msg.suggestions.map((suggestion, si) => (
+                      <button
+                        key={si}
+                        onClick={() => sendMessage(suggestion)}
+                        disabled={streaming}
+                        className="rounded-full border border-ht-border bg-white px-3.5 py-1.5 text-[12px] text-ht-text hover:bg-ht-primary hover:text-white hover:border-ht-primary transition-all active:scale-95 shadow-sm"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

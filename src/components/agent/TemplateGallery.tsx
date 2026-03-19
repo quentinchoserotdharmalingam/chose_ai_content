@@ -8,7 +8,7 @@ import { useToast } from "./Toast";
 
 interface TemplateGalleryProps {
   onBack: () => void;
-  onAgentCreated: () => void;
+  onAgentCreated: (agentId?: string) => void;
 }
 
 export function TemplateGallery({ onBack, onAgentCreated }: TemplateGalleryProps) {
@@ -40,8 +40,9 @@ export function TemplateGallery({ onBack, onAgentCreated }: TemplateGalleryProps
         }),
       });
       if (!res.ok) throw new Error();
+      const created = await res.json();
       toast(`Agent "${template.name}" ajouté`, "success");
-      onAgentCreated();
+      onAgentCreated(created.id);
     } catch {
       toast("Erreur lors de l'ajout", "error");
     } finally {
@@ -53,10 +54,10 @@ export function TemplateGallery({ onBack, onAgentCreated }: TemplateGalleryProps
     return (
       <AgentCreationChat
         onBack={() => setShowChat(false)}
-        onCreated={() => {
+        onCreated={(agentId) => {
           setShowChat(false);
           toast("Agent créé avec succès", "success");
-          onAgentCreated();
+          onAgentCreated(agentId);
         }}
       />
     );

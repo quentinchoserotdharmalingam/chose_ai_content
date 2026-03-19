@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap, ChevronRight, Pencil, Save, X } from "lucide-react";
 import { AGENT_CATEGORY_META, type AgentCategory, type AgentAction } from "@/types";
 import { useToast } from "./Toast";
 import { AgentActionEditModal } from "./AgentActionEditModal";
@@ -52,6 +52,12 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
   });
   const [selectedAction, setSelectedAction] = useState<AgentAction | null>(null);
   const [savingAction, setSavingAction] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editTriggerLabel, setEditTriggerLabel] = useState("");
+  const [editInfoDescription, setEditInfoDescription] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -130,6 +136,46 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
     }
   };
 
+  const startEditing = () => {
+    if (!agent) return;
+    setEditName(agent.name);
+    setEditDescription(agent.description || "");
+    setEditTriggerLabel(agent.triggerLabel);
+    setEditInfoDescription(agent.infoDescription || "");
+    setExpandedSections({ trigger: true, info: true, actions: true });
+    setEditing(true);
+  };
+
+  const cancelEditing = () => setEditing(false);
+
+  const saveChanges = async () => {
+    if (!agent) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/agents/${agentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName,
+          description: editDescription,
+          triggerLabel: editTriggerLabel,
+          infoDescription: editInfoDescription,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const agentRes = await fetch(`/api/agents/${agentId}`);
+      if (!agentRes.ok) throw new Error();
+      setAgent(await agentRes.json());
+      setEditing(false);
+      toast("Agent mis à jour", "success");
+      onUpdated();
+    } catch {
+      toast("Erreur lors de la sauvegarde", "error");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const handleActionSave = async (updated: AgentAction) => {
     if (!agent) return;
     setSavingAction(true);
@@ -200,31 +246,83 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
             >
               {agent.icon}
             </div>
-            <div>
-              <h2 className="text-[18px] font-semibold text-ht-text">{agent.name}</h2>
+            <div className="min-w-0">
+              <h2 className="text-[18px] font-semibold text-ht-text truncate">{agent.name}</h2>
               <span className="text-[12px] text-ht-text-secondary mt-1">
                 {AGENT_CATEGORY_META[agent.category as AgentCategory]?.label}
               </span>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={duplicateAgent}
-              className="flex h-9 items-center gap-2 rounded-lg border border-ht-border px-3 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary transition-all"
-            >
-              <Copy className="h-3.5 w-3.5" />
-              Dupliquer
-            </button>
-            <button
-              onClick={deleteAgent}
-              className="flex h-9 items-center gap-2 rounded-lg border border-red-200 px-3 text-[12px] font-medium text-red-500 hover:bg-red-50 transition-all"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Supprimer
-            </button>
+            {editing ? (
+              <>
+                <button
+                  onClick={saveChanges}
+                  disabled={savingEdit}
+                  className="flex h-9 items-center gap-2 rounded-lg bg-green-600 px-3 text-[12px] font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-all"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  {savingEdit ? "Enregistrement..." : "Enregistrer"}
+                </button>
+                <button
+                  onClick={cancelEditing}
+                  className="flex h-9 items-center gap-2 rounded-lg border border-ht-border px-3 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary transition-all"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Annuler
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={startEditing}
+                  className="flex h-9 items-center gap-2 rounded-lg border border-ht-border px-3 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary transition-all"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Modifier
+                </button>
+                <button
+                  onClick={duplicateAgent}
+                  className="flex h-9 items-center gap-2 rounded-lg border border-ht-border px-3 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary transition-all"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Dupliquer
+                </button>
+                <button
+                  onClick={deleteAgent}
+                  className="flex h-9 items-center gap-2 rounded-lg border border-red-200 px-3 text-[12px] font-medium text-red-500 hover:bg-red-50 transition-all"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Supprimer
+                </button>
+              </>
+            )}
           </div>
         </div>
-        <p className="text-[13px] text-ht-text-secondary leading-relaxed">{agent.description}</p>
+        {editing ? (
+          <div className="space-y-3">
+            <div>
+              <label className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-1 block">Nom</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full rounded-lg border border-ht-border px-3 py-2 text-[15px] font-semibold text-ht-text focus:outline-none focus:ring-2 focus:ring-ht-primary/20 focus:border-ht-primary transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-1 block">Description</label>
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={2}
+                className="w-full rounded-lg border border-ht-border px-3 py-2 text-[13px] text-ht-text focus:outline-none focus:ring-2 focus:ring-ht-primary/20 focus:border-ht-primary transition-all resize-none"
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-[13px] text-ht-text-secondary leading-relaxed">{agent.description}</p>
+        )}
       </div>
 
       {/* Collapsible config sections */}
@@ -248,7 +346,16 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
           </button>
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.trigger ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"}`}>
             <div className="px-5 pb-4 border-t border-ht-border pt-3">
-              <p className="text-[13px] text-ht-text">{agent.triggerLabel}</p>
+              {editing ? (
+                <input
+                  type="text"
+                  value={editTriggerLabel}
+                  onChange={(e) => setEditTriggerLabel(e.target.value)}
+                  className="w-full rounded-lg border border-ht-border px-3 py-2 text-[13px] text-ht-text focus:outline-none focus:ring-2 focus:ring-ht-primary/20 focus:border-ht-primary transition-all"
+                />
+              ) : (
+                <p className="text-[13px] text-ht-text">{agent.triggerLabel}</p>
+              )}
             </div>
           </div>
         </div>
@@ -267,7 +374,16 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
           </button>
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.info ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"}`}>
             <div className="px-5 pb-4 border-t border-ht-border pt-3">
-              <p className="text-[13px] text-ht-text">{agent.infoDescription || "Non configuré"}</p>
+              {editing ? (
+                <textarea
+                  value={editInfoDescription}
+                  onChange={(e) => setEditInfoDescription(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-lg border border-ht-border px-3 py-2 text-[13px] text-ht-text focus:outline-none focus:ring-2 focus:ring-ht-primary/20 focus:border-ht-primary transition-all resize-none"
+                />
+              ) : (
+                <p className="text-[13px] text-ht-text">{agent.infoDescription || "Non configuré"}</p>
+              )}
             </div>
           </div>
         </div>

@@ -74,9 +74,12 @@ function AgentPageContent() {
     return (
       <TemplateGallery
         onBack={() => setShowTemplateGallery(false)}
-        onAgentCreated={() => {
+        onAgentCreated={(agentId) => {
           setShowTemplateGallery(false);
           fetchAgents();
+          if (agentId) {
+            setSelectedAgent(agentId);
+          }
         }}
       />
     );
