@@ -113,8 +113,7 @@ export function SuggestionsCockpit() {
     })),
   ];
 
-  const urgentCount = suggestions.filter(s => s.severity === "urgent").length;
-  const attentionCount = suggestions.filter(s => s.severity === "attention").length;
+
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -243,46 +242,25 @@ export function SuggestionsCockpit() {
           <StatsSidebarSkeleton />
         ) : (
           <div className="sticky top-4 space-y-4">
-            {/* Pending summary */}
-            <div className="rounded-xl border border-ht-border bg-white p-5">
-              <h3 className="text-[14px] font-semibold text-ht-text mb-3">En attente</h3>
-              <div className="space-y-2">
-                {Object.entries(SUGGESTION_SEVERITY_META).map(([key, meta]) => {
-                  const count = suggestions.filter((s) => s.severity === key).length;
-                  return (
-                    <div key={key} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
-                        <span className="text-[12px] text-ht-text-secondary">{meta.label}</span>
-                      </div>
-                      <span className="text-[13px] font-semibold text-ht-text">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Upcoming this week */}
+            {/* Pending summary — alert-row style */}
             <div className="rounded-xl border border-ht-border bg-white p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Calendar className="h-4 w-4 text-ht-text-secondary" />
-                <h3 className="text-[14px] font-semibold text-ht-text">Cette semaine</h3>
+                <h3 className="text-[14px] font-semibold text-ht-text">En attente</h3>
               </div>
               <div className="space-y-2">
-                {urgentCount > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
-                    <span className="h-2 w-2 rounded-full bg-red-500" />
-                    <span className="text-[12px] text-red-700 font-medium">{urgentCount} urgent{urgentCount > 1 ? "s" : ""} à traiter</span>
-                  </div>
-                )}
-                {attentionCount > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-yellow-50 px-3 py-2">
-                    <span className="h-2 w-2 rounded-full bg-yellow-500" />
-                    <span className="text-[12px] text-yellow-700 font-medium">{attentionCount} point{attentionCount > 1 ? "s" : ""} d&apos;attention</span>
-                  </div>
-                )}
-                {urgentCount === 0 && attentionCount === 0 && (
-                  <p className="text-[12px] text-ht-text-secondary">Rien de critique cette semaine</p>
+                {Object.entries(SUGGESTION_SEVERITY_META).map(([key, meta]) => {
+                  const count = suggestions.filter((s) => s.severity === key).length;
+                  if (count === 0) return null;
+                  return (
+                    <div key={key} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: meta.color + "12" }}>
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: meta.color }} />
+                      <span className="text-[12px] font-medium flex-1" style={{ color: meta.color }}>{count} {meta.label.toLowerCase()}{count > 1 ? "s" : ""}</span>
+                    </div>
+                  );
+                })}
+                {suggestions.length === 0 && (
+                  <p className="text-[12px] text-ht-text-secondary">Aucune suggestion en attente</p>
                 )}
               </div>
             </div>
