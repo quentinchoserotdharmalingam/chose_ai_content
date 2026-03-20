@@ -251,7 +251,7 @@ export async function POST() {
       status: "pending",
       createdAt: daysAgo(5),
     },
-    // Already resolved suggestions (for history)
+    // Already resolved suggestions (for history) — all with full preview data for action detail modals
     {
       agentId: agentMap["doc_incomplete"].id,
       employeeId: employees[3].id, // Thomas
@@ -260,7 +260,10 @@ export async function POST() {
       title: "Thomas Martin — Attestation formation sécurité manquante",
       summary: "Thomas Martin n'avait pas fourni son attestation de formation sécurité obligatoire.",
       context: JSON.stringify({ employeeName: "Thomas Martin", employeeRole: "Commercial Senior", department: "Commercial" }),
-      actionPlan: JSON.stringify([{ id: 1, label: "Relancer Thomas Martin", detail: "Email de rappel envoyé" }]),
+      actionPlan: JSON.stringify([
+        { id: 1, label: "Relancer Thomas Martin", detail: "Email de rappel envoyé", type: "email", preview: { to: "thomas.martin@company.com", subject: "Rappel : attestation formation sécurité manquante", body: "Bonjour Thomas,\n\nVotre dossier administratif est presque complet. Il nous manque encore votre attestation de formation sécurité obligatoire.\n\nMerci de nous la transmettre dès que possible via le portail sécurisé.\n\nCordialement,\nL'équipe RH" } },
+        { id: 2, label: "Notifier le RH", detail: "Information pour suivi", type: "notification", preview: { to: "Léa Rousseau", subject: "Document manquant — Thomas Martin", body: "Thomas Martin n'a toujours pas fourni son attestation de formation sécurité. Un email de relance lui a été envoyé. Merci de suivre." } },
+      ]),
       alternatives: JSON.stringify([]),
       status: "accepted",
       resolvedAt: daysAgo(3),
@@ -274,7 +277,10 @@ export async function POST() {
       title: "Nicolas Moreau — Message de bienvenue envoyé",
       summary: "Message de bienvenue personnalisé envoyé à Nicolas Moreau avec les accès et le guide de démarrage.",
       context: JSON.stringify({ employeeName: "Nicolas Moreau", employeeRole: "Data Analyst", department: "Tech" }),
-      actionPlan: JSON.stringify([{ id: 1, label: "Envoyer message de bienvenue", detail: "Email envoyé avec succès" }]),
+      actionPlan: JSON.stringify([
+        { id: 1, label: "Envoyer message de bienvenue", detail: "Email envoyé avec succès", type: "email", preview: { to: "nicolas.moreau@company.com", subject: "Bienvenue Nicolas ! Votre guide de démarrage Data", body: "Bonjour Nicolas,\n\nBienvenue dans l'équipe Tech !\n\nVoici vos accès pour bien démarrer :\n• Data Warehouse : [lien d'accès]\n• Jupyter Notebooks : [lien]\n• Documentation interne Data : [lien Notion]\n• Slack : #data-team, #tech, #general\n\nVotre manager Alexandre Petit vous contactera pour un premier point.\n\nBon onboarding !" } },
+        { id: 2, label: "Notifier Alexandre Petit (manager)", detail: "Information sur l'arrivée", type: "email", preview: { to: "alexandre.petit@company.com", subject: "Nicolas Moreau a reçu son message de bienvenue", body: "Bonjour Alexandre,\n\nLe message de bienvenue avec les accès et le guide de démarrage a été envoyé à Nicolas Moreau.\n\nMerci de planifier un premier point avec lui cette semaine.\n\nCordialement" } },
+      ]),
       alternatives: JSON.stringify([]),
       status: "accepted",
       resolvedAt: daysAgo(5),
@@ -288,7 +294,10 @@ export async function POST() {
       title: "Chloé Bernard — Check-in planifié avec Alexandre",
       summary: "Check-in M+0.5 planifié entre Chloé Bernard et Alexandre Petit.",
       context: JSON.stringify({ employeeName: "Chloé Bernard", employeeRole: "UX Researcher", department: "Produit" }),
-      actionPlan: JSON.stringify([{ id: 1, label: "Planifier le check-in", detail: "Meeting créé le 10 mars à 14h" }]),
+      actionPlan: JSON.stringify([
+        { id: 1, label: "Planifier le check-in", detail: "Meeting créé le 10 mars à 14h", type: "meeting", preview: { subject: "Check-in M+0.5 — Chloé Bernard / Alexandre Petit", date: "Lundi 10 mars à 14h00", duration: "30 minutes", participants: ["Chloé Bernard", "Alexandre Petit"], note: "Points à aborder : ressenti général, intégration dans l'équipe, accès outils, premiers livrables." } },
+        { id: 2, label: "Envoyer une confirmation à Chloé", detail: "Email de confirmation du check-in", type: "email", preview: { to: "chloe.bernard@company.com", subject: "Check-in M+0.5 confirmé — 10 mars à 14h", body: "Bonjour Chloé,\n\nVotre check-in de mi-mois avec Alexandre Petit est confirmé pour le lundi 10 mars à 14h.\n\nC'est l'occasion de faire le point sur vos premières semaines. N'hésitez pas à préparer vos questions !\n\nÀ bientôt" } },
+      ]),
       alternatives: JSON.stringify([]),
       status: "customized",
       customizedAction: JSON.stringify({ note: "Check-in avancé d'une semaine à la demande du manager", date: "2026-03-10" }),
@@ -303,7 +312,10 @@ export async function POST() {
       title: "Romain Lefebvre — Score engagement critique (4.1/10)",
       summary: "Romain Lefebvre montre des signes de désengagement importants. Score pulse très bas et activité en chute.",
       context: JSON.stringify({ employeeName: "Romain Lefebvre", employeeRole: "Ingénieur DevOps", department: "Tech" }),
-      actionPlan: JSON.stringify([{ id: 1, label: "Planifier un entretien de rétention", detail: "Entretien confidentiel avec le RH" }]),
+      actionPlan: JSON.stringify([
+        { id: 1, label: "Planifier un entretien de rétention", detail: "Entretien confidentiel avec le RH", type: "meeting", preview: { subject: "Entretien de rétention — Romain Lefebvre", date: "Cette semaine (prioritaire)", duration: "45 minutes", participants: ["Romain Lefebvre", "Léa Rousseau (RH)"], note: "Entretien confidentiel. Points à aborder : ressenti général, facteurs de désengagement, perspectives d'évolution, conditions de travail." } },
+        { id: 2, label: "Alerter Alexandre Petit (manager Tech)", detail: "Notification confidentielle sur le risque", type: "email", preview: { to: "alexandre.petit@company.com", subject: "⚠️ Risque de départ — Romain Lefebvre (confidentiel)", body: "Bonjour Alexandre,\n\nRomain Lefebvre présente un score d'engagement critique de 4.1/10. Son activité est en forte baisse.\n\nUn entretien de rétention a été planifié avec les RH. Merci de rester attentif à son bien-être et de favoriser les échanges informels cette semaine.\n\nCe message est confidentiel.\n\nCordialement" } },
+      ]),
       alternatives: JSON.stringify([]),
       status: "accepted",
       resolvedAt: daysAgo(2),
@@ -317,11 +329,67 @@ export async function POST() {
       title: "Emma Laurent — Satisfaction onboarding moyenne",
       summary: "Emma a donné un score de 6/10 à son onboarding. Quelques frustrations remontées sur les accès outils.",
       context: JSON.stringify({ employeeName: "Emma Laurent", employeeRole: "Account Manager", department: "Commercial" }),
-      actionPlan: JSON.stringify([{ id: 1, label: "Vérifier les accès outils", detail: "CRM, email, téléphone" }]),
+      actionPlan: JSON.stringify([
+        { id: 1, label: "Vérifier les accès outils", detail: "CRM, email, téléphone", type: "task", preview: { subject: "Vérification accès outils — Emma Laurent", body: "Checklist des accès à vérifier pour Emma Laurent :\n• CRM Salesforce — vérifier licence et permissions\n• Email professionnel — vérifier configuration\n• Téléphone IP — vérifier attribution poste\n• VPN — vérifier accès distant", to: "IT Support" } },
+        { id: 2, label: "Envoyer un questionnaire de suivi", detail: "Email avec formulaire satisfaction détaillé", type: "email", preview: { to: "emma.laurent@company.com", subject: "Votre avis compte — Suivi de votre onboarding", body: "Bonjour Emma,\n\nMerci pour vos retours sur votre onboarding. Nous avons noté certains points d'amélioration, notamment sur les accès outils.\n\nNous travaillons à résoudre ces problèmes. Pouvez-vous nous préciser :\n• Quels outils vous manquent encore ?\n• Y a-t-il d'autres points bloquants ?\n\nN'hésitez pas à me contacter directement.\n\nCordialement,\nL'équipe RH" } },
+      ]),
       alternatives: JSON.stringify([]),
       status: "ignored",
       resolvedAt: daysAgo(4),
       createdAt: daysAgo(8),
+    },
+    // ── Satisfaction-related resolved suggestions ──
+    {
+      agentId: agentMap["onboarding_satisfaction"].id,
+      employeeId: employees[7].id, // Nicolas
+      severity: "attention",
+      category: "engagement",
+      title: "Score moyen pour Nicolas Moreau en fin d'onboarding",
+      summary: "Nicolas Moreau affiche un score de satisfaction de 5.0/10 à la fin de sa première semaine. Des points d'amélioration identifiés sur l'accompagnement technique.",
+      context: JSON.stringify({ employeeName: "Nicolas Moreau", employeeRole: "Data Analyst", department: "Tech", additionalInfo: { pulseScore: "5.0/10", onboardingDay: "J+7", mainIssues: "Accès data warehouse lent, formation SQL non planifiée" } }),
+      actionPlan: JSON.stringify([
+        { id: 1, label: "Alerter le RH sur la satisfaction moyenne", detail: "Email d'alerte avec détails du score", type: "email", preview: { to: "lea.rousseau@company.com", subject: "⚠️ Score de satisfaction moyen — Nicolas Moreau (5.0/10)", body: "Bonjour Léa,\n\nLe score de satisfaction de Nicolas Moreau (Data Analyst, Tech) est de 5.0/10 après sa première semaine.\n\nPoints remontés :\n• Accès au data warehouse trop lent\n• Formation SQL avancé non encore planifiée\n• Sentiment d'isolement dans l'équipe\n\nUne action rapide est recommandée pour améliorer son expérience d'onboarding.\n\nCordialement,\nAgent IA — Alerte Satisfaction" } },
+        { id: 2, label: "Planifier un entretien de suivi", detail: "Réunion dans les 48h avec le manager", type: "meeting", preview: { subject: "Entretien de suivi satisfaction — Nicolas Moreau", date: "Dans les 48h", duration: "30 minutes", participants: ["Nicolas Moreau", "Alexandre Petit", "Léa Rousseau (RH)"], note: "Points à aborder : ressenti général, difficultés techniques rencontrées, accès aux outils, intégration dans l'équipe." } },
+      ]),
+      alternatives: JSON.stringify([{ label: "Envoyer un questionnaire détaillé", description: "Formulaire en ligne pour identifier les points bloquants" }]),
+      status: "accepted",
+      resolvedAt: daysAgo(1),
+      createdAt: daysAgo(3),
+    },
+    {
+      agentId: agentMap["onboarding_satisfaction"].id,
+      employeeId: employees[2].id, // Sarah
+      severity: "urgent",
+      category: "engagement",
+      title: "Score de satisfaction critique pour Sarah Dubois en onboarding",
+      summary: "Sarah Dubois affiche un score de satisfaction de 3.2/10, bien en dessous du seuil d'alerte. Risque élevé de désengagement précoce. Aucune connexion à la plateforme depuis 5 jours.",
+      context: JSON.stringify({ employeeName: "Sarah Dubois", employeeRole: "Chargée de communication", department: "Marketing", additionalInfo: { pulseScore: "3.2/10", onboardingDay: "J+5", lastLogin: "Jamais", mainIssues: "Accès plateforme non fonctionnels, pas de buddy, pas de point manager" } }),
+      actionPlan: JSON.stringify([
+        { id: 1, label: "Alerter le RH — score critique", detail: "Email d'alerte urgente", type: "email", preview: { to: "lea.rousseau@company.com", subject: "🔴 URGENT — Score satisfaction critique : Sarah Dubois (3.2/10)", body: "Bonjour Léa,\n\nLe score de satisfaction de Sarah Dubois (Chargée de communication, Marketing) est critique : 3.2/10.\n\nSignaux d'alerte :\n• Aucune connexion à la plateforme depuis son arrivée (J+5)\n• Pas de buddy assigné\n• Aucun point manager réalisé\n• Accès outils non fonctionnels\n\nAction immédiate requise : un entretien téléphonique est recommandé dans les 24h.\n\nCordialement,\nAgent IA — Alerte Satisfaction" } },
+        { id: 2, label: "Planifier un entretien d'urgence", detail: "Réunion prioritaire dans les 24h", type: "meeting", preview: { subject: "Entretien urgent satisfaction — Sarah Dubois", date: "Dans les 24h (prioritaire)", duration: "45 minutes", participants: ["Sarah Dubois", "Léa Rousseau (RH)", "Manager Marketing"], note: "Entretien prioritaire. Objectif : comprendre les causes du désengagement, débloquer les accès outils, assigner un buddy, définir un plan de rattrapage." } },
+      ]),
+      alternatives: JSON.stringify([{ label: "Appeler directement Sarah", description: "Contact téléphonique immédiat pour vérifier la situation" }]),
+      status: "accepted",
+      resolvedAt: daysAgo(0),
+      createdAt: daysAgo(2),
+    },
+    {
+      agentId: agentMap["onboarding_satisfaction"].id,
+      employeeId: employees[14].id, // Inès
+      severity: "optimization",
+      category: "engagement",
+      title: "Inès Chevalier — Satisfaction stable à 6.8/10, pistes d'amélioration",
+      summary: "Inès Chevalier affiche un score de 6.8/10. Score acceptable mais des verbatims montrent des frustrations sur la charge de travail avant son congé.",
+      context: JSON.stringify({ employeeName: "Inès Chevalier", employeeRole: "Comptable", department: "Finance", additionalInfo: { pulseScore: "6.8/10", status: "En congé", mainIssues: "Charge de travail pré-congé, manque de backup" } }),
+      actionPlan: JSON.stringify([
+        { id: 1, label: "Envoyer un récapitulatif au manager Finance", detail: "Points d'amélioration identifiés", type: "email", preview: { to: "manager.finance@company.com", subject: "Satisfaction Inès Chevalier — Points d'amélioration identifiés", body: "Bonjour,\n\nLe score de satisfaction d'Inès Chevalier est de 6.8/10. Des pistes d'amélioration ont été identifiées :\n\n• Charge de travail élevée avant son congé (pas de backup défini)\n• Processus de passation à formaliser\n• Besoin de reconnaissance sur les efforts fournis\n\nRecommandation : planifier un point à son retour pour ajuster la charge et définir un plan de backup.\n\nCordialement" } },
+        { id: 2, label: "Créer une tâche de suivi retour de congé", detail: "Rappel pour entretien au retour", type: "task", preview: { subject: "Suivi retour congé — Inès Chevalier", body: "Tâche planifiée :\n• Entretien de retour de congé avec Inès Chevalier\n• Objectif : évaluer la charge de travail, définir un backup, recueillir ses besoins\n• Deadline : J+2 après retour de congé", to: "Léa Rousseau (RH)" } },
+      ]),
+      alternatives: JSON.stringify([]),
+      status: "customized",
+      customizedAction: JSON.stringify({ note: "Entretien reporté au retour de congé d'Inès, prévu le 28 mars", date: "2026-03-28" }),
+      resolvedAt: daysAgo(1),
+      createdAt: daysAgo(5),
     },
   ];
 
