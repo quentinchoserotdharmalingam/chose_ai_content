@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap, ChevronRight, Pencil, Save, X } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap, ChevronRight, Pencil, Save, X, Plus } from "lucide-react";
 import { AGENT_CATEGORY_META, type AgentCategory, type AgentAction } from "@/types";
 import { useToast } from "./Toast";
 import { AgentActionEditModal } from "./AgentActionEditModal";
+import { inferActionType, ACTION_TYPE_META } from "@/lib/action-utils";
 
 function safeParseJSON<T>(json: string, fallback: T): T {
   try { return JSON.parse(json) as T; } catch { return fallback; }
@@ -44,7 +45,6 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
   const [agent, setAgent] = useState<AgentFullData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     trigger: true,
     info: true,
@@ -77,21 +77,54 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const generateSuggestions = async () => {
-    setGenerating(true);
+  const addAction = async () => {
+    if (!agent) return;
+    const currentActions: AgentAction[] = safeParseJSON(agent.actions || "[]", []);
+    const newId = currentActions.length > 0 ? Math.max(...currentActions.map(a => a.id)) + 1 : 1;
+    const newAction: AgentAction = {
+      id: newId,
+      label: "Nouvelle action",
+      enabled: true,
+      type: "email",
+      detail: "",
+      preview: { to: "", subject: "", body: "" },
+    };
+    const newActions = [...currentActions, newAction];
     try {
-      const res = await fetch(`/api/agents/${agentId}/generate`, { method: "POST" });
+      const res = await fetch(`/api/agents/${agentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actions: newActions }),
+      });
       if (!res.ok) throw new Error();
-      const data = await res.json();
-      const count = data.suggestions?.length || 0;
-      toast(`${count} suggestion${count > 1 ? "s" : ""} générée${count > 1 ? "s" : ""}`, "success");
       const agentRes = await fetch(`/api/agents/${agentId}`);
+      if (!agentRes.ok) throw new Error();
       setAgent(await agentRes.json());
+      setSelectedAction(newAction);
       onUpdated();
     } catch {
-      toast("Erreur lors de la génération", "error");
-    } finally {
-      setGenerating(false);
+      toast("Erreur lors de l'ajout", "error");
+    }
+  };
+
+  const deleteAction = async (actionId: number) => {
+    if (!agent) return;
+    const currentActions: AgentAction[] = safeParseJSON(agent.actions || "[]", []);
+    const newActions = currentActions.filter(a => a.id !== actionId);
+    try {
+      const res = await fetch(`/api/agents/${agentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actions: newActions }),
+      });
+      if (!res.ok) throw new Error();
+      const agentRes = await fetch(`/api/agents/${agentId}`);
+      if (!agentRes.ok) throw new Error();
+      setAgent(await agentRes.json());
+      toast("Action supprimée", "success");
+      onUpdated();
+    } catch {
+      toast("Erreur lors de la suppression", "error");
     }
   };
 
@@ -221,8 +254,6 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
   }
 
   const actions: AgentAction[] = safeParseJSON(agent.actions || "[]", []);
-  const pendingSuggestions = agent.suggestions.filter((s) => s.status === "pending");
-  const resolvedSuggestions = agent.suggestions.filter((s) => s.status !== "pending");
 
   return (
     <>
@@ -401,79 +432,56 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
             </div>
             <ChevronDown className={`h-4 w-4 text-ht-text-secondary transition-transform duration-200 ${expandedSections.actions ? "rotate-180" : ""}`} />
           </button>
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.actions ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.actions ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
             <div className="px-5 pb-4 border-t border-ht-border pt-3 space-y-2">
-              {actions.map((action) => (
-                <button
+              {actions.map((action) => {
+                const actionType = action.type || inferActionType(action.label);
+                const actionMeta = ACTION_TYPE_META[actionType] || ACTION_TYPE_META.notification;
+                const ActionIcon = actionMeta.icon;
+                return (
+                <div
                   key={action.id}
-                  onClick={() => setSelectedAction(action)}
-                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 w-full text-left group hover:shadow-sm transition-all cursor-pointer ${
-                    action.enabled ? "border-green-200 bg-green-50/50" : "border-ht-border bg-ht-fill-secondary opacity-60"
-                  }`}
+                  className="flex items-center gap-2 group"
                 >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-ht-text shadow-sm">
-                    {action.id}
-                  </span>
-                  <span className="text-[13px] text-ht-text flex-1">{action.label}</span>
-                  <span className={`text-[11px] font-medium ${action.enabled ? "text-green-600" : "text-gray-400"}`}>
-                    {action.enabled ? "Activé" : "Désactivé"}
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-ht-text-secondary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </button>
-              ))}
+                  <button
+                    onClick={() => setSelectedAction(action)}
+                    className="flex items-center gap-3 rounded-lg border border-ht-border bg-white px-4 py-3 flex-1 text-left hover:shadow-sm hover:border-ht-text-secondary/30 transition-all cursor-pointer min-w-0"
+                  >
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${actionMeta.bg}`}>
+                      <ActionIcon className={`h-4 w-4 ${actionMeta.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] text-ht-text font-medium truncate">{action.label}</p>
+                      {action.detail && <p className="text-[11px] text-ht-text-secondary truncate">{action.detail}</p>}
+                    </div>
+                    <div className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0 ${actionMeta.bg} ${actionMeta.color}`}>
+                      <ActionIcon className="h-3 w-3" />
+                      {actionMeta.label}
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-ht-text-secondary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteAction(action.id); }}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ht-text-secondary/40 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                    title="Supprimer cette action"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                );
+              })}
+              {/* Add action button */}
+              <button
+                onClick={addAction}
+                className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-ht-border px-4 py-3 w-full text-[13px] text-ht-text-secondary hover:text-ht-primary hover:border-ht-primary hover:bg-ht-primary/5 transition-all"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter une action
+              </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Generate button */}
-      <div className="rounded-xl border border-dashed border-ht-primary/30 bg-[#FFF5F5] p-5 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h3 className="text-[14px] font-semibold text-ht-text">Générer des suggestions</h3>
-            <p className="text-[12px] text-ht-text-secondary mt-1">
-              L&apos;IA analyse les données de vos collaborateurs et génère des suggestions d&apos;actions
-            </p>
-          </div>
-          <button
-            onClick={generateSuggestions}
-            disabled={generating}
-            className="flex items-center justify-center gap-2 rounded-lg bg-ht-primary px-5 py-2.5 text-[13px] font-medium text-white shadow-sm transition-all hover:bg-ht-primary-dark disabled:opacity-50 active:scale-95 shrink-0"
-          >
-            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {generating ? "Génération..." : "Générer"}
-          </button>
-        </div>
-      </div>
-
-      {/* Recent suggestions */}
-      {agent.suggestions.length > 0 && (
-        <div className="rounded-xl border border-ht-border bg-white p-5">
-          <h3 className="text-[14px] font-semibold text-ht-text mb-3">
-            Suggestions ({pendingSuggestions.length} en attente, {resolvedSuggestions.length} traitées)
-          </h3>
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            {agent.suggestions.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 rounded-lg border border-ht-border px-4 py-2.5 hover:bg-ht-fill-secondary/50 transition-colors">
-                <span className={`inline-flex h-2 w-2 shrink-0 rounded-full ${
-                  s.severity === "urgent" ? "bg-red-500" : s.severity === "attention" ? "bg-yellow-500" : s.severity === "opportunity" ? "bg-blue-500" : "bg-purple-500"
-                }`} />
-                <span className="text-[12px] text-ht-text flex-1 truncate">{s.title}</span>
-                {s.employee && (
-                  <span className="text-[11px] text-ht-text-secondary hidden md:inline truncate max-w-[120px]">
-                    {s.employee.firstName} {s.employee.lastName}
-                  </span>
-                )}
-                <span className={`text-[11px] font-medium shrink-0 ${
-                  s.status === "pending" ? "text-orange-500" : s.status === "accepted" ? "text-green-500" : s.status === "customized" ? "text-blue-500" : "text-gray-400"
-                }`}>
-                  {s.status === "pending" ? "En attente" : s.status === "accepted" ? "Validée" : s.status === "customized" ? "Personnalisée" : "Ignorée"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
 
       {/* Action edit modal */}
