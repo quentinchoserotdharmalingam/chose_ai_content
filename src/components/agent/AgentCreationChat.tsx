@@ -331,21 +331,6 @@ export function AgentCreationChat({ onBack, onCreated }: AgentCreationChatProps)
                   )}
                 </div>
 
-                {/* Suggestion chips - only on last assistant message */}
-                {!isUser && msg.suggestions && msg.suggestions.length > 0 && i === messages.length - 1 && !streaming && (
-                  <div className="flex flex-wrap gap-2 mt-2 ml-11">
-                    {msg.suggestions.map((suggestion, si) => (
-                      <button
-                        key={si}
-                        onClick={() => sendMessage(suggestion)}
-                        disabled={streaming}
-                        className="rounded-full border border-ht-border bg-white px-3.5 py-1.5 text-[12px] text-ht-text hover:bg-ht-primary hover:text-white hover:border-ht-primary transition-all active:scale-95 shadow-sm"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             );
           })}
@@ -396,6 +381,28 @@ export function AgentCreationChat({ onBack, onCreated }: AgentCreationChatProps)
           </button>
         </div>
       )}
+
+      {/* Suggestion chips — above input */}
+      {(() => {
+        const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+        if (!lastAssistant?.suggestions?.length || streaming) return null;
+        return (
+          <div className="px-3 pt-3 pb-1">
+            <div className="max-w-2xl mx-auto flex flex-wrap gap-2 justify-center">
+              {lastAssistant.suggestions.map((suggestion, si) => (
+                <button
+                  key={si}
+                  onClick={() => sendMessage(suggestion)}
+                  disabled={streaming}
+                  className="rounded-full border border-ht-border bg-white px-3.5 py-1.5 text-[12px] text-ht-text hover:bg-ht-primary hover:text-white hover:border-ht-primary transition-all active:scale-95 shadow-sm"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Input area */}
       <div className="border-t border-ht-border bg-white px-3 pt-3 pb-2 rounded-b-xl">
