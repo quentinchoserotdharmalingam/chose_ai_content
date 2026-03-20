@@ -2,7 +2,7 @@ import { Mail, CalendarDays, ClipboardList, Bell } from "lucide-react";
 
 export const ACTION_TYPE_META: Record<string, { icon: typeof Mail; label: string; color: string; bg: string }> = {
   email: { icon: Mail, label: "Email", color: "text-blue-600", bg: "bg-blue-50" },
-  meeting: { icon: CalendarDays, label: "Réunion", color: "text-purple-600", bg: "bg-purple-50" },
+  meeting: { icon: CalendarDays, label: "Événement", color: "text-purple-600", bg: "bg-purple-50" },
   task: { icon: ClipboardList, label: "Tâche", color: "text-green-600", bg: "bg-green-50" },
   notification: { icon: Bell, label: "Notification", color: "text-orange-600", bg: "bg-orange-50" },
 };

@@ -27,10 +27,10 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/creator/agent", label: "Agent IA", icon: Bot },
-  { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/formations", label: "Formations", icon: GraduationCap },
   { href: "/creator", label: "Formation IA", icon: Sparkles },
   { href: "/creator/interview", label: "Interview IA", icon: MessageSquare },
+  { href: "/documents", label: "Documents", icon: FileText },
+  { href: "/formations", label: "Formations", icon: GraduationCap },
   { href: "/questionnaires", label: "Questionnaires", icon: ClipboardList },
   { href: "/quiz", label: "Quiz", icon: HelpCircle },
   { href: "/events", label: "Événements", icon: Calendar },

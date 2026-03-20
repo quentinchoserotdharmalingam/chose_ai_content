@@ -491,6 +491,8 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
           onClose={() => setSelectedAction(null)}
           onSave={handleActionSave}
           saving={savingAction}
+          agentName={agent.name}
+          agentDescription={agent.description || undefined}
         />
       )}
     </>
