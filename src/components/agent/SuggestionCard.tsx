@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Check, X, CheckCircle2, ChevronRight, ArrowLeft, Send, XCircle } from "lucide-react";
+import { Check, X, CheckCircle2, ChevronRight, ArrowLeft, Send, XCircle, CalendarDays, ClipboardList, Bell } from "lucide-react";
 import { SUGGESTION_SEVERITY_META, SUGGESTION_CATEGORY_META, type SuggestionSeverity, type SuggestionActionStep } from "@/types";
 import { inferActionType, ACTION_TYPE_META } from "@/lib/action-utils";
 
