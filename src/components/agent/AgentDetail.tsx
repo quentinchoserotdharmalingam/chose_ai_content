@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, Aler
 import { AGENT_CATEGORY_META, type AgentCategory, type AgentAction } from "@/types";
 import { useToast } from "./Toast";
 import { AgentActionEditModal } from "./AgentActionEditModal";
+import { inferActionType, ACTION_TYPE_META } from "@/lib/action-utils";
 
 function safeParseJSON<T>(json: string, fallback: T): T {
   try { return JSON.parse(json) as T; } catch { return fallback; }
@@ -401,9 +402,13 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
             </div>
             <ChevronDown className={`h-4 w-4 text-ht-text-secondary transition-transform duration-200 ${expandedSections.actions ? "rotate-180" : ""}`} />
           </button>
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.actions ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.actions ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"}`}>
             <div className="px-5 pb-4 border-t border-ht-border pt-3 space-y-2">
-              {actions.map((action) => (
+              {actions.map((action) => {
+                const actionType = action.type || inferActionType(action.label);
+                const actionMeta = ACTION_TYPE_META[actionType] || ACTION_TYPE_META.notification;
+                const ActionIcon = actionMeta.icon;
+                return (
                 <button
                   key={action.id}
                   onClick={() => setSelectedAction(action)}
@@ -411,16 +416,20 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
                     action.enabled ? "border-green-200 bg-green-50/50" : "border-ht-border bg-ht-fill-secondary opacity-60"
                   }`}
                 >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-ht-text shadow-sm">
-                    {action.id}
-                  </span>
-                  <span className="text-[13px] text-ht-text flex-1">{action.label}</span>
-                  <span className={`text-[11px] font-medium ${action.enabled ? "text-green-600" : "text-gray-400"}`}>
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${actionMeta.bg}`}>
+                    <ActionIcon className={`h-4 w-4 ${actionMeta.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] text-ht-text font-medium truncate">{action.label}</p>
+                    {action.detail && <p className="text-[11px] text-ht-text-secondary truncate">{action.detail}</p>}
+                  </div>
+                  <span className={`text-[11px] font-medium shrink-0 ${action.enabled ? "text-green-600" : "text-gray-400"}`}>
                     {action.enabled ? "Activé" : "Désactivé"}
                   </span>
                   <ChevronRight className="h-4 w-4 text-ht-text-secondary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

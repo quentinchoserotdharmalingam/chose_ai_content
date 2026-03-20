@@ -87,7 +87,18 @@ L'utilisateur veut créer un agent IA qui surveille son activité RH et remonte 
     "triggerLabel": "...",
     "triggerConfig": {},
     "infoDescription": "...",
-    "actions": [{ "id": 1, "label": "...", "enabled": true }]
+    "actions": [{
+      "id": 1,
+      "label": "...",
+      "enabled": true,
+      "type": "email" | "meeting" | "task" | "notification",
+      "detail": "description courte de l'action",
+      "preview": {
+        "to": "destinataire (utilise des variables comme {{collaborateur.prenom}}, {{collaborateur.manager}})",
+        "subject": "objet",
+        "body": "corps complet avec variables {{collaborateur.prenom}}, {{collaborateur.nom}}, {{collaborateur.poste}}, {{collaborateur.departement}}, {{collaborateur.manager}}, {{collaborateur.date_arrivee}}, {{entreprise.nom}}"
+      }
+    }]
   }
 }
 \`\`\`
