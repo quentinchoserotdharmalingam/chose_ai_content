@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   FileText,
   GraduationCap,
@@ -104,9 +105,7 @@ export function Sidebar() {
         {/* Logo */}
         <div className="flex h-16 items-center justify-center px-4">
           <Link href="/creator" className="flex items-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-ht-primary text-white shrink-0">
-              <GraduationCap className="h-6 w-6" />
-            </div>
+            <Image src="/logo.svg" alt="Logo" width={44} height={44} className="shrink-0 rounded-xl" />
           </Link>
         </div>
 
