@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Bot, Plus, ChevronRight, Loader2, AlertTriangle, Inbox, History, Search } from "lucide-react";
+import { Bot, Plus, ChevronRight, Loader2, AlertTriangle, Inbox, History, Search, LayoutDashboard } from "lucide-react";
 import { AGENT_CATEGORY_META, type AgentCategory } from "@/types";
 import { AgentDetail } from "@/components/agent/AgentDetail";
 import { SuggestionsCockpit } from "@/components/agent/SuggestionsCockpit";
@@ -23,14 +23,14 @@ interface AgentData {
   suggestions: Array<{ id: string; status: string; severity: string }>;
 }
 
-type ViewType = "agents" | "suggestions" | "history";
+type ViewType = "cockpit" | "agents" | "history";
 
 function AgentPageContent() {
   const [agents, setAgents] = useState<AgentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [activeView, setActiveView] = useState<ViewType>("agents");
+  const [activeView, setActiveView] = useState<ViewType>("cockpit");
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -112,8 +112,26 @@ function AgentPageContent() {
 
   return (
     <div>
-      {/* Sub-navigation: Mes agents / Suggestions / Historique */}
+      {/* Sub-navigation: Cockpit / Mes agents / Historique */}
       <div className="flex items-center gap-1 mb-5 overflow-x-auto">
+        <button
+          onClick={() => setActiveView("cockpit")}
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-medium transition-all whitespace-nowrap ${
+            activeView === "cockpit"
+              ? "bg-ht-primary text-white"
+              : "text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary"
+          }`}
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          Cockpit
+          {totalPending > 0 && (
+            <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold ${
+              activeView === "cockpit" ? "bg-white/20" : "bg-orange-100 text-orange-600"
+            }`}>
+              {totalPending}
+            </span>
+          )}
+        </button>
         <button
           onClick={() => setActiveView("agents")}
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-medium transition-all whitespace-nowrap ${
@@ -131,24 +149,6 @@ function AgentPageContent() {
           </span>
         </button>
         <button
-          onClick={() => setActiveView("suggestions")}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-medium transition-all whitespace-nowrap ${
-            activeView === "suggestions"
-              ? "bg-ht-primary text-white"
-              : "text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary"
-          }`}
-        >
-          <Inbox className="h-4 w-4" />
-          Suggestions
-          {totalPending > 0 && (
-            <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold ${
-              activeView === "suggestions" ? "bg-white/20" : "bg-orange-100 text-orange-600"
-            }`}>
-              {totalPending}
-            </span>
-          )}
-        </button>
-        <button
           onClick={() => setActiveView("history")}
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-medium transition-all whitespace-nowrap ${
             activeView === "history"
@@ -161,8 +161,8 @@ function AgentPageContent() {
         </button>
       </div>
 
-      {/* ─── Suggestions view ─── */}
-      {activeView === "suggestions" && <SuggestionsCockpit />}
+      {/* ─── Cockpit view ─── */}
+      {activeView === "cockpit" && <SuggestionsCockpit />}
 
       {/* ─── History view ─── */}
       {activeView === "history" && <SuggestionsHistory />}
