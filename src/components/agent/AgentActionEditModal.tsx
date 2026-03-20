@@ -31,7 +31,6 @@ const VARIABLE_SUGGESTIONS = [
 
 export function AgentActionEditModal({ action, onClose, onSave, saving }: AgentActionEditModalProps) {
   const [label, setLabel] = useState(action.label);
-  const [enabled, setEnabled] = useState(action.enabled);
   const [type, setType] = useState<string>(action.type || inferActionType(action.label));
   const [detail, setDetail] = useState(action.detail || "");
   const [preview, setPreview] = useState<AgentActionPreview>(action.preview || {});
@@ -39,17 +38,12 @@ export function AgentActionEditModal({ action, onClose, onSave, saving }: AgentA
   const meta = ACTION_TYPE_META[type] || ACTION_TYPE_META.notification;
   const Icon = meta.icon;
 
-  const hasChanges = label !== action.label || enabled !== action.enabled ||
-    type !== (action.type || inferActionType(action.label)) ||
-    detail !== (action.detail || "") ||
-    JSON.stringify(preview) !== JSON.stringify(action.preview || {});
-
   const handleSave = () => {
     if (!label.trim()) return;
     onSave({
       id: action.id,
       label: label.trim(),
-      enabled,
+      enabled: true,
       type: type as AgentAction["type"],
       detail: detail || undefined,
       preview: Object.keys(preview).length > 0 ? preview : undefined,
@@ -57,7 +51,7 @@ export function AgentActionEditModal({ action, onClose, onSave, saving }: AgentA
   };
 
   const updatePreview = (field: keyof AgentActionPreview, value: string | string[]) => {
-    setPreview(prev => ({ ...prev, [field]: value }));
+    setPreview((prev: AgentActionPreview) => ({ ...prev, [field]: value }));
   };
 
   const insertVariable = (field: "to" | "subject" | "body" | "note", variable: string) => {
@@ -338,34 +332,6 @@ export function AgentActionEditModal({ action, onClose, onSave, saving }: AgentA
             </div>
           )}
 
-          {/* Enable/Disable toggle */}
-          <div>
-            <label className={labelClass}>État</label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setEnabled(true)}
-                className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-medium transition-all ${
-                  enabled
-                    ? "bg-green-50 border-2 border-green-400 text-green-700"
-                    : "bg-white border border-ht-border text-ht-text-secondary hover:bg-ht-fill-secondary"
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${enabled ? "bg-green-500" : "bg-gray-300"}`} />
-                Activé
-              </button>
-              <button
-                onClick={() => setEnabled(false)}
-                className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-medium transition-all ${
-                  !enabled
-                    ? "bg-gray-100 border-2 border-gray-400 text-gray-700"
-                    : "bg-white border border-ht-border text-ht-text-secondary hover:bg-ht-fill-secondary"
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${!enabled ? "bg-gray-500" : "bg-gray-300"}`} />
-                Désactivé
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
