@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, CheckCircle2, AlertTriangle, Calendar, History } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Calendar, History } from "lucide-react";
 import { SUGGESTION_SEVERITY_META, type SuggestionSeverity } from "@/types";
 import { SuggestionCard } from "./SuggestionCard";
 import { SuggestionCardSkeleton, StatsSidebarSkeleton } from "./SuggestionSkeleton";
@@ -143,14 +143,6 @@ export function SuggestionsCockpit() {
               </button>
             ))}
           </div>
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="flex items-center gap-2 shrink-0 rounded-lg border border-ht-border px-3 py-2 text-[12px] font-medium text-ht-text-secondary hover:text-ht-text hover:bg-ht-fill-secondary transition-all"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">Rafraîchir</span>
-          </button>
         </div>
 
         {/* Mobile stats summary */}
