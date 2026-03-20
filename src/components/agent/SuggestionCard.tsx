@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Check, X, CheckCircle2, ChevronRight, ArrowLeft, Send, XCircle } from "lucide-react";
 import { SUGGESTION_SEVERITY_META, SUGGESTION_CATEGORY_META, type SuggestionSeverity, type SuggestionActionStep } from "@/types";
 import { inferActionType, ACTION_TYPE_META } from "@/lib/action-utils";
@@ -55,7 +56,7 @@ function ActionPreviewModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div className="fixed inset-0 bg-black/40 transition-opacity" />
       <div
-        className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col"
+        className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header bar */}
@@ -463,8 +464,8 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore }: SuggestionCar
         </div>
       </div>
 
-      {/* Action preview modal */}
-      {selectedAction && (
+      {/* Action preview modal — portal to body to escape CSS transform containment */}
+      {selectedAction && createPortal(
         <ActionPreviewModal
           action={selectedAction}
           employee={suggestion.employee}
@@ -477,7 +478,8 @@ export function SuggestionCard({ suggestion, onAccept, onIgnore }: SuggestionCar
             markAction(selectedAction.id, "ignored");
             setSelectedAction(null);
           }}
-        />
+        />,
+        document.body
       )}
     </>
   );
