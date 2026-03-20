@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Save, X, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, X, Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { type AgentAction, type AgentActionPreview } from "@/types";
 import { inferActionType, ACTION_TYPE_META } from "@/lib/action-utils";
 
@@ -10,11 +10,13 @@ interface AgentActionEditModalProps {
   onClose: () => void;
   onSave: (updated: AgentAction) => void;
   saving?: boolean;
+  agentName?: string;
+  agentDescription?: string;
 }
 
 const ACTION_TYPES = [
   { value: "email", label: "Email" },
-  { value: "meeting", label: "Réunion" },
+  { value: "meeting", label: "Événement" },
   { value: "task", label: "Tâche" },
   { value: "notification", label: "Notification" },
 ] as const;
@@ -29,11 +31,12 @@ const VARIABLE_SUGGESTIONS = [
   { var: "{{entreprise.nom}}", label: "Entreprise" },
 ];
 
-export function AgentActionEditModal({ action, onClose, onSave, saving }: AgentActionEditModalProps) {
+export function AgentActionEditModal({ action, onClose, onSave, saving, agentName, agentDescription }: AgentActionEditModalProps) {
   const [label, setLabel] = useState(action.label);
   const [type, setType] = useState<string>(action.type || inferActionType(action.label));
   const [detail, setDetail] = useState(action.detail || "");
   const [preview, setPreview] = useState<AgentActionPreview>(action.preview || {});
+  const [generating, setGenerating] = useState(false);
 
   const meta = ACTION_TYPE_META[type] || ACTION_TYPE_META.notification;
   const Icon = meta.icon;
@@ -57,6 +60,34 @@ export function AgentActionEditModal({ action, onClose, onSave, saving }: AgentA
   const insertVariable = (field: "to" | "subject" | "body" | "note", variable: string) => {
     const current = (preview[field] as string) || "";
     updatePreview(field, current + variable);
+  };
+
+  const generateWithAI = async () => {
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/agents/generate-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          actionLabel: label,
+          actionDetail: detail,
+          agentName,
+          agentDescription,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const email = await res.json();
+      setPreview((prev: AgentActionPreview) => ({
+        ...prev,
+        to: email.to || prev.to,
+        subject: email.subject || prev.subject,
+        body: email.body || prev.body,
+      }));
+    } catch {
+      // silent fail
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -141,6 +172,18 @@ export function AgentActionEditModal({ action, onClose, onSave, saving }: AgentA
             />
           </div>
 
+          {/* AI generate button for email */}
+          {type === "email" && (
+            <button
+              onClick={generateWithAI}
+              disabled={generating}
+              className="flex items-center justify-center gap-2 w-full rounded-lg border border-dashed border-blue-300 bg-blue-50/50 px-4 py-2.5 text-[12px] font-medium text-blue-600 hover:bg-blue-100/50 hover:border-blue-400 transition-all disabled:opacity-50"
+            >
+              {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {generating ? "Génération en cours..." : "Générer l'email avec l'IA"}
+            </button>
+          )}
+
           {/* ── EMAIL FIELDS ── */}
           {type === "email" && (
             <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50/30 p-4">
@@ -195,7 +238,7 @@ export function AgentActionEditModal({ action, onClose, onSave, saving }: AgentA
           {/* ── MEETING FIELDS ── */}
           {type === "meeting" && (
             <div className="space-y-3 rounded-xl border border-purple-200 bg-purple-50/30 p-4">
-              <p className="text-[12px] font-semibold text-purple-700">Configuration réunion</p>
+              <p className="text-[12px] font-semibold text-purple-700">Configuration événement</p>
               <div>
                 <label className={labelClass}>Sujet</label>
                 <input
