@@ -59,7 +59,7 @@ export async function POST() {
         actions: JSON.stringify(template.actions),
         isTemplate: true,
         templateId: template.templateId,
-        status: template.templateId === "weekly_report" || template.templateId === "team_dashboard" ? "paused" : "active",
+        status: "active",
       },
     });
     agents.push(agent);

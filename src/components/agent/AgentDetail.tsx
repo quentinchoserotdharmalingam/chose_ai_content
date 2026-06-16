@@ -1,8 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Trash2, Settings, ChevronDown, Copy, AlertTriangle, Zap, Mail, CalendarDays, ClipboardList, Bell, ChevronRight, X } from "lucide-react";
 import { AGENT_CATEGORY_META, type AgentCategory, type AgentAction } from "@/types";
+
+const ACTION_TYPE_META: Record<string, { icon: typeof Mail; label: string; color: string; bg: string }> = {
+  email: { icon: Mail, label: "Email", color: "text-blue-600", bg: "bg-blue-50" },
+  meeting: { icon: CalendarDays, label: "Réunion", color: "text-purple-600", bg: "bg-purple-50" },
+  task: { icon: ClipboardList, label: "Tâche", color: "text-green-600", bg: "bg-green-50" },
+  notification: { icon: Bell, label: "Notification", color: "text-orange-600", bg: "bg-orange-50" },
+};
+
+function inferActionType(label: string): string {
+  const l = label.toLowerCase();
+  if (l.includes("email") || l.includes("envoyer") || l.includes("notifier") || l.includes("rappel") || l.includes("relancer") || l.includes("alerter")) return "email";
+  if (l.includes("planifier") || l.includes("meeting") || l.includes("point") || l.includes("créneau") || l.includes("entretien") || l.includes("suggérer un entretien")) return "meeting";
+  if (l.includes("vérifier") || l.includes("générer") || l.includes("analyser") || l.includes("afficher") || l.includes("créer")) return "task";
+  return "notification";
+}
 import { useToast } from "./Toast";
 
 function safeParseJSON<T>(json: string, fallback: T): T {
@@ -44,6 +59,7 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<AgentAction | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     trigger: true,
     info: true,
@@ -251,29 +267,45 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
           >
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-ht-text-secondary" />
-              <h3 className="text-[14px] font-semibold text-ht-text">Actions suggérées</h3>
+              <h3 className="text-[14px] font-semibold text-ht-text">Actions configurées</h3>
               <span className="text-[11px] text-ht-text-secondary">({actions.length})</span>
             </div>
             <ChevronDown className={`h-4 w-4 text-ht-text-secondary transition-transform duration-200 ${expandedSections.actions ? "rotate-180" : ""}`} />
           </button>
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.actions ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedSections.actions ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"}`}>
             <div className="px-5 pb-4 border-t border-ht-border pt-3 space-y-2">
-              {actions.map((action) => (
-                <div
-                  key={action.id}
-                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
-                    action.enabled ? "border-green-200 bg-green-50/50" : "border-ht-border bg-ht-fill-secondary opacity-60"
-                  }`}
-                >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-ht-text shadow-sm">
-                    {action.id}
-                  </span>
-                  <span className="text-[13px] text-ht-text flex-1">{action.label}</span>
-                  <span className={`text-[11px] font-medium ${action.enabled ? "text-green-600" : "text-gray-400"}`}>
-                    {action.enabled ? "Activé" : "Désactivé"}
-                  </span>
-                </div>
-              ))}
+              {actions.map((action) => {
+                const actionType = action.type || inferActionType(action.label);
+                const meta = ACTION_TYPE_META[actionType] || ACTION_TYPE_META.notification;
+                const TypeIcon = meta.icon;
+                return (
+                  <button
+                    key={action.id}
+                    onClick={() => setSelectedAction(action)}
+                    className={`w-full flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all group ${
+                      action.enabled
+                        ? "border-ht-border bg-white hover:border-ht-text-secondary hover:shadow-sm"
+                        : "border-ht-border bg-ht-fill-secondary opacity-60"
+                    }`}
+                  >
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}>
+                      <TypeIcon className={`h-4 w-4 ${meta.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium text-ht-text">{action.label}</p>
+                      {action.description && (
+                        <p className="text-[11px] text-ht-text-secondary truncate mt-0.5">{action.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[11px] font-medium ${action.enabled ? "text-green-600" : "text-gray-400"}`}>
+                        {action.enabled ? "Activé" : "Désactivé"}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-ht-text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -327,6 +359,97 @@ export function AgentDetail({ agentId, onBack, onUpdated }: AgentDetailProps) {
           </div>
         </div>
       )}
+
+      {/* Action detail modal */}
+      {selectedAction && (() => {
+        const actionType = selectedAction.type || inferActionType(selectedAction.label);
+        const meta = ACTION_TYPE_META[actionType] || ACTION_TYPE_META.notification;
+        const TypeIcon = meta.icon;
+        return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setSelectedAction(null)}>
+            <div className="fixed inset-0 bg-black/40 transition-opacity" />
+            <div
+              className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-ht-border shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${meta.bg}`}>
+                    <TypeIcon className={`h-4.5 w-4.5 ${meta.color}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-ht-text">{selectedAction.label}</h3>
+                    <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium mt-0.5 ${meta.bg} ${meta.color}`}>
+                      <TypeIcon className="h-3 w-3" />
+                      {meta.label}
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedAction(null)} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-ht-fill-secondary transition-colors">
+                  <X className="h-4 w-4 text-ht-text-secondary" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="overflow-y-auto flex-1 px-5 py-5 space-y-4">
+                {/* Status */}
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-medium ${
+                    selectedAction.enabled ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${selectedAction.enabled ? "bg-green-500" : "bg-gray-400"}`} />
+                    {selectedAction.enabled ? "Activée" : "Désactivée"}
+                  </span>
+                </div>
+
+                {/* Description */}
+                {selectedAction.description ? (
+                  <div>
+                    <p className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-2">Ce que fait cette action</p>
+                    <div className="rounded-xl bg-gray-50 px-4 py-4">
+                      <p className="text-[13px] text-ht-text leading-[1.7]">{selectedAction.description}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-gray-50 px-4 py-4">
+                    <p className="text-[13px] text-ht-text-secondary">Aucune description détaillée disponible pour cette action.</p>
+                  </div>
+                )}
+
+                {/* How it works */}
+                <div>
+                  <p className="text-[11px] font-semibold text-ht-text-secondary uppercase tracking-wide mb-2">Fonctionnement</p>
+                  <div className="rounded-xl border border-ht-border px-4 py-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium text-ht-text-secondary w-16 shrink-0">Type</span>
+                      <span className="text-[12px] text-ht-text">{meta.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium text-ht-text-secondary w-16 shrink-0">Mode</span>
+                      <span className="text-[12px] text-ht-text">Automatique à chaque déclenchement</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium text-ht-text-secondary w-16 shrink-0">Statut</span>
+                      <span className="text-[12px] text-ht-text">{selectedAction.enabled ? "Active — sera exécutée" : "Désactivée — ignorée"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-ht-border px-5 py-4 shrink-0 bg-white rounded-b-2xl">
+                <button
+                  onClick={() => setSelectedAction(null)}
+                  className="w-full rounded-xl bg-ht-fill-secondary px-4 py-3 text-[13px] font-medium text-ht-text hover:bg-gray-200 transition-all"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

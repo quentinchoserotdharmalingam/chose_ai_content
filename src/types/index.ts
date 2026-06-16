@@ -493,6 +493,8 @@ export interface AgentAction {
   id: number;
   label: string;
   enabled: boolean;
+  type?: "email" | "meeting" | "task" | "notification";
+  description?: string;
 }
 
 export interface SuggestionContext {
@@ -583,8 +585,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { event: "new_employee", delayDays: 1 },
     infoDescription: "Collaborateur sans message de bienvenue envoyé",
     actions: [
-      { id: 1, label: "Envoyer message de bienvenue", enabled: true },
-      { id: 2, label: "Notifier le manager", enabled: true },
+      { id: 1, label: "Envoyer message de bienvenue", enabled: true, type: "email", description: "Email personnalisé au nouveau collaborateur avec ses accès (plateforme, Slack, Drive), le nom de son manager, son buddy, et un guide de démarrage." },
+      { id: 2, label: "Notifier le manager", enabled: true, type: "email", description: "Email au manager l'informant de l'arrivée avec la checklist des actions à réaliser : café d'accueil, objectifs 30j, présentation équipe." },
     ],
   },
   {
@@ -599,8 +601,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { event: "document_missing", delayDays: 7 },
     infoDescription: "Liste des pièces manquantes par collaborateur",
     actions: [
-      { id: 1, label: "Relancer le collaborateur", enabled: true },
-      { id: 2, label: "Notifier le RH référent", enabled: true },
+      { id: 1, label: "Relancer le collaborateur", enabled: true, type: "email", description: "Email de relance listant les pièces manquantes (RIB, attestation sécu, mutuelle…) avec un lien de dépôt sécurisé et une deadline claire." },
+      { id: 2, label: "Notifier le RH référent", enabled: true, type: "notification", description: "Notification interne au RH avec le récapitulatif des pièces manquantes, le nombre de jours de retard, et le lien vers le dossier du collaborateur." },
     ],
   },
   {
@@ -615,8 +617,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { event: "low_satisfaction", threshold: 5 },
     infoDescription: "Score NPS < seuil et verbatims négatifs",
     actions: [
-      { id: 1, label: "Alerter le RH", enabled: true },
-      { id: 2, label: "Suggérer un entretien", enabled: true },
+      { id: 1, label: "Alerter le RH", enabled: true, type: "email", description: "Email au RH référent avec le score NPS du collaborateur, les verbatims négatifs anonymisés, et une recommandation d'action (entretien, ajustement du parcours)." },
+      { id: 2, label: "Suggérer un entretien", enabled: true, type: "meeting", description: "Proposition automatique d'un créneau d'entretien de 30 min entre le RH et le collaborateur, avec un guide d'entretien pré-rempli basé sur les retours négatifs." },
     ],
   },
   {
@@ -631,8 +633,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { event: "manager_inactive", delayDays: 14 },
     infoDescription: "Manager n'ayant réalisé aucune action depuis X jours",
     actions: [
-      { id: 1, label: "Notifier le manager", enabled: true },
-      { id: 2, label: "Planifier un meeting", enabled: true },
+      { id: 1, label: "Notifier le manager", enabled: true, type: "email", description: "Email de rappel au manager avec le récapitulatif de ses actions en attente : check-ins non réalisés, tâches à valider, feedbacks à donner." },
+      { id: 2, label: "Planifier un point RH", enabled: true, type: "meeting", description: "Créer un créneau de 30 min entre le RH et le manager pour comprendre les raisons de l'inactivité et proposer un accompagnement si nécessaire." },
     ],
   },
   {
@@ -647,8 +649,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { schedule: "weekly", day: "monday", time: "09:00" },
     infoDescription: "Synthèse hebdomadaire de l'activité RH",
     actions: [
-      { id: 1, label: "Générer le rapport", enabled: true },
-      { id: 2, label: "Envoyer au RH", enabled: true },
+      { id: 1, label: "Générer le rapport", enabled: true, type: "task", description: "Compilation automatique des métriques : nombre d'onboardings en cours, taux de complétion formation, documents en attente, scores d'engagement, alertes de la semaine." },
+      { id: 2, label: "Envoyer au RH", enabled: true, type: "email", description: "Email de synthèse hebdomadaire envoyé à l'équipe RH avec les KPI clés, les alertes prioritaires, et les actions recommandées pour la semaine." },
     ],
   },
   {
@@ -663,8 +665,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { event: "upcoming_onboarding", delayDays: -7 },
     infoDescription: "Checklist des éléments manquants avant arrivée",
     actions: [
-      { id: 1, label: "Vérifier les documents", enabled: true },
-      { id: 2, label: "Alerter si incomplet", enabled: true },
+      { id: 1, label: "Vérifier les documents", enabled: true, type: "task", description: "Audit automatique du dossier : manager assigné, buddy désigné, poste de travail préparé, accès outils créés (Slack, email, logiciels métier), kit d'accueil envoyé." },
+      { id: 2, label: "Alerter si incomplet", enabled: true, type: "email", description: "Email d'alerte au RH et au manager listant les éléments manquants avec deadline, en distinguant les actions bloquantes (accès, contrat) des actions souhaitables (buddy, kit)." },
     ],
   },
   // --- Skills Managers (5) ---
@@ -680,8 +682,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { schedule: "daily", time: "08:00" },
     infoDescription: "État global de l'équipe (onboarding, tâches, engagement)",
     actions: [
-      { id: 1, label: "Afficher métriques", enabled: true },
-      { id: 2, label: "Alerter si anomalie", enabled: true },
+      { id: 1, label: "Afficher métriques", enabled: true, type: "task", description: "Tableau de bord avec les métriques de l'équipe : onboardings en cours et progression, tâches en retard par collaborateur, scores d'engagement, prochains check-ins." },
+      { id: 2, label: "Alerter si anomalie", enabled: true, type: "notification", description: "Notification push si un indicateur dépasse le seuil : engagement < 5/10, tâche en retard > 3 jours, onboarding bloqué, ou absence non prévue détectée." },
     ],
   },
   {
@@ -696,8 +698,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { event: "upcoming_checkin", delayDays: -2 },
     infoDescription: "Prochain check-in planifié avec contexte",
     actions: [
-      { id: 1, label: "Notifier le manager", enabled: true },
-      { id: 2, label: "Proposer un créneau", enabled: true },
+      { id: 1, label: "Notifier le manager", enabled: true, type: "email", description: "Email au manager avec le contexte du check-in : profil du collaborateur, avancement onboarding, score d'engagement, points à aborder recommandés." },
+      { id: 2, label: "Proposer un créneau", enabled: true, type: "meeting", description: "Création automatique d'un événement calendrier de 30 min basé sur les disponibilités communes du manager et du collaborateur, avec ordre du jour pré-rempli." },
     ],
   },
   {
@@ -712,9 +714,9 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { schedule: "weekly", day: "friday", time: "17:00" },
     infoDescription: "Score d'engagement et tendance par collaborateur",
     actions: [
-      { id: 1, label: "Analyser activité", enabled: true },
-      { id: 2, label: "Envoyer rapport", enabled: true },
-      { id: 3, label: "Alerter si engagement < seuil", enabled: true },
+      { id: 1, label: "Analyser activité", enabled: true, type: "task", description: "Analyse automatique de l'activité de chaque collaborateur : connexions, tâches complétées, interactions, réponses aux Pulse. Détection de tendance (hausse/baisse/stable)." },
+      { id: 2, label: "Envoyer rapport", enabled: true, type: "email", description: "Email de synthèse hebdomadaire au manager avec le score d'engagement de chaque membre de l'équipe, les tendances, et les actions suggérées pour les profils à risque." },
+      { id: 3, label: "Alerter si engagement < seuil", enabled: true, type: "notification", description: "Notification immédiate si un collaborateur passe sous le seuil de 5/10 en engagement, avec le contexte (dernière connexion, tâches en retard, dernière interaction manager)." },
     ],
   },
   {
@@ -729,8 +731,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { event: "task_overdue", delayDays: 1 },
     infoDescription: "Tâches non complétées après deadline",
     actions: [
-      { id: 1, label: "Rappeler le collaborateur", enabled: true },
-      { id: 2, label: "Notifier le manager", enabled: true },
+      { id: 1, label: "Rappeler le collaborateur", enabled: true, type: "email", description: "Email de rappel bienveillant au collaborateur listant ses tâches en retard avec les nouvelles deadlines proposées et un lien direct vers chaque tâche." },
+      { id: 2, label: "Notifier le manager", enabled: true, type: "notification", description: "Notification au manager avec la liste des tâches en retard de son équipe, le nombre de jours de retard, et des suggestions d'action (point rapide, réassignation)." },
     ],
   },
   {
@@ -745,8 +747,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     triggerConfig: { event: "buddy_inactive", delayDays: 5 },
     infoDescription: "Buddy n'ayant pas interagi avec le nouveau",
     actions: [
-      { id: 1, label: "Alerter le buddy", enabled: true },
-      { id: 2, label: "Notifier le RH", enabled: true },
+      { id: 1, label: "Alerter le buddy", enabled: true, type: "email", description: "Email de rappel au buddy avec le profil du filleul, le nombre de jours sans interaction, et des suggestions concrètes : café, déjeuner, message Slack, point de 15 min." },
+      { id: 2, label: "Notifier le RH", enabled: true, type: "notification", description: "Notification au RH si le buddy reste inactif après le rappel, avec proposition de changement de buddy et historique des interactions passées." },
     ],
   },
 ];
